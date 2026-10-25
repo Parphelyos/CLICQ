@@ -43,6 +43,8 @@ mark[title]{transition:filter .12s ease} mark[title]:hover{filter:saturate(1.2) 
 <script>
   // Pega aquí TU ID de cliente OAuth (termina en .apps.googleusercontent.com)
   window.CLINQ_GOOGLE_CLIENT_ID = "";
+  // URL de tu función en Vercel, p. ej. "https://clinq-api.vercel.app/api/generate"
+  window.CLINQ_API_URL = "";
 </script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
@@ -1335,6 +1337,163 @@ wkInit();
       const k = M.lang + "|" + M.term.toLowerCase(); let s = tImg.get(k);
       if (!s) { s = { st: "loading", items: [] }; tImg.set(k, s); commons(M.term).then((it) => { s.st = "ok"; s.items = it; }).catch(() => { s.st = "error"; }).then(() => { if (wikiCur && wikiCur.term === M.term && wikiCur.lang === M.lang) paintImgs(M); }); }
       paintImgs(M);
+    } catch (e) {}
+  };
+})();
+</script>
+<script>
+/* ===== Creador de casos desde PDF: secciones, OCR, fidelidad, fuente por caso y regenerar ===== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const API = () => window.CLINQ_API_URL || (/vercel\.app$/.test(location.hostname) ? "/api/generate" : "");
+  let doc = null, pdfRef = null, cancel = false, busy = false; const ctx = new Map();
+  const st = document.createElement("style");
+  st.textContent = `.cg-secs{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:6px;margin:10px 0;background:#fff}
+.cg-sec{display:flex;gap:10px;align-items:center;padding:7px 8px;border-radius:8px;font-size:13px}.cg-sec:hover{background:#f5f8ff}.cg-sec span{margin-left:auto;color:var(--muted);font-size:11px;white-space:nowrap}
+.cg-opts{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}.cg-opts label{font-size:12px;font-weight:700;color:#56657a;display:grid;gap:4px}
+.cg-ok{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:#56657a;margin:10px 0}.cg-bar{height:8px;background:#e8edf5;border-radius:99px;overflow:hidden;margin-top:10px}.cg-bar div{height:100%;width:0;background:var(--blue);transition:width .2s}`;
+  document.head.appendChild(st);
+
+  const panel = document.createElement("div"); panel.className = "panel"; panel.id = "cg-panel"; panel.style.marginBottom = "18px";
+  panel.innerHTML = `<div class="sectionhead"><div><h3>✨ Crear casos desde un PDF</h3><p>Suelta tu PDF, elige las secciones y crea los casos. Podrás revisarlos antes de guardarlos.</p></div></div>
+<div class="dropzone" id="cg-drop"><h3 style="font-size:15px">Arrastra tu PDF aquí</h3><p>o elígelo desde tu dispositivo</p><button type="button" class="btn primary" id="cg-pick">Elegir PDF</button><input type="file" id="cg-file" accept="application/pdf,.pdf" hidden></div>
+<div class="smalltext muted" id="cg-status" style="margin-top:10px" aria-live="polite"></div>
+<div id="cg-main" hidden>
+ <div id="cg-ocr" class="notice" hidden>Este PDF parece escaneado (casi no tiene texto). <button type="button" class="btn outline small" id="cg-ocrbtn">🔍 Leer con OCR</button> <span class="muted">Se hace en tu navegador y puede tardar.</span></div>
+ <div class="sectionhead" style="margin:10px 0 0"><div><h3 style="font-size:14px">Secciones detectadas</h3></div><div style="display:flex;gap:6px"><button type="button" class="btn outline small" id="cg-all">Todas</button><button type="button" class="btn outline small" id="cg-none">Ninguna</button></div></div>
+ <div class="cg-secs" id="cg-secs"></div>
+ <div class="cg-opts">
+  <label>Modo<select class="field" id="cg-mode"><option value="generate">Generar casos nuevos</option><option value="fidelity">Fidelidad: extraer todos los casos detectados</option></select></label>
+  <label id="cg-l1">Casos por sección<select class="field" id="cg-count"><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option></select></label>
+  <label id="cg-l2">Estilo<select class="field" id="cg-style"><option value="clinical">Caso clínico (USMLE)</option><option value="direct">Pregunta directa</option></select></label>
+ </div>
+ <label class="cg-ok"><input type="checkbox" id="cg-ok"><span>Entiendo que el texto de las secciones elegidas se envía al servidor de ClinQ y a un servicio de IA (Google Gemini) para crear los casos. Los casos generados pueden tener errores: revísalos antes de estudiar con ellos.</span></label>
+ <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn primary" id="cg-go">✨ Crear casos</button><button type="button" class="btn outline" id="cg-stop" hidden>Detener</button></div>
+ <div class="cg-bar" id="cg-barw" hidden><div id="cg-bar"></div></div>
+</div>`;
+  const host = $("view-import"); if (host) host.prepend(panel);
+  const status = (m) => { $("cg-status").textContent = m; };
+  const drop = $("cg-drop");
+  $("cg-pick").onclick = () => $("cg-file").click();
+  $("cg-file").onchange = (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) load(f); };
+  ["dragover", "dragenter"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("dragover"); }));
+  ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("dragover"); }));
+  drop.addEventListener("drop", (e) => { const f = [...e.dataTransfer.files].find((x) => /\.pdf$/i.test(x.name)); if (f) load(f); else status("Suelta un archivo PDF."); });
+  $("cg-mode").onchange = () => { const g = $("cg-mode").value === "generate"; $("cg-l1").style.display = $("cg-l2").style.display = g ? "" : "none"; };
+  $("cg-all").onclick = () => setAll(true); $("cg-none").onclick = () => setAll(false);
+  $("cg-go").onclick = run; $("cg-stop").onclick = () => { cancel = true; status("Deteniendo…"); };
+  $("cg-ocrbtn").onclick = ocr;
+
+  async function load(file) {
+    try {
+      status("Abriendo PDF…"); $("cg-main").hidden = true;
+      const lib = await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js", "pdfjsLib");
+      lib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      pdfRef = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+      const pages = [];
+      for (let i = 1; i <= pdfRef.numPages; i++) {
+        status(`Leyendo página ${i} de ${pdfRef.numPages}…`);
+        const c = await (await pdfRef.getPage(i)).getTextContent(); let t = "";
+        c.items.forEach((it) => { t += it.str + (it.hasEOL ? "\n" : " "); });
+        pages.push(t.replace(/[ \t]+/g, " ").trim());
+      }
+      doc = { name: file.name.replace(/\.pdf$/i, ""), pages, sections: [] }; build();
+    } catch (e) { status("No se pudo leer el PDF: " + (e.message || e)); }
+  }
+  function detect(pages) {
+    const H = /^(cap[ií]tulo|chapter|tema|unidad|secci[oó]n|m[oó]dulo|bloque)\s+[\dIVXLivxl]+\b.{0,80}$/i, heads = [];
+    pages.forEach((t, i) => { const ls = t.split("\n").map((s) => s.trim()).filter(Boolean).slice(0, 4); const h = ls.find((l) => H.test(l) || (l.length >= 8 && l.length <= 70 && /[A-ZÁÉÍÓÚÑ]{4}/.test(l) && l === l.toUpperCase() && !/\d{3,}/.test(l))); if (h) heads.push({ i, label: h.replace(/\s+/g, " ") }); });
+    let secs = [];
+    heads.forEach((h) => { if (secs.length && h.i - secs[secs.length - 1].from < 2) return; secs.push({ from: h.i, label: h.label }); });
+    if (secs.length < 2 || secs.length > 40) { secs = []; for (let i = 0; i < pages.length; i += 8) secs.push({ from: i, label: "Páginas " + (i + 1) + "–" + Math.min(i + 8, pages.length) }); }
+    else if (secs[0].from > 0) secs.unshift({ from: 0, label: "Inicio" });
+    secs.forEach((s, k) => { s.to = (secs[k + 1] ? secs[k + 1].from : pages.length) - 1; s.on = true; });
+    return secs;
+  }
+  function build() {
+    doc.sections = detect(doc.pages);
+    const chars = doc.pages.reduce((a, p) => a + p.length, 0);
+    $("cg-ocr").hidden = chars / Math.max(1, doc.pages.length) > 60;
+    $("cg-secs").innerHTML = doc.sections.map((s, i) => `<label class="cg-sec"><input type="checkbox" data-i="${i}" checked><strong>${esc(s.label)}</strong><span>págs. ${s.from + 1}–${s.to + 1}</span></label>`).join("");
+    $("cg-secs").querySelectorAll("input").forEach((c) => (c.onchange = () => { doc.sections[+c.dataset.i].on = c.checked; }));
+    $("cg-main").hidden = false; $("cg-mode").onchange();
+    status(`${doc.pages.length} páginas · ${doc.sections.length} secciones. Elige y pulsa «Crear casos».`);
+  }
+  function setAll(v) { doc.sections.forEach((s) => (s.on = v)); $("cg-secs").querySelectorAll("input").forEach((c) => (c.checked = v)); }
+  async function ocr() {
+    if (!pdfRef || busy) return; busy = true; cancel = false; $("cg-stop").hidden = false;
+    try {
+      const T = await loadScript("https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js", "Tesseract");
+      const w = await T.createWorker("spa+eng");
+      for (let i = 1; i <= pdfRef.numPages && !cancel; i++) {
+        status(`OCR: página ${i} de ${pdfRef.numPages}…`);
+        const pg = await pdfRef.getPage(i), vp = pg.getViewport({ scale: 2 }), cv = document.createElement("canvas");
+        cv.width = vp.width; cv.height = vp.height; await pg.render({ canvasContext: cv.getContext("2d"), viewport: vp }).promise;
+        doc.pages[i - 1] = ((await w.recognize(cv)).data.text || "").trim();
+      }
+      await w.terminate(); build(); if (cancel) status("OCR detenido; se usará el texto leído hasta ahora.");
+    } catch (e) { status("No se pudo hacer OCR: " + (e.message || e)); }
+    busy = false; $("cg-stop").hidden = true;
+  }
+  function chunks(s, max = 14000) {
+    const out = []; let cur = "";
+    for (let i = s.from; i <= s.to; i++) { const p = `\n[[PÁGINA ${i + 1}]]\n${doc.pages[i] || ""}`.slice(0, max); if (cur && cur.length + p.length > max) { out.push(cur); cur = ""; } cur += p; }
+    if (cur) out.push(cur); return out.filter((c) => c.replace(/\[\[PÁGINA \d+\]\]/g, "").trim().length > 200);
+  }
+  async function call(body) {
+    const r = await fetch(API(), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Error " + r.status); return j.questions || [];
+  }
+  function norm(q, fid, i) {
+    const stem = String(q.stem || "").trim();
+    const opts = (Array.isArray(q.options) ? q.options : []).map((o) => String(typeof o === "object" && o ? o.text || "" : o).replace(/^\s*[A-E][\).:\-]\s+/, "").trim()).filter(Boolean).slice(0, 5).map((t, k) => ({ key: String.fromCharCode(65 + k), text: t }));
+    let a = String(q.answer || "").trim().toUpperCase().slice(0, 1); if (!opts.some((o) => o.key === a)) a = "";
+    if (stem.length < 12 || opts.length < 2 || (!fid && (!a || opts.length < 3))) return null;
+    const p = parseInt(q.page) || 0;
+    return { id: uid(), stem, options: opts, answer: a, explanation: String(q.explanation || "").trim(), source: doc.name + (p ? " · pág. " + p : ""), page: p || undefined, subject: inferSpecialty(stem, doc.name), created: Date.now() + i, updated: Date.now(), attempts: 0, correctCount: 0, flagged: false, origin: fid ? "imported-pdf" : "generated-ai" };
+  }
+  const key = (q) => String(q.stem).toLowerCase().replace(/\W/g, "");
+  function add(list, c) {
+    const seen = new Set(importPreview.map(key)); let n = 0;
+    list.forEach((q) => { if (seen.has(key(q))) return; seen.add(key(q)); ctx.set(q.id, c); importPreview.push(q); n++; });
+    if (n) renderPreview(); return n;
+  }
+  async function run() {
+    if (busy) return;
+    if (!API()) { alert("Falta configurar la dirección del servidor (CLINQ_API_URL en index.html)."); return; }
+    if (!$("cg-ok").checked) { notify("Marca la casilla de aviso para continuar."); return; }
+    const secs = doc.sections.filter((s) => s.on); if (!secs.length) { notify("Elige al menos una sección."); return; }
+    const mode = $("cg-mode").value, fid = mode === "fidelity", count = +$("cg-count").value, style = $("cg-style").value, jobs = [];
+    secs.forEach((s) => { const cs = chunks(s); cs.forEach((c) => jobs.push({ s, c, n: Math.max(1, Math.ceil(count / cs.length)) })); });
+    if (!jobs.length) { notify("Las secciones elegidas casi no tienen texto. Prueba con OCR."); return; }
+    busy = true; cancel = false; $("cg-go").disabled = true; $("cg-stop").hidden = false; $("cg-barw").hidden = false;
+    let done = 0, added = 0, fail = 0, err = "";
+    for (const j of jobs) {
+      if (cancel) break; status(`Creando casos… sección «${j.s.label}» (${done + 1} de ${jobs.length}) · ${added} casos listos`);
+      try { added += add((await call({ mode, text: j.c, count: j.n, style, section: j.s.label })).map((q, i) => norm(q, fid, added + i)).filter(Boolean), j.c); } catch (e) { fail++; err = e.message; }
+      done++; $("cg-bar").style.width = Math.round((done / jobs.length) * 100) + "%";
+    }
+    busy = false; $("cg-go").disabled = false; $("cg-stop").hidden = true;
+    status(`${cancel ? "Detenido" : "Listo"}: ${added} casos para revisar abajo${fail ? ` · ${fail} parte(s) fallaron (${err})` : ""}.`);
+    if (added) $("preview-area").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  async function regen(id, b) {
+    const i = importPreview.findIndex((q) => q.id === id); if (i < 0) return; const old = importPreview[i];
+    b.disabled = true; b.textContent = "Generando…";
+    try {
+      const n = norm((await call({ mode: "generate", text: ctx.get(id), count: 1, style: $("cg-style").value, avoid: old.stem }))[0] || {}, false, 0);
+      if (!n) throw new Error("No se obtuvo un caso válido"); ctx.set(n.id, ctx.get(id)); importPreview[i] = n; renderPreview(); notify("Caso regenerado");
+    } catch (e) { b.disabled = false; b.textContent = "🔄 Regenerar"; notify(e.message || "No se pudo regenerar"); }
+  }
+  const _rp = renderPreview;
+  renderPreview = function () {
+    _rp.apply(this, arguments);
+    try {
+      document.querySelectorAll("#preview-area .previewitem").forEach((el, i) => {
+        const q = importPreview[i]; if (!q || !ctx.has(q.id)) return; const f = el.querySelector(".previewfooter");
+        const s = document.createElement("div"); s.className = "smalltext muted"; s.style.marginTop = "6px"; s.textContent = "📄 Fuente: " + q.source; f.before(s);
+        if (q.origin === "generated-ai") { const b = document.createElement("button"); b.type = "button"; b.className = "btn outline small"; b.textContent = "🔄 Regenerar"; b.onclick = () => regen(q.id, b); f.querySelector("span:last-child").prepend(b); }
+      });
     } catch (e) {}
   };
 })();
