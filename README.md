@@ -1,2 +1,2 @@
 # CLICQ
-https://parphelyos.github.io/CLICQ/
+https://parphelyos.github.io/ClinQ/
