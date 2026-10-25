@@ -1435,14 +1435,17 @@ wkInit();
     } catch (e) { status("No se pudo hacer OCR: " + (e.message || e)); }
     busy = false; $("cg-stop").hidden = true;
   }
-  function chunks(s, max = 14000) {
+  function chunks(s, max = 7000) {
     const out = []; let cur = "";
     for (let i = s.from; i <= s.to; i++) { const p = `\n[[PÁGINA ${i + 1}]]\n${doc.pages[i] || ""}`.slice(0, max); if (cur && cur.length + p.length > max) { out.push(cur); cur = ""; } cur += p; }
     if (cur) out.push(cur); return out.filter((c) => c.replace(/\[\[PÁGINA \d+\]\]/g, "").trim().length > 200);
   }
   async function call(body) {
-    const r = await fetch(API(), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Error " + r.status); return j.questions || [];
+    const ac = new AbortController(), to = setTimeout(() => ac.abort(), 58000);
+    try {
+      const r = await fetch(API(), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ac.signal });
+      const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || (r.status === 504 ? "La IA tardó demasiado" : "Error " + r.status)); return j.questions || [];
+    } catch (e) { if (e.name === "AbortError") throw new Error("La IA tardó demasiado"); throw e; } finally { clearTimeout(to); }
   }
   function norm(q, fid, i) {
     const stem = String(q.stem || "").trim();
@@ -1468,15 +1471,22 @@ wkInit();
     if (!$("cg-ok").checked) { notify("Marca la casilla de aviso para continuar."); return; }
     const secs = doc.sections.filter((s) => s.on); if (!secs.length) { notify("Elige al menos una sección."); return; }
     const mode = $("cg-mode").value, fid = mode === "fidelity", count = +$("cg-count").value, style = $("cg-style").value, jobs = [];
-    secs.forEach((s) => { const cs = chunks(s); cs.forEach((c) => jobs.push({ s, c, n: Math.max(1, Math.ceil(count / cs.length)) })); });
+    secs.forEach((s) => { const cs = chunks(s); cs.forEach((c) => { if (fid) { jobs.push({ s, c, n: 0 }); return; } let left = Math.max(1, Math.ceil(count / cs.length)); while (left > 0) { const n = Math.min(5, left); jobs.push({ s, c, n }); left -= n; } }); });
     if (!jobs.length) { notify("Las secciones elegidas casi no tienen texto. Prueba con OCR."); return; }
     busy = true; cancel = false; $("cg-go").disabled = true; $("cg-stop").hidden = false; $("cg-barw").hidden = false;
     let done = 0, added = 0, fail = 0, err = "";
+    const prev = new Map(); let t0 = Date.now(), base = "";
+    const tick = setInterval(() => status(base + " · " + Math.round((Date.now() - t0) / 1000) + " s"), 1000);
     for (const j of jobs) {
-      if (cancel) break; status(`Creando casos… sección «${j.s.label}» (${done + 1} de ${jobs.length}) · ${added} casos listos`);
-      try { added += add((await call({ mode, text: j.c, count: j.n, style, section: j.s.label })).map((q, i) => norm(q, fid, added + i)).filter(Boolean), j.c); } catch (e) { fail++; err = e.message; }
+      if (cancel) break; t0 = Date.now(); base = `Creando casos… parte ${done + 1} de ${jobs.length} («${j.s.label}») · ${added} casos listos`; status(base);
+      try {
+        const av = (prev.get(j.c) || []).slice(-8).map((x) => x.slice(0, 150)).join(" | ");
+        const qs = (await call({ mode, text: j.c, count: j.n, style, section: j.s.label, avoid: av })).map((q, i) => norm(q, fid, added + i)).filter(Boolean);
+        prev.set(j.c, [...(prev.get(j.c) || []), ...qs.map((q) => q.stem)]); added += add(qs, j.c);
+      } catch (e) { fail++; err = e.message; }
       done++; $("cg-bar").style.width = Math.round((done / jobs.length) * 100) + "%";
     }
+    clearInterval(tick);
     busy = false; $("cg-go").disabled = false; $("cg-stop").hidden = true;
     status(`${cancel ? "Detenido" : "Listo"}: ${added} casos para revisar abajo${fail ? ` · ${fail} parte(s) fallaron (${err})` : ""}.`);
     if (added) $("preview-area").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1500,6 +1510,40 @@ wkInit();
       });
     } catch (e) {}
   };
+})();
+</script>
+<script>
+/* ===== Importar: nuevo orden y interruptores ===== */
+(function () {
+  const v = document.getElementById("view-import"), grid = v && v.querySelector(".importgrid"); if (!grid) return;
+  const css = document.createElement("style");
+  css.textContent = ".segsw{display:inline-flex;background:#eef2fa;border-radius:12px;padding:4px;gap:4px;margin-bottom:14px;flex-wrap:wrap}.segsw button{border:0;background:transparent;padding:8px 14px;border-radius:9px;font-weight:750;font-size:13px;color:#56657a}.segsw button.on{background:#fff;color:var(--blue);box-shadow:0 2px 8px #1a2f6a1f}";
+  document.head.appendChild(css);
+  const [up, paste] = [...grid.children], panels = [...v.children].filter((e) => e.classList.contains("panel"));
+  const prompt = panels.find((p) => /Prompt para tu IA/.test(p.textContent.slice(0, 120))), nblm = document.getElementById("nblm-panel"), cg = document.getElementById("cg-panel");
+  const flat = (p) => { p.style.cssText += ";border:0;box-shadow:none;padding:0;margin:0;background:transparent"; };
+  const wire = (sw, fn) => sw.querySelectorAll("button").forEach((b) => (b.onclick = () => { sw.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); fn(b.dataset.t); }));
+
+  /* 1) Prompt para IA  ⇄  NotebookLM */
+  if (prompt && nblm) {
+    const top = document.createElement("div"); top.className = "panel"; top.id = "ai-tabs"; top.style.marginBottom = "18px";
+    top.innerHTML = '<div class="segsw"><button type="button" class="on" data-t="p">📋 Prompt para tu IA</button><button type="button" data-t="n">📓 NotebookLM</button></div><div id="ai-tabs-body"></div>';
+    const body = top.querySelector("#ai-tabs-body"); [prompt, nblm].forEach((p) => { flat(p); body.appendChild(p); }); nblm.style.display = "none";
+    wire(top.querySelector(".segsw"), (t) => { prompt.style.display = t === "p" ? "" : "none"; nblm.style.display = t === "n" ? "" : "none"; });
+    v.insertBefore(top, grid);
+  }
+  /* 2) Subir archivos  ⇄  Crear casos con IA */
+  const dz = up.querySelector("#dropzone"), priv = up.querySelector(".privacy");
+  if (cg) {
+    flat(cg); cg.style.display = "none"; const h = cg.querySelector(".sectionhead"); if (h) h.style.display = "none";
+    up.querySelector("#import-status").before(cg);
+    const sw = document.createElement("div"); sw.className = "segsw";
+    sw.innerHTML = '<button type="button" class="on" data-t="f">📁 Subir archivo</button><button type="button" data-t="a">✨ Crear casos con IA</button>';
+    up.querySelector(".sectionhead").after(sw);
+    wire(sw, (t) => { const f = t === "f"; [dz, priv].forEach((e) => e && (e.style.display = f ? "" : "none")); cg.style.display = f ? "none" : ""; });
+  }
+  /* 3) Pegar texto, al final */
+  up.style.marginBottom = "18px"; v.insertBefore(up, grid); v.insertBefore(paste, grid); grid.remove();
 })();
 </script>
 </body>
