@@ -204,6 +204,171 @@ html.dark .sidebar{background:#090f1c}
 @media(max-width:600px){.themesw .ts-label{display:none}.kbdlegend{gap:8px}}
 </style>
 
+
+<style id="clinq-image-fallback-style">
+#wk-imgs .wk-im-missing{min-height:84px;display:flex;flex-direction:column;justify-content:center;background:var(--panel,#f6f8fc);border-style:dashed;color:var(--muted,#61708a);padding:8px}#wk-imgs .wk-im-missing span{max-height:none;overflow:visible;white-space:normal;text-align:center;word-break:break-word}#wk-imgs .wk-im img{background:linear-gradient(135deg,#edf1f7,#f9fbff);object-fit:contain}
+</style>
+
+<style id="clinq-dark-contrast-overhaul">
+/* ClinQ: night-mode contrast overhaul. Keep text readable in every interactive state. */
+html.dark{
+  color-scheme:dark;
+  --bg:#0b1220;
+  --panel:#141f32;
+  --text:#edf3ff;
+  --muted:#b6c3d8;
+  --line:#354661;
+  --blue:#a6bbff;
+  --blue2:#253757;
+  --green:#69e0aa;
+  --greenbg:#153b2f;
+  --red:#ff9ca4;
+  --redbg:#44252d;
+  --gold:#ffd078;
+  --goldbg:#41331d;
+  --clinq-hover:#263b5a;
+  --clinq-input:#0e192a;
+  --clinq-raised:#1b2a42;
+}
+html.dark body,
+html.dark .app,
+html.dark .main,
+html.dark .view{background:var(--bg)!important;color:var(--text)!important}
+html.dark .panel,
+html.dark .stat,
+html.dark .quickcard,
+html.dark .qrow,
+html.dark .quizcard,
+html.dark .modal,
+html.dark .previewitem,
+html.dark .sessionrow,
+html.dark .kbdlegend,
+html.dark .progressbox,
+html.dark .resdet,
+html.dark .reslist,
+html.dark .chartbox,
+html.dark .emptybank{
+  background:var(--panel)!important;color:var(--text)!important;border-color:var(--line)!important;
+}
+html.dark h1,html.dark h2,html.dark h3,html.dark h4,html.dark h5,
+html.dark p,html.dark label,html.dark strong,html.dark .quizstem,
+html.dark .qsummary strong,html.dark .qnum,html.dark .statnum,
+html.dark .sectionhead h3,html.dark .modalhead h3{color:var(--text)}
+html.dark .muted,html.dark .smalltext,html.dark .statsub,
+html.dark .stathead,html.dark .sectionhead p,html.dark .qsummary span,
+html.dark .previewfooter,html.dark .previewopts,html.dark .previewexplanation,
+html.dark .empty,html.dark .emptybank p,html.dark .toolbar .muted,
+html.dark .sessioninfo span,html.dark .quizbottom .muted,
+html.dark .kbdlegend{color:var(--muted)}
+/* Inputs, selects, and editable surfaces */
+html.dark .field,html.dark textarea,html.dark input:not([type="checkbox"]):not([type="radio"]),html.dark select,
+html.dark .textimport,html.dark .pastebox textarea{
+  background:var(--clinq-input)!important;color:var(--text)!important;border-color:var(--line)!important;
+}
+html.dark input::placeholder,html.dark textarea::placeholder{color:#93a4be!important;opacity:1}
+html.dark .field:focus,html.dark textarea:focus,html.dark input:focus,html.dark select:focus{
+  outline:none;border-color:#91adff!important;box-shadow:0 0 0 3px #597ed52e!important;
+}
+/* Buttons: avoid global white-on-white hover and preserve readable semantic states. */
+html.dark button:hover:not(.option):not(.primary):not(.danger),
+html.dark .btn.outline:hover,
+html.dark .btn.light:hover{
+  background:#2a3e5d!important;color:#f5f8ff!important;border-color:#6681ae!important;
+}
+html.dark .btn{color:var(--text)}
+html.dark .btn.primary{background:#4265d7!important;color:#fff!important;border-color:#6687f2!important}
+html.dark .btn.primary:hover{background:#5277ed!important;color:#fff!important;border-color:#9bb2ff!important}
+html.dark .btn.outline{background:var(--clinq-raised)!important;color:var(--text)!important;border-color:var(--line)!important}
+html.dark .btn.light{background:#e3ebff!important;color:#172746!important;border-color:#a6bbff!important}
+html.dark .btn.ghost{background:#ffffff12!important;color:#f5f8ff!important;border-color:#ffffff40!important}
+html.dark .btn.danger{background:#4b2932!important;color:#ffb0b6!important;border-color:#84434e!important}
+html.dark .btn.danger:hover{background:#63303b!important;color:#fff0f1!important}
+html.dark button:disabled,html.dark .btn:disabled{opacity:.48;cursor:not-allowed}
+html.dark a{color:#a9c1ff}
+html.dark a:hover{color:#d1dcff}
+/* Main test options: distinct default, hover, selected, correct, and incorrect states. */
+html.dark .option{
+  background:#18263b!important;color:#edf3ff!important;border-color:#40516b!important;
+  box-shadow:none!important;transition:background-color .12s,border-color .12s,box-shadow .12s;
+}
+html.dark .option:not(.correct):not(.incorrect):not(.selected):hover:not([aria-disabled="true"]){
+  background:#2a3f60!important;color:#ffffff!important;border-color:#9bb5ff!important;
+  box-shadow:0 0 0 2px #7999ed28!important;
+}
+html.dark .option:not(.correct):not(.incorrect):not(.selected):focus-visible{
+  background:#263b5a!important;color:#fff!important;border-color:#afc2ff!important;outline:2px solid #91adff!important;outline-offset:2px;
+}
+html.dark .option.selected,
+html.dark .option.selected:hover{
+  background:#26395d!important;color:#f3f6ff!important;border-color:#a3b8ff!important;
+}
+html.dark .option.correct,
+html.dark .option.correct:hover,
+html.dark .option.correct:focus-visible{
+  background:#153e30!important;color:#e5fff2!important;border-color:#55dba0!important;
+  box-shadow:inset 4px 0 #55dba0!important;
+}
+html.dark .option.incorrect,
+html.dark .option.incorrect:hover,
+html.dark .option.incorrect:focus-visible{
+  background:#482630!important;color:#fff0f1!important;border-color:#ff8792!important;
+  box-shadow:inset 4px 0 #ff8792!important;
+}
+html.dark .option .letter{background:#253650!important;color:#eaf0ff!important;border-color:#526580!important}
+html.dark .option.selected .letter{background:#5577e7!important;color:#fff!important;border-color:#a3b8ff!important}
+html.dark .option.correct .letter{background:#16865c!important;color:#fff!important;border-color:#69e0aa!important}
+html.dark .option.incorrect .letter{background:#b83f51!important;color:#fff!important;border-color:#ff9ca4!important}
+html.dark .option .hlf,html.dark .option .hlf *,html.dark .option .hlf mark,
+html.dark .option .hlf span:not(.letter){color:inherit!important}
+html.dark .option .hlf mark,html.dark mark{background:#77601d!important;color:#fff5c9!important;border-radius:3px}
+/* Open/close answers panel and feedback messages */
+html.dark .option-disclosure{background:#121d2e!important;border-color:#354661!important}
+html.dark .option-disclosure>summary{background:#19273d!important;color:#eef3ff!important;border-color:#354661!important}
+html.dark .option-disclosure>summary:hover{background:#273c5b!important;color:#fff!important}
+html.dark .option-disclosure>summary:after{color:#a9bdff!important}
+html.dark .feedback{border:1px solid var(--line)!important}
+html.dark .feedback.good{background:#153b2f!important;color:#dffff0!important;border-color:#3f9876!important}
+html.dark .feedback.bad{background:#44252d!important;color:#ffe7e9!important;border-color:#a34c59!important}
+html.dark .feedback.neutral{background:#1c2a3e!important;color:#e0e9f7!important;border-color:#465974!important}
+html.dark .feedback *{color:inherit}
+/* Secondary surfaces that previously retained pale colors in night mode */
+html.dark .hero{background:linear-gradient(115deg,#13243e,#203d70)!important;color:#f4f7ff!important}
+html.dark .hero p{color:#d1ddf3!important}
+html.dark .dropzone,html.dark .pastebox{background:#142238!important;border-color:#526b94!important;color:var(--text)!important}
+html.dark .uploadicon,html.dark .quickicon,html.dark .staticon,html.dark .stepnum,html.dark .qnum{background:#25395b!important;color:#c5d5ff!important;border-color:#465d87!important}
+html.dark .filetype{background:#1b2a41!important;color:#c8d5e8!important;border-color:#3b4e6a!important}
+html.dark .notice{background:#3b301b!important;color:#ffe3a4!important;border-color:#80652d!important}
+html.dark .privacy{background:#143328!important;color:#d0f3e2!important;border-color:#285e49!important}
+html.dark .previewstem,html.dark .previewitem{color:var(--text)!important}
+html.dark .previewexplanation summary{color:#c3d2f1!important}
+html.dark .pill{background:#27354a!important;color:#c9d5e7!important}
+html.dark .pill.green{background:#153b2f!important;color:#9cf0c5!important}
+html.dark .pill.gold{background:#44351e!important;color:#ffdc92!important}
+html.dark .pill.blue{background:#24375a!important;color:#c2d1ff!important}
+html.dark .localpill{background:#143328!important;color:#b9efd3!important;border-color:#285e49!important}
+html.dark .avatar{background:#2a3d65!important;color:#e0e8ff!important}
+html.dark .nav button:hover{background:#243654!important;color:#fff!important}
+html.dark .nav button.active{background:#2e4672!important;color:#fff!important}
+html.dark .sidebottom{background:#111b2b!important;color:#bdc9dc!important;border-color:#33445f!important}
+html.dark .sidebottom strong{color:#f5f8ff!important}
+html.dark .progressline{background:#2b3950!important}
+html.dark .progressline div{background:#8ca8ff!important}
+html.dark .modalback{background:#030813c9!important}
+html.dark .modalhead,html.dark .modalactions{border-color:var(--line)!important}
+html.dark .kbdlegend kbd{background:#0f1a2b!important;color:#f0f4ff!important;border-color:#465a79!important}
+html.dark .hlq-b.on{background:#4a3c1b!important;border-color:#b68b2c!important;color:#ffe2a0!important}
+html.dark .hlq-c button{border-color:#c2cde0!important;box-shadow:0 0 0 1px #566784!important}
+html.dark .wk-ar{background:#1b2a42!important;color:#f2f6ff!important;border-color:#485d7c!important}
+html.dark .wk-im,html.dark .wk-im-missing{background:#18263b!important;color:#dce6f7!important;border-color:#435571!important}
+html.dark .wk-gl,html.dark .wk-gl a{color:#c2d2ff!important}
+/* Tables, code areas, and small cards */
+html.dark table,html.dark th,html.dark td{border-color:var(--line)!important;color:var(--text)}
+html.dark pre,html.dark code{background:#101a2a!important;color:#e2eaff!important;border-color:#354661!important}
+html.dark hr{border-color:var(--line)!important}
+html.dark ::selection{background:#4868b7!important;color:#fff!important}
+@media(prefers-reduced-motion:reduce){html.dark .option,html.dark .btn{transition:none!important}}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -1559,60 +1724,120 @@ wkInit();
   const _rq = renderQuizQuestion;
   renderQuizQuestion = function () { _rq.apply(this, arguments); try { wrapNote(); } catch (e) {} };
 
-  /* Modo tutor: sección de imágenes (las de la pregunta + Wikimedia Commons) */
+  /* Modo tutor: imágenes multi-formato + reintentos por URL alternativa */
   const tImg = new Map();
+  function httpsUrl(v) {
+    try { const u = new URL(String(v || "")); return u.protocol === "https:" ? u.href : ""; }
+    catch (e) { return ""; }
+  }
   async function commons(term) {
-    const r = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(term)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime|extmetadata&iiurlwidth=800&format=json&origin=*`);
-    if (!r.ok) throw new Error("commons");
+    const endpoint = "https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=" + encodeURIComponent(term) + "&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime|thumbmime|mediatype|extmetadata&iiurlwidth=900&format=json&origin=*";
+    const r = await fetch(endpoint, { headers: { Accept: "application/json" } });
+    if (!r.ok) throw new Error("commons:" + r.status);
     const j = await r.json();
     return Object.values((j.query && j.query.pages) || {}).sort((a, b) => (a.index || 0) - (b.index || 0)).map((p) => {
-      const ii = (p.imageinfo || [])[0]; if (!ii || !/^image\/(jpeg|png|webp)$/.test(ii.mime) || !/^https:\/\/upload\.wikimedia\.org\//.test(ii.thumburl || "")) return null;
+      const ii = (p.imageinfo || [])[0]; if (!ii) return null;
+      const mime = String(ii.mime || "").toLowerCase(), thumbMime = String(ii.thumbmime || "").toLowerCase();
+      const mediaType = String(ii.mediatype || "").toUpperCase();
+      // Prefer the Commons-generated thumbnail: it commonly rasterizes SVG and other formats
+      // into a browser-compatible image, rather than serving the original file type.
+      const thumb = httpsUrl(ii.thumburl) || ((mime.startsWith("image/") && !/tiff|heic|heif|jp2|jpx/i.test(mime)) ? httpsUrl(ii.url) : "");
+      if (!thumb || !(thumbMime.startsWith("image/") || mime.startsWith("image/") || mediaType === "BITMAP" || mediaType === "DRAWING")) return null;
       const m = ii.extmetadata || {}, g = (k) => htmlText((m[k] && m[k].value) || "");
-      return { title: String(p.title || "").replace(/^File:/, "").replace(/\.[a-z]+$/i, ""), thumb: ii.thumburl, page: /^https:\/\/commons\.wikimedia\.org\//.test(ii.descriptionurl || "") ? ii.descriptionurl : "", author: g("Artist"), lic: g("LicenseShortName"), desc: g("ImageDescription"), srcName: "Wikimedia Commons" };
+      const original = httpsUrl(ii.url);
+      return {
+        title: String(p.title || "").replace(/^File:/, "").replace(/\.[a-z0-9]+$/i, ""),
+        thumb, url: original, alternates: original && original !== thumb ? [original] : [],
+        page: httpsUrl(ii.descriptionurl).startsWith("https://commons.wikimedia.org/") ? ii.descriptionurl : "",
+        author: g("Artist"), lic: g("LicenseShortName"), desc: g("ImageDescription"), srcName: "Wikimedia Commons"
+      };
     }).filter(Boolean).slice(0, 30);
   }
   async function openverseImgs(term) {
-    const r = await fetch("https://api.openverse.org/v1/images/?q=" + encodeURIComponent(term) + "&page_size=20&mature=false");
-    if (!r.ok) throw new Error("openverse");
+    const r = await fetch("https://api.openverse.org/v1/images/?q=" + encodeURIComponent(term) + "&page_size=30&mature=false", { headers: { Accept: "application/json" } });
+    if (!r.ok) throw new Error("openverse:" + r.status);
     const j = await r.json();
-    return (j.results || []).map(x => ({
-      title: String(x.title || term).slice(0, 90),
-      thumb: x.thumbnail || x.url || "",
-      page: /^https?:\/\//.test(x.foreign_landing_url || "") ? x.foreign_landing_url : "",
-      author: x.creator || "",
-      lic: ("CC " + String(x.license || "").toUpperCase() + (x.license_version ? " " + x.license_version : "")).trim(),
-      desc: "", srcName: "Openverse"
-    })).filter(x => String(x.thumb || "").startsWith("https://"));
+    return (j.results || []).map(x => {
+      const original = httpsUrl(x.url), apiThumb = x.id ? httpsUrl("https://api.openverse.org/v1/images/" + encodeURIComponent(x.id) + "/thumb/") : "";
+      const thumb = apiThumb || httpsUrl(x.thumbnail) || original;
+      if (!thumb) return null;
+      const alternates = [httpsUrl(x.thumbnail), original, apiThumb].filter((u, i, a) => u && u !== thumb && a.indexOf(u) === i);
+      return {
+        title: String(x.title || term).slice(0, 90), thumb, url: original, alternates,
+        page: httpsUrl(x.foreign_landing_url), author: x.creator || "",
+        lic: ("CC " + String(x.license || "").toUpperCase() + (x.license_version ? " " + x.license_version : "")).trim(),
+        desc: "", srcName: "Openverse" + (x.source ? " · " + x.source : "")
+      };
+    }).filter(Boolean);
   }
   async function allInternetImgs(term) {
     const rs = await Promise.allSettled([commons(term), openverseImgs(term)]);
     const a = rs[0].status === "fulfilled" ? rs[0].value : [];
     const b = rs[1].status === "fulfilled" ? rs[1].value : [];
-    const out = [], n = Math.max(a.length, b.length);
-    for (let i = 0; i < n; i++) { if (a[i]) out.push(a[i]); if (b[i]) out.push(b[i]); }
-    if (!out.length) throw new Error("No se encontraron imágenes");
+    const out = [], seen = new Set(), n = Math.max(a.length, b.length);
+    for (let i = 0; i < n; i++) {
+      for (const it of [a[i], b[i]]) {
+        if (!it) continue;
+        const sig = (it.page || it.thumb || it.url || "") + "|" + it.title;
+        if (seen.has(sig)) continue; seen.add(sig); out.push(it);
+      }
+    }
+    if (!out.length && rs.every(x => x.status === "rejected")) throw new Error("No fue posible consultar las fuentes de imágenes");
     return out;
+  }
+  function markImageUnavailable(img, button, label, item) {
+    if (img && img.parentNode) img.remove();
+    if (button) { button.classList.add("wk-im-missing"); button.dataset.broken = "1"; button.title = "No se pudo cargar la imagen. Pulsa para abrir la fuente."; }
+    if (label) label.textContent = "Imagen no disponible · abrir fuente";
+  }
+  function wireRemoteImage(img, button, label, item) {
+    if (!img || !item) return;
+    const list = [item.thumb, ...(item.alternates || []), item.url].map(httpsUrl).filter((u, i, a) => u && a.indexOf(u) === i);
+    let next = 0, tried = new Set();
+    const current = httpsUrl(img.getAttribute("src")); if (current) tried.add(current);
+    img.addEventListener("load", () => { img.dataset.loadedSrc = img.currentSrc || img.src; }, { once: false });
+    img.addEventListener("error", () => {
+      while (next < list.length && tried.has(list[next])) next++;
+      if (next < list.length) { const u = list[next++]; tried.add(u); img.src = u; return; }
+      markImageUnavailable(img, button, label, item);
+    });
   }
   function paintImgs(M) {
     const sec = document.getElementById("wk-imgs"); if (!sec) return;
     const q = curQ(), s = tImg.get(M.lang + "|" + M.term.toLowerCase()) || { st: "loading", items: [] };
     const own = q ? [...(q.images || []), ...(q.noteImages || [])].filter((u) => typeof u === "string" && u) : [];
     let h = '<div class="wk-st">🖼 Imágenes</div>';
-    if (own.length) h += '<div class="smalltext muted">De esta pregunta y tus notas</div><div class="wk-ims">' + own.map((u, i) => { const inf = infoOf(q, u); return `<button type="button" class="wk-im" data-o="${i}"><img src="${esc(u)}" alt=""><span>${esc((inf && inf.term) || "Ampliar")}</span></button>`; }).join("") + "</div>";
+    if (own.length) h += '<div class="smalltext muted">De esta pregunta y tus notas</div><div class="wk-ims">' + own.map((u, i) => { const inf = infoOf(q, u); return `<button type="button" class="wk-im" data-o="${i}"><img src="${esc(u)}" alt="" loading="lazy"><span>${esc((inf && inf.term) || "Ampliar")}</span></button>`; }).join("") + "</div>";
     h += `<div class="smalltext muted" style="margin-top:8px">Wikimedia Commons + Openverse · «${esc(M.term)}» · desliza para ver más</div>`;
     if (s.st === "loading") h += '<div class="smalltext muted">Buscando imágenes…</div>';
-    else if (s.st === "error") h += '<div class="smalltext muted">No se pudieron cargar imágenes (revisa tu conexión).</div>';
-    else if (!s.items.length) h += '<div class="smalltext muted">Sin imágenes para este término.</div>';
-    else h += '<div class="wk-ims">' + s.items.map((it, i) => `<button type="button" class="wk-im" data-c="${i}"><img src="${esc(it.thumb)}" alt="" loading="lazy"><span>${esc(it.title)}</span></button>`).join("") + '</div><div class="wk-lic">Imágenes de Wikimedia Commons y Openverse; cada una tiene su propia licencia (se muestra al ampliar).</div>';
+    else if (s.st === "error") h += '<div class="smalltext muted">No se pudo consultar la búsqueda ahora. Comprueba la conexión o abre Google Imágenes.</div>';
+    else if (!s.items.length) h += '<div class="smalltext muted">No hay imágenes disponibles para este término.</div>';
+    else h += '<div class="wk-ims">' + s.items.map((it, i) => `<button type="button" class="wk-im" data-c="${i}"><img src="${esc(it.thumb)}" alt="" loading="lazy" decoding="async"><span>${esc(it.title)}</span></button>`).join("") + '</div><div class="wk-lic">Se muestran miniaturas compatibles siempre que la fuente las facilite; cada imagen conserva su licencia y fuente al ampliarla.</div>';
     sec.innerHTML = h;
-    sec.querySelectorAll("[data-o]").forEach((b) => (b.onclick = () => zoomImg(own[Number(b.dataset.o)])));
-    sec.querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => {
-      const it = s.items[Number(b.dataset.c)], cap = [it.desc || it.title, it.author ? "Autor: " + it.author : "", "Licencia: " + (it.lic || "ver página")].filter(Boolean).join(". ") + ".";
-      zoomImg(it.thumb, { title: it.title, caption: cap, url: it.page, save: async () => {
-        const qq = curQ(); if (!qq) return;
-        try { const data = await imgFromFile(await (await fetch(it.thumb)).blob()); qq.noteImages = qq.noteImages || []; qq.noteImages.push(data); qq.noteImageInfo = qq.noteImageInfo || {}; qq.noteImageInfo[key(data)] = { term: it.title, def: cap + " (" + (it.srcName || "Wikimedia Commons") + ")", src: it.srcName || "Wikimedia Commons" }; qq.updated = Date.now(); persistBank(); const i = document.getElementById("qnote-i"); if (i) i.innerHTML = thumbsHTML(qq.noteImages, "removeNoteImg"); notify("Imagen guardada en tus notas"); closeView(); } catch (e) { notify("No se pudo guardar la imagen"); }
-      } });
-    }));
+    sec.querySelectorAll("[data-o]").forEach((b) => {
+      const img = b.querySelector("img"), label = b.querySelector("span");
+      if (img) img.addEventListener("error", () => markImageUnavailable(img, b, label, null), { once: true });
+      b.onclick = () => { if (b.dataset.broken === "1") return; zoomImg(own[Number(b.dataset.o)]); };
+    });
+    sec.querySelectorAll("[data-c]").forEach((b) => {
+      const idx = Number(b.dataset.c), it = s.items[idx], img = b.querySelector("img"), label = b.querySelector("span");
+      wireRemoteImage(img, b, label, it);
+      b.onclick = () => {
+        if (b.dataset.broken === "1") { const target = it.page || it.url; if (target) window.open(target, "_blank", "noopener,noreferrer"); return; }
+        const loaded = (img && img.dataset.loadedSrc) || (img && img.currentSrc) || it.thumb;
+        const cap = [it.desc || it.title, it.author ? "Autor: " + it.author : "", "Licencia: " + (it.lic || "ver página")].filter(Boolean).join(". ") + ".";
+        zoomImg(loaded, { title: it.title, caption: cap, url: it.page || it.url, save: async () => {
+          const qq = curQ(); if (!qq) return;
+          try {
+            const src = loaded || it.thumb, resp = await fetch(src, { mode: "cors" }); if (!resp.ok) throw new Error("No se pudo descargar");
+            const data = await imgFromFile(await resp.blob()); qq.noteImages = qq.noteImages || []; qq.noteImages.push(data); qq.noteImageInfo = qq.noteImageInfo || {};
+            qq.noteImageInfo[key(data)] = { term: it.title, def: cap + " (" + (it.srcName || "Openverse") + ")", src: it.srcName || "Openverse" };
+            qq.updated = Date.now(); persistBank(); const box = document.getElementById("qnote-i"); if (box) box.innerHTML = thumbsHTML(qq.noteImages, "removeNoteImg");
+            notify("Imagen guardada en tus notas"); closeView();
+          } catch (e) { notify("Esta fuente no permite guardar la imagen automáticamente; abre la fuente para guardarla manualmente."); }
+        } });
+      };
+    });
   }
   const _rt = renderTutor;
   renderTutor = function (rect, M) {
@@ -1923,13 +2148,21 @@ async function visionDetect(dataUrl,auto){
 </script>
 
 <script>
-/* Mejoras de uso */
+/* Mejoras de uso: tema, sesión, carrusel y atajos accesibles */
 (function(){
  const $=id=>document.getElementById(id);
  function setTheme(dark,save=true){
    document.documentElement.classList.toggle('dark',!!dark);
    const c=$('clinq-theme-toggle');if(c)c.checked=!!dark;
    if(save)try{localStorage.setItem('clinq_theme',dark?'dark':'light')}catch(e){}
+ }
+ function isTypingTarget(target){
+   if(!target)return false;
+   if(target.isContentEditable)return true;
+   const tag=(target.tagName||'').toUpperCase();
+   if(tag==='TEXTAREA'||tag==='SELECT')return true;
+   if(tag==='INPUT')return /^(text|search|url|email|password|tel|number|date|datetime-local|month|week|time)$/i.test(target.type||'text');
+   return false;
  }
  function addThemeSwitch(){
    const top=document.querySelector('.topright');if(!top||$('clinq-theme-toggle'))return;
@@ -1940,68 +2173,105 @@ async function visionDetect(dataUrl,auto){
    setTheme(dark,false);
  }
  function appendSession(ids){
-   if(!window.currentQuiz||currentQuiz.finished||!Array.isArray(currentQuiz.questions))return;
-   const existing=new Set(currentQuiz.questions);
-   const fresh=ids.filter(id=>!existing.has(id)&&bank.some(q=>q.id===id));
+   if(typeof currentQuiz==='undefined'||!currentQuiz||currentQuiz.finished||!Array.isArray(currentQuiz.questions))return;
+   const existing=new Set(currentQuiz.questions),fresh=ids.filter(id=>!existing.has(id)&&bank.some(q=>q.id===id));
    if(!fresh.length)return;
    currentQuiz.questions.push(...fresh);if(typeof saveSessions==='function')saveSessions();
-   if(typeof renderQuizQuestion==='function'&&document.getElementById('view-practice')?.classList.contains('active'))renderQuizQuestion();
+   if(typeof renderQuizQuestion==='function'&&$('view-practice')?.classList.contains('active'))renderQuizQuestion();
    if(typeof notify==='function')notify(fresh.length+' pregunta(s) nueva(s) añadida(s) a la sesión actual');
  }
  function installSessionHooks(){
-   if(typeof window.saveImported==='function'&&!window.saveImported.__sessionHook){
-     const old=window.saveImported;
-     const wrapped=function(){const before=new Set((bank||[]).map(q=>q.id));const result=old.apply(this,arguments);appendSession((bank||[]).filter(q=>!before.has(q.id)).map(q=>q.id));return result};
-     wrapped.__sessionHook=true;window.saveImported=wrapped;
-   }
-   if(typeof window.saveEdit==='function'&&!window.saveEdit.__sessionHook){
-     const old=window.saveEdit;
-     const wrapped=function(){const before=new Set((bank||[]).map(q=>q.id));const result=old.apply(this,arguments);appendSession((bank||[]).filter(q=>!before.has(q.id)).map(q=>q.id));return result};
-     wrapped.__sessionHook=true;window.saveEdit=wrapped;
-   }
+   ['saveImported','saveEdit'].forEach(name=>{
+     const fn=window[name];if(typeof fn!=='function'||fn.__sessionHook)return;
+     const wrapped=function(){const before=new Set(bank.map(q=>q.id));const result=fn.apply(this,arguments);appendSession(bank.filter(q=>!before.has(q.id)).map(q=>q.id));return result};
+     wrapped.__sessionHook=true;window[name]=wrapped;
+   });
  }
  function installImageCarousel(){
    const sec=$('wk-imgs');if(!sec)return;
    sec.querySelectorAll('.wk-ims').forEach(row=>{
-     if(row.parentElement.classList.contains('wk-car'))return;
+     if(row.parentElement&&row.parentElement.classList.contains('wk-car'))return;
      const wrap=document.createElement('div');wrap.className='wk-car';row.parentNode.insertBefore(wrap,row);wrap.appendChild(row);
      const arrow=(dir,label)=>{const b=document.createElement('button');b.type='button';b.className='wk-ar '+(dir<0?'l':'r');b.textContent=dir<0?'‹':'›';b.setAttribute('aria-label',label);b.onclick=()=>row.scrollBy({left:dir*Math.max(180,row.clientWidth*.8),behavior:'smooth'});return b};
      wrap.append(arrow(-1,'Ver imágenes anteriores'),arrow(1,'Ver más imágenes'));
    });
-   const term=window.wikiCur&&wikiCur.term;if(term&&!sec.querySelector('.wk-gl')){
+   const term=(typeof wikiCur!=='undefined'&&wikiCur&&wikiCur.term)||'';
+   if(term&&!sec.querySelector('.wk-gl')){
      const a=document.createElement('div');a.className='wk-gl';
      const url='https://www.google.com/search?tbm=isch&q='+encodeURIComponent(term);
      a.innerHTML='Buscar más imágenes: <a href="'+url+'" target="_blank" rel="noopener noreferrer">Google Imágenes ↗</a> · <a href="https://commons.wikimedia.org/w/index.php?search='+encodeURIComponent(term)+'&ns6=1" target="_blank" rel="noopener noreferrer">Wikimedia Commons ↗</a>';
      sec.appendChild(a);
    }
  }
- function addLegend(){
-   const host=$('quiz-area');if(!host||!document.querySelector('.quizcard')||host.querySelector('.kbdlegend'))return;
-   const rows=[['M','Marcar pregunta'],['H','Subrayar selección'],['T','Activar/desactivar tutor'],['N','Modo noche/día'],['A–E','Elegir respuesta'],['← / →','Pregunta anterior/siguiente'],['Enter','Siguiente'],['Esc','Cerrar ventana']];
-   const d=document.createElement('div');d.className='kbdlegend';d.innerHTML='<strong>⌨ Atajos de teclado</strong>'+rows.map(x=>'<span><kbd>'+x[0]+'</kbd>'+x[1]+'</span>').join('');host.appendChild(d);
+ function activeQuiz(){return typeof currentQuiz!=='undefined'&&!!currentQuiz&&!currentQuiz.finished&&$('view-practice')?.classList.contains('active')&&!!document.querySelector('.quizcard')&&!document.querySelector('.modalback.open,#img-view.open,#img-zoom.open')}
+ function handled(e){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation()}
+ function markCurrent(){const q=bank.find(x=>x.id===currentQuiz.questions[currentQuiz.index]);if(!q)return; if(typeof toggleFlag==='function')toggleFlag(q.id);else{q.flagged=!q.flagged;q.updated=Date.now();if(typeof saveBank==='function')saveBank();renderQuizQuestion()}}
+ function highlighter(){
+   if(typeof hlQuickApply==='function'&&hlQuickApply()){if(typeof notify==='function')notify('Texto subrayado');return;}
+   if(typeof hlQuickOn==='undefined')return;
+   hlQuickOn=!hlQuickOn;const b=document.querySelector('.hlq-b'),w=document.querySelector('.hlquick');
+   if(b){b.textContent='🖍 '+(hlQuickOn?'Subrayando…':'Subrayar texto');b.classList.toggle('on',hlQuickOn)}
+   if(w)w.classList.toggle('on',hlQuickOn);
+   if(typeof notify==='function')notify(hlQuickOn?'Modo subrayar activado: selecciona texto.':'Modo subrayar desactivado.');
+ }
+ function answerOption(letterOrNumber){
+   const d=document.querySelector('.option-disclosure');if(!d)return false;
+   const opts=[...d.querySelectorAll('.option')];let b=null;
+   if(/^[1-5]$/.test(letterOrNumber))b=opts[Number(letterOrNumber)-1]||null;
+   else b=opts.find(el=>(el.querySelector('.letter')?.textContent||'').trim().toLowerCase()===letterOrNumber)||opts['abcde'.indexOf(letterOrNumber)]||null;
+   if(!b||b.getAttribute('aria-disabled')==='true'||b.classList.contains('disabled'))return false;
+   if(!d.open)d.open=true;
+   if(typeof setOptionsOpen==='function')setOptionsOpen(currentQuiz.questions[currentQuiz.index],true);
+   b.click();return true;
  }
  function runKey(e){
-   if(e.ctrlKey||e.metaKey||e.altKey||e.repeat)return;
-   const target=e.target;if(target&&(target.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)))return;
+   if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey||e.repeat||e.isComposing||isTypingTarget(e.target))return;
    const key=(e.key||'').toLowerCase();
-   if(key==='n'){setTheme(!document.documentElement.classList.contains('dark'));return}
-   if(!window.currentQuiz||currentQuiz.finished||!$('view-practice')?.classList.contains('active')||!document.querySelector('.quizcard'))return;
-   if(document.querySelector('.modalback.open,#img-zoom.open,#wiki-pop.open'))return;
-   if(key==='m'){e.preventDefault();const q=bank.find(x=>x.id===currentQuiz.questions[currentQuiz.index]);if(q){if(typeof toggleFlag==='function')toggleFlag(q.id);else{q.flagged=!q.flagged;if(typeof saveBank==='function')saveBank();if(typeof renderQuizQuestion==='function')renderQuizQuestion()}}}
-   else if(key==='h'){e.preventDefault();if(typeof hlQuickApply==='function'&&hlQuickApply())return;if(typeof hlQuickOn!=='undefined'){hlQuickOn=!hlQuickOn;const b=document.querySelector('.hlq-b');if(b){b.textContent='🖍 '+(hlQuickOn?'Subrayando…':'Subrayar texto');b.classList.toggle('on',hlQuickOn)}if(typeof notify==='function'&&hlQuickOn)notify('Selecciona el texto que quieres subrayar.')}} 
-   else if(key==='t'){e.preventDefault();const c=document.querySelector('.tutorsw input');if(c)c.click();else if(typeof tutorOn==='function'&&typeof notify==='function')notify('Usa el botón del tutor para activarlo.')}
-   else if(/^[a-e]$/.test(key)){const d=document.querySelector('.option-disclosure');if(d&&!d.open)d.open=true;const opts=[...document.querySelectorAll('.option-disclosure .option')];if(opts[key.charCodeAt(0)-97]){e.preventDefault();opts[key.charCodeAt(0)-97].click()}}
-   else if(e.key==='Escape'){const pop=$('wiki-pop');if(pop)pop.style.display='none'}
+   if(key==='n'){handled(e);setTheme(!document.documentElement.classList.contains('dark'));return;}
+   if(key==='escape'){
+     if(typeof hideWikiPop==='function')hideWikiPop();
+     if(typeof hideHlPop==='function')hideHlPop();
+     return;
+   }
+   if(!activeQuiz())return;
+   if(key==='m'){handled(e);markCurrent();return;}
+   if(key==='h'){handled(e);highlighter();return;}
+   if(key==='t'){const c=document.querySelector('.tutorsw input');if(c){handled(e);c.click()}else if(typeof notify==='function')notify('El control del modo tutor no está disponible en esta pregunta.');return;}
+   if(key==='v'&&typeof openRefModal==='function'){handled(e);openRefModal();return;}
+   if(key==='o'){handled(e);if(typeof skipQuestion==='function')skipQuestion();return;}
+   if(/^[a-e1-5]$/.test(key)){if(answerOption(key))handled(e);return;}
+   if(key===' '||key==='spacebar'){
+     const d=document.querySelector('.option-disclosure');if(!d)return;
+     handled(e);d.open=!d.open;if(typeof setOptionsOpen==='function')setOptionsOpen(currentQuiz.questions[currentQuiz.index],d.open);return;
+   }
+   if(key==='arrowleft'){if(typeof previousQuestion==='function'&&currentQuiz.index>0){handled(e);previousQuestion()}return;}
+   if(key==='arrowright'){
+     const qid=currentQuiz.questions[currentQuiz.index],answered=currentQuiz.answers&&currentQuiz.answers[qid]!==undefined;
+     if(currentQuiz.mode==='exam'||answered){handled(e);if(typeof nextQuestion==='function')nextQuestion()}
+     return;
+   }
+   if(key==='enter'){
+     if(e.target&&e.target.closest&&e.target.closest('button,.option,summary,a'))return;
+     const qid=currentQuiz.questions[currentQuiz.index],answered=currentQuiz.answers&&currentQuiz.answers[qid]!==undefined;
+     if(currentQuiz.mode==='exam'||answered){handled(e);if(typeof nextQuestion==='function')nextQuestion()}
+   }
  }
- document.addEventListener('DOMContentLoaded',()=>{addThemeSwitch();installSessionHooks();addLegend();
-   const sec=$('wiki-pop');if(sec&&window.MutationObserver){new MutationObserver(()=>setTimeout(installImageCarousel,0)).observe(sec,{childList:true,subtree:true});}
+ function addLegend(){
+   const host=$('quiz-area');if(!host||!document.querySelector('.quizcard'))return;
+   host.querySelector('.kbdlegend')?.remove();
+   const rows=[['M','Marcar / quitar marca'],['H','Subrayar texto'],['T','Activar/desactivar tutor'],['V','Valores normales'],['N','Modo día/noche'],['O','Omitir pregunta'],['A–E / 1–5','Elegir respuesta'],['← / →','Anterior / siguiente'],['Espacio','Abrir/cerrar opciones'],['Enter','Siguiente (si se puede)'],['Esc','Cerrar ventanas del tutor']];
+   const d=document.createElement('div');d.className='kbdlegend';d.innerHTML='<strong>⌨ Atajos de teclado</strong>'+rows.map(x=>'<span><kbd>'+x[0]+'</kbd>'+x[1]+'</span>').join('');host.appendChild(d);
+ }
+ document.addEventListener('DOMContentLoaded',()=>{
+   addThemeSwitch();installSessionHooks();addLegend();
+   if(window.MutationObserver&&document.body)new MutationObserver(()=>{if($('wk-imgs'))setTimeout(installImageCarousel,0)}).observe(document.body,{childList:true,subtree:true});
  });
- document.addEventListener('keydown',runKey);
- const oldRender=window.renderQuizQuestion;
- if(typeof oldRender==='function')window.renderQuizQuestion=function(){const r=oldRender.apply(this,arguments);setTimeout(()=>{addLegend();installSessionHooks()},0);return r};
- const oldPaint=window.paintImgs;
- if(typeof oldPaint==='function')window.paintImgs=function(){const r=oldPaint.apply(this,arguments);setTimeout(installImageCarousel,0);return r};
- // Reintentar hooks tras cargar scripts en orden
+ // Capture-phase listener ensures the shortcuts are handled before page controls can swallow keys.
+ window.addEventListener('keydown',runKey,true);
+ const priorRender=window.renderQuizQuestion;
+ if(typeof priorRender==='function')window.renderQuizQuestion=function(){const r=priorRender.apply(this,arguments);setTimeout(()=>{addLegend();installSessionHooks()},0);return r};
+ const priorPaint=window.paintImgs;
+ if(typeof priorPaint==='function')window.paintImgs=function(){const r=priorPaint.apply(this,arguments);setTimeout(installImageCarousel,0);return r};
  setTimeout(()=>{addThemeSwitch();installSessionHooks();addLegend()},500);
 })();
 </script>
