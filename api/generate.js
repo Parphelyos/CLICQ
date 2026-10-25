@@ -12,7 +12,7 @@ function prompt(b) {
   }
   const n = Math.min(Math.max(parseInt(b.count) || 5, 1), 20);
   const style = b.style === 'direct' ? 'preguntas directas y concisas sobre los conceptos del texto' : 'viñetas clínicas estilo USMLE Step 2 CK (edad, sexo, motivo de consulta, hallazgos, laboratorio) con una pregunta final';
-  const avoid = b.avoid ? `\nNo repitas ni parafrasees esta pregunta: ${String(b.avoid).slice(0, 300)}` : '';
+  const avoid = b.avoid ? `\nNo repitas ni parafrasees estas preguntas ya creadas: ${String(b.avoid).slice(0, 1500)}` : '';
   return `Crea exactamente ${n} preguntas de opción múltiple con 5 opciones (A–E) y una sola correcta, como ${style}. Usa ÚNICAMENTE información contenida en el texto; no inventes datos. Los distractores deben ser plausibles. La explicación indica por qué la correcta lo es y por qué falla alguna incorrecta.${avoid} ${FORMAT}\n\nTEXTO:\n${text}`;
 }
 
@@ -40,19 +40,23 @@ module.exports = async (req, res) => {
 
   try {
     const models = [process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-3.1-flash-lite'].filter(Boolean);
-    let r;
-    for (const model of models) {
-      r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYS }] },
-          contents: [{ role: 'user', parts: [{ text: prompt(b) }] }],
-          generationConfig: { responseMimeType: 'application/json', temperature: b.mode === 'fidelity' ? 0.1 : 0.5 },
-        }),
-      });
-      if (r.status !== 404) break; // modelo retirado o inexistente: prueba el siguiente
+    let r = null;
+    for (let i = 0; i < models.length; i++) {
+      try {
+        r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[i]}:generateContent`, {
+          method: 'POST',
+          signal: AbortSignal.timeout(i === 0 ? 35000 : 20000),
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYS }] },
+            contents: [{ role: 'user', parts: [{ text: prompt(b) }] }],
+            generationConfig: { responseMimeType: 'application/json', temperature: b.mode === 'fidelity' ? 0.1 : 0.5, maxOutputTokens: 8192 },
+          }),
+        });
+        if (r.status !== 404 && r.status < 500) break; // si el modelo no existe, falla o tarda, prueba el siguiente
+      } catch (e) { r = null; }
     }
+    if (!r) return res.status(504).json({ error: 'La IA tardó demasiado. Prueba con menos casos o una sección más corta.' });
     if (r.status === 429) return res.status(429).json({ error: 'Se alcanzó el límite del servicio de IA. Inténtalo en un minuto.' });
     if (!r.ok) return res.status(502).json({ error: 'El servicio de IA no respondió (' + r.status + ').' });
     const j = await r.json();
