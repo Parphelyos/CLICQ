@@ -1345,7 +1345,7 @@ wkInit();
 /* ===== Creador de casos desde PDF: secciones, OCR, fidelidad, fuente por caso y regenerar ===== */
 (function () {
   const $ = (id) => document.getElementById(id);
-  const API = () => window.CLINQ_API_URL || (/vercel\.app$/.test(location.hostname) ? "/api/generate" : "");
+  const API = () => window.CLINQ_API_URL || (function () { try { return localStorage.getItem("clinq_api_url") || ""; } catch (e) { return ""; } })() || (/vercel\.app$/.test(location.hostname) ? "/api/generate" : "");
   let doc = null, pdfRef = null, cancel = false, busy = false; const ctx = new Map();
   const st = document.createElement("style");
   st.textContent = `.cg-secs{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:6px;margin:10px 0;background:#fff}
@@ -1460,7 +1460,11 @@ wkInit();
   }
   async function run() {
     if (busy) return;
-    if (!API()) { alert("Falta configurar la dirección del servidor (CLINQ_API_URL en index.html)."); return; }
+    if (!API()) {
+      const u = (prompt("Pega la dirección de tu función en Vercel (termina en /api/generate):", "https://") || "").trim();
+      if (!/^https:\/\/[^\s]+\/api\/generate$/.test(u)) { if (u) alert("La dirección debe verse así: https://tu-proyecto.vercel.app/api/generate"); return; }
+      try { localStorage.setItem("clinq_api_url", u); } catch (e) {}
+    }
     if (!$("cg-ok").checked) { notify("Marca la casilla de aviso para continuar."); return; }
     const secs = doc.sections.filter((s) => s.on); if (!secs.length) { notify("Elige al menos una sección."); return; }
     const mode = $("cg-mode").value, fid = mode === "fidelity", count = +$("cg-count").value, style = $("cg-style").value, jobs = [];
