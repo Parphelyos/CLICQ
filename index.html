@@ -174,6 +174,36 @@ textarea,input.field,input[type=text],input[type=search]{-webkit-appearance:none
 .pastebox label{margin-top:0}
 .okinfo{color:#13845b;font-weight:700}.warninfo{color:#b26b00;font-weight:700}
 </style>
+
+<style>
+/* ClinQ mejoras: tema, carrusel y comandos */
+html.dark{color-scheme:dark;--bg:#101827;--panel:#182235;--text:#e7edf7;--muted:#a4b1c5;--line:#334158;--blue:#7c9aff;--blue2:#263656;--greenbg:#153b30;--redbg:#45252d;--goldbg:#44371e}
+html.dark body{background:var(--bg);color:var(--text)}
+html.dark .panel,html.dark .stat,html.dark .quickcard,html.dark .qrow,html.dark .quizcard,html.dark .option,html.dark .modal,html.dark .previewitem,html.dark .sessionrow,html.dark .kbdlegend{background:var(--panel);color:var(--text);border-color:var(--line)}
+html.dark .field,html.dark textarea,html.dark input,html.dark select{background:#111b2b;color:var(--text);border-color:var(--line)}
+html.dark .btn.outline{background:#1b2940;color:var(--text);border-color:var(--line)}
+html.dark .option-disclosure,html.dark .option-disclosure>summary{background:#172238;color:var(--text);border-color:var(--line)}
+html.dark .wk-rel,html.dark #wiki-pop,html.dark .hlpop,html.dark #hl-menu{background:#182235;color:var(--text);border-color:var(--line)}
+html.dark .wk-rel strong,html.dark #hl-menu .hlm-i{color:var(--text)}
+html.dark .sidebar{background:#090f1c}
+.themesw{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;white-space:nowrap}
+.themesw input{width:0;height:0;position:absolute;opacity:0}
+.themesw .ts-s{width:38px;height:22px;border-radius:99px;background:#cbd5e1;position:relative;display:inline-block}
+.themesw .ts-s:after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:white;transition:transform .18s}
+.themesw input:checked+.ts-s{background:#335eea}.themesw input:checked+.ts-s:after{transform:translateX(16px)}
+#wk-imgs .wk-car{position:relative}
+#wk-imgs .wk-ims{display:flex!important;flex-wrap:nowrap!important;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 10px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+#wk-imgs .wk-ims .wk-im{flex:0 0 130px;scroll-snap-align:start;min-width:0}
+#wk-imgs .wk-im img{width:100%;height:88px;object-fit:cover;display:block}
+#wk-imgs .wk-ar{position:absolute;top:28px;z-index:2;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:20px;box-shadow:0 2px 8px #0002}
+#wk-imgs .wk-ar.l{left:2px}#wk-imgs .wk-ar.r{right:2px}
+.wk-gl{font-size:12px;margin:8px 0}.wk-gl a{color:var(--blue);font-weight:700}
+.kbdlegend{margin:18px 0 8px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--panel);display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:12px;color:var(--muted)}
+.kbdlegend strong{color:var(--text)}.kbdlegend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.kbdlegend kbd{font:700 11px/1 ui-monospace,monospace;padding:4px 7px;border-radius:6px;border:1px solid var(--line);border-bottom-width:2px;background:var(--bg);color:var(--text)}
+@media(max-width:600px){.themesw .ts-label{display:none}.kbdlegend{gap:8px}}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -415,7 +445,7 @@ function openHlMenu(x,y,ctx){
  if(text){
   if(h)h+='<hr>';
   h+=`<button class="hlm-i" role="menuitem" onclick="hlMenuAct('copy')"><span class="hlm-ic">📄</span>Copiar</button>`;
-  if(tutorOn()&&text.length<=60&&text.split(/\s+/).length<=6)h+=`<button class="hlm-i" role="menuitem" onclick="hlMenuAct('tutor')"><span class="hlm-ic">🔎</span>Definir con el tutor</button>`;
+  if(tutorOn()&&text.length<=500&&text.split(/\s+/).length<=80)h+=`<button class="hlm-i" role="menuitem" onclick="hlMenuAct('tutor')"><span class="hlm-ic">🔎</span>Definir con el tutor</button>`;
   h+=`<button class="hlm-i" role="menuitem" onclick="hlMenuAct('addnote')"><span class="hlm-ic">📋</span>Añadir a mis notas</button>`;
   h+=`<button class="hlm-i" role="menuitem" onclick="hlMenuAct('google')"><span class="hlm-ic">🌐</span>Buscar en Google</button>`;
  }
@@ -1402,7 +1432,7 @@ function onWikiSelect() {
   if (!tutorOn() || !currentQuiz || currentQuiz.finished) return;
   const sel = window.getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount) return;
   const raw = sel.toString(), term = cleanDefineTerm(raw);
-  if (!term || term.length > 60 || term.split(" ").length > 6 || wikiSkipTerm(term)) return;
+  if (!term || term.length > 500 || term.split(/\s+/).length > 80 || wikiSkipTerm(term)) return;
   const r = sel.getRangeAt(0), host = (r.commonAncestorContainer.nodeType === 1 ? r.commonAncestorContainer : r.commonAncestorContainer.parentElement);
   if (!host || !host.closest(".quizcard") || host.closest("textarea,input,#qnote,.quiztop,.refbtn,#wiki-pop")) return;
   if (wikiCur && wikiCur.term === term && document.getElementById("wiki-pop").style.display === "block") return;
@@ -1532,14 +1562,36 @@ wkInit();
   /* Modo tutor: sección de imágenes (las de la pregunta + Wikimedia Commons) */
   const tImg = new Map();
   async function commons(term) {
-    const r = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(term)}&gsrnamespace=6&gsrlimit=10&prop=imageinfo&iiprop=url|mime|extmetadata&iiurlwidth=800&format=json&origin=*`);
+    const r = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(term)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime|extmetadata&iiurlwidth=800&format=json&origin=*`);
     if (!r.ok) throw new Error("commons");
     const j = await r.json();
     return Object.values((j.query && j.query.pages) || {}).sort((a, b) => (a.index || 0) - (b.index || 0)).map((p) => {
       const ii = (p.imageinfo || [])[0]; if (!ii || !/^image\/(jpeg|png|webp)$/.test(ii.mime) || !/^https:\/\/upload\.wikimedia\.org\//.test(ii.thumburl || "")) return null;
       const m = ii.extmetadata || {}, g = (k) => htmlText((m[k] && m[k].value) || "");
-      return { title: String(p.title || "").replace(/^File:/, "").replace(/\.[a-z]+$/i, ""), thumb: ii.thumburl, page: /^https:\/\/commons\.wikimedia\.org\//.test(ii.descriptionurl || "") ? ii.descriptionurl : "", author: g("Artist"), lic: g("LicenseShortName"), desc: g("ImageDescription") };
-    }).filter(Boolean).slice(0, 6);
+      return { title: String(p.title || "").replace(/^File:/, "").replace(/\.[a-z]+$/i, ""), thumb: ii.thumburl, page: /^https:\/\/commons\.wikimedia\.org\//.test(ii.descriptionurl || "") ? ii.descriptionurl : "", author: g("Artist"), lic: g("LicenseShortName"), desc: g("ImageDescription"), srcName: "Wikimedia Commons" };
+    }).filter(Boolean).slice(0, 30);
+  }
+  async function openverseImgs(term) {
+    const r = await fetch("https://api.openverse.org/v1/images/?q=" + encodeURIComponent(term) + "&page_size=20&mature=false");
+    if (!r.ok) throw new Error("openverse");
+    const j = await r.json();
+    return (j.results || []).map(x => ({
+      title: String(x.title || term).slice(0, 90),
+      thumb: x.thumbnail || x.url || "",
+      page: /^https?:\/\//.test(x.foreign_landing_url || "") ? x.foreign_landing_url : "",
+      author: x.creator || "",
+      lic: ("CC " + String(x.license || "").toUpperCase() + (x.license_version ? " " + x.license_version : "")).trim(),
+      desc: "", srcName: "Openverse"
+    })).filter(x => String(x.thumb || "").startsWith("https://"));
+  }
+  async function allInternetImgs(term) {
+    const rs = await Promise.allSettled([commons(term), openverseImgs(term)]);
+    const a = rs[0].status === "fulfilled" ? rs[0].value : [];
+    const b = rs[1].status === "fulfilled" ? rs[1].value : [];
+    const out = [], n = Math.max(a.length, b.length);
+    for (let i = 0; i < n; i++) { if (a[i]) out.push(a[i]); if (b[i]) out.push(b[i]); }
+    if (!out.length) throw new Error("No se encontraron imágenes");
+    return out;
   }
   function paintImgs(M) {
     const sec = document.getElementById("wk-imgs"); if (!sec) return;
@@ -1547,18 +1599,18 @@ wkInit();
     const own = q ? [...(q.images || []), ...(q.noteImages || [])].filter((u) => typeof u === "string" && u) : [];
     let h = '<div class="wk-st">🖼 Imágenes</div>';
     if (own.length) h += '<div class="smalltext muted">De esta pregunta y tus notas</div><div class="wk-ims">' + own.map((u, i) => { const inf = infoOf(q, u); return `<button type="button" class="wk-im" data-o="${i}"><img src="${esc(u)}" alt=""><span>${esc((inf && inf.term) || "Ampliar")}</span></button>`; }).join("") + "</div>";
-    h += `<div class="smalltext muted" style="margin-top:8px">Wikimedia Commons · «${esc(M.term)}»</div>`;
+    h += `<div class="smalltext muted" style="margin-top:8px">Wikimedia Commons + Openverse · «${esc(M.term)}» · desliza para ver más</div>`;
     if (s.st === "loading") h += '<div class="smalltext muted">Buscando imágenes…</div>';
     else if (s.st === "error") h += '<div class="smalltext muted">No se pudieron cargar imágenes (revisa tu conexión).</div>';
     else if (!s.items.length) h += '<div class="smalltext muted">Sin imágenes para este término.</div>';
-    else h += '<div class="wk-ims">' + s.items.map((it, i) => `<button type="button" class="wk-im" data-c="${i}"><img src="${esc(it.thumb)}" alt="" loading="lazy"><span>${esc(it.title)}</span></button>`).join("") + '</div><div class="wk-lic">Imágenes de Wikimedia Commons; cada una tiene su propia licencia (se muestra al ampliar).</div>';
+    else h += '<div class="wk-ims">' + s.items.map((it, i) => `<button type="button" class="wk-im" data-c="${i}"><img src="${esc(it.thumb)}" alt="" loading="lazy"><span>${esc(it.title)}</span></button>`).join("") + '</div><div class="wk-lic">Imágenes de Wikimedia Commons y Openverse; cada una tiene su propia licencia (se muestra al ampliar).</div>';
     sec.innerHTML = h;
     sec.querySelectorAll("[data-o]").forEach((b) => (b.onclick = () => zoomImg(own[Number(b.dataset.o)])));
     sec.querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => {
       const it = s.items[Number(b.dataset.c)], cap = [it.desc || it.title, it.author ? "Autor: " + it.author : "", "Licencia: " + (it.lic || "ver página")].filter(Boolean).join(". ") + ".";
       zoomImg(it.thumb, { title: it.title, caption: cap, url: it.page, save: async () => {
         const qq = curQ(); if (!qq) return;
-        try { const data = await imgFromFile(await (await fetch(it.thumb)).blob()); qq.noteImages = qq.noteImages || []; qq.noteImages.push(data); qq.noteImageInfo = qq.noteImageInfo || {}; qq.noteImageInfo[key(data)] = { term: it.title, def: cap + " (Wikimedia Commons)", src: "Wikimedia Commons" }; qq.updated = Date.now(); persistBank(); const i = document.getElementById("qnote-i"); if (i) i.innerHTML = thumbsHTML(qq.noteImages, "removeNoteImg"); notify("Imagen guardada en tus notas"); closeView(); } catch (e) { notify("No se pudo guardar la imagen"); }
+        try { const data = await imgFromFile(await (await fetch(it.thumb)).blob()); qq.noteImages = qq.noteImages || []; qq.noteImages.push(data); qq.noteImageInfo = qq.noteImageInfo || {}; qq.noteImageInfo[key(data)] = { term: it.title, def: cap + " (" + (it.srcName || "Wikimedia Commons") + ")", src: it.srcName || "Wikimedia Commons" }; qq.updated = Date.now(); persistBank(); const i = document.getElementById("qnote-i"); if (i) i.innerHTML = thumbsHTML(qq.noteImages, "removeNoteImg"); notify("Imagen guardada en tus notas"); closeView(); } catch (e) { notify("No se pudo guardar la imagen"); }
       } });
     }));
   }
@@ -1570,7 +1622,7 @@ wkInit();
       const sec = document.createElement("div"); sec.className = "wk-sec"; sec.id = "wk-imgs";
       if (body.children[0]) body.children[0].after(sec); else body.appendChild(sec);
       const k = M.lang + "|" + M.term.toLowerCase(); let s = tImg.get(k);
-      if (!s) { s = { st: "loading", items: [] }; tImg.set(k, s); commons(M.term).then((it) => { s.st = "ok"; s.items = it; }).catch(() => { s.st = "error"; }).then(() => { if (wikiCur && wikiCur.term === M.term && wikiCur.lang === M.lang) paintImgs(M); }); }
+      if (!s) { s = { st: "loading", items: [] }; tImg.set(k, s); allInternetImgs(M.term).then((it) => { s.st = "ok"; s.items = it; }).catch(() => { s.st = "error"; }).then(() => { if (wikiCur && wikiCur.term === M.term && wikiCur.lang === M.lang) paintImgs(M); }); }
       paintImgs(M);
     } catch (e) {}
   };
@@ -1869,5 +1921,90 @@ async function visionDetect(dataUrl,auto){
  try{return JSON.parse(txt)}catch(e){throw new Error('La IA devolvió algo que no pude leer. Intenta de nuevo.')}
 }
 </script>
+
+<script>
+/* Mejoras de uso */
+(function(){
+ const $=id=>document.getElementById(id);
+ function setTheme(dark,save=true){
+   document.documentElement.classList.toggle('dark',!!dark);
+   const c=$('clinq-theme-toggle');if(c)c.checked=!!dark;
+   if(save)try{localStorage.setItem('clinq_theme',dark?'dark':'light')}catch(e){}
+ }
+ function addThemeSwitch(){
+   const top=document.querySelector('.topright');if(!top||$('clinq-theme-toggle'))return;
+   let dark=false;try{dark=localStorage.getItem('clinq_theme')==='dark'}catch(e){}
+   const lab=document.createElement('label');lab.className='themesw';lab.title='Cambiar modo día/noche (N)';
+   lab.innerHTML='<span>☀️</span><span class="ts-label">Día</span><input id="clinq-theme-toggle" type="checkbox" aria-label="Activar modo noche"><span class="ts-s"></span><span>🌙</span>';
+   top.prepend(lab);lab.querySelector('input').addEventListener('change',e=>setTheme(e.target.checked));
+   setTheme(dark,false);
+ }
+ function appendSession(ids){
+   if(!window.currentQuiz||currentQuiz.finished||!Array.isArray(currentQuiz.questions))return;
+   const existing=new Set(currentQuiz.questions);
+   const fresh=ids.filter(id=>!existing.has(id)&&bank.some(q=>q.id===id));
+   if(!fresh.length)return;
+   currentQuiz.questions.push(...fresh);if(typeof saveSessions==='function')saveSessions();
+   if(typeof renderQuizQuestion==='function'&&document.getElementById('view-practice')?.classList.contains('active'))renderQuizQuestion();
+   if(typeof notify==='function')notify(fresh.length+' pregunta(s) nueva(s) añadida(s) a la sesión actual');
+ }
+ function installSessionHooks(){
+   if(typeof window.saveImported==='function'&&!window.saveImported.__sessionHook){
+     const old=window.saveImported;
+     const wrapped=function(){const before=new Set((bank||[]).map(q=>q.id));const result=old.apply(this,arguments);appendSession((bank||[]).filter(q=>!before.has(q.id)).map(q=>q.id));return result};
+     wrapped.__sessionHook=true;window.saveImported=wrapped;
+   }
+   if(typeof window.saveEdit==='function'&&!window.saveEdit.__sessionHook){
+     const old=window.saveEdit;
+     const wrapped=function(){const before=new Set((bank||[]).map(q=>q.id));const result=old.apply(this,arguments);appendSession((bank||[]).filter(q=>!before.has(q.id)).map(q=>q.id));return result};
+     wrapped.__sessionHook=true;window.saveEdit=wrapped;
+   }
+ }
+ function installImageCarousel(){
+   const sec=$('wk-imgs');if(!sec)return;
+   sec.querySelectorAll('.wk-ims').forEach(row=>{
+     if(row.parentElement.classList.contains('wk-car'))return;
+     const wrap=document.createElement('div');wrap.className='wk-car';row.parentNode.insertBefore(wrap,row);wrap.appendChild(row);
+     const arrow=(dir,label)=>{const b=document.createElement('button');b.type='button';b.className='wk-ar '+(dir<0?'l':'r');b.textContent=dir<0?'‹':'›';b.setAttribute('aria-label',label);b.onclick=()=>row.scrollBy({left:dir*Math.max(180,row.clientWidth*.8),behavior:'smooth'});return b};
+     wrap.append(arrow(-1,'Ver imágenes anteriores'),arrow(1,'Ver más imágenes'));
+   });
+   const term=window.wikiCur&&wikiCur.term;if(term&&!sec.querySelector('.wk-gl')){
+     const a=document.createElement('div');a.className='wk-gl';
+     const url='https://www.google.com/search?tbm=isch&q='+encodeURIComponent(term);
+     a.innerHTML='Buscar más imágenes: <a href="'+url+'" target="_blank" rel="noopener noreferrer">Google Imágenes ↗</a> · <a href="https://commons.wikimedia.org/w/index.php?search='+encodeURIComponent(term)+'&ns6=1" target="_blank" rel="noopener noreferrer">Wikimedia Commons ↗</a>';
+     sec.appendChild(a);
+   }
+ }
+ function addLegend(){
+   const host=$('quiz-area');if(!host||!document.querySelector('.quizcard')||host.querySelector('.kbdlegend'))return;
+   const rows=[['M','Marcar pregunta'],['H','Subrayar selección'],['T','Activar/desactivar tutor'],['N','Modo noche/día'],['A–E','Elegir respuesta'],['← / →','Pregunta anterior/siguiente'],['Enter','Siguiente'],['Esc','Cerrar ventana']];
+   const d=document.createElement('div');d.className='kbdlegend';d.innerHTML='<strong>⌨ Atajos de teclado</strong>'+rows.map(x=>'<span><kbd>'+x[0]+'</kbd>'+x[1]+'</span>').join('');host.appendChild(d);
+ }
+ function runKey(e){
+   if(e.ctrlKey||e.metaKey||e.altKey||e.repeat)return;
+   const target=e.target;if(target&&(target.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)))return;
+   const key=(e.key||'').toLowerCase();
+   if(key==='n'){setTheme(!document.documentElement.classList.contains('dark'));return}
+   if(!window.currentQuiz||currentQuiz.finished||!$('view-practice')?.classList.contains('active')||!document.querySelector('.quizcard'))return;
+   if(document.querySelector('.modalback.open,#img-zoom.open,#wiki-pop.open'))return;
+   if(key==='m'){e.preventDefault();const q=bank.find(x=>x.id===currentQuiz.questions[currentQuiz.index]);if(q){if(typeof toggleFlag==='function')toggleFlag(q.id);else{q.flagged=!q.flagged;if(typeof saveBank==='function')saveBank();if(typeof renderQuizQuestion==='function')renderQuizQuestion()}}}
+   else if(key==='h'){e.preventDefault();if(typeof hlQuickApply==='function'&&hlQuickApply())return;if(typeof hlQuickOn!=='undefined'){hlQuickOn=!hlQuickOn;const b=document.querySelector('.hlq-b');if(b){b.textContent='🖍 '+(hlQuickOn?'Subrayando…':'Subrayar texto');b.classList.toggle('on',hlQuickOn)}if(typeof notify==='function'&&hlQuickOn)notify('Selecciona el texto que quieres subrayar.')}} 
+   else if(key==='t'){e.preventDefault();const c=document.querySelector('.tutorsw input');if(c)c.click();else if(typeof tutorOn==='function'&&typeof notify==='function')notify('Usa el botón del tutor para activarlo.')}
+   else if(/^[a-e]$/.test(key)){const d=document.querySelector('.option-disclosure');if(d&&!d.open)d.open=true;const opts=[...document.querySelectorAll('.option-disclosure .option')];if(opts[key.charCodeAt(0)-97]){e.preventDefault();opts[key.charCodeAt(0)-97].click()}}
+   else if(e.key==='Escape'){const pop=$('wiki-pop');if(pop)pop.style.display='none'}
+ }
+ document.addEventListener('DOMContentLoaded',()=>{addThemeSwitch();installSessionHooks();addLegend();
+   const sec=$('wiki-pop');if(sec&&window.MutationObserver){new MutationObserver(()=>setTimeout(installImageCarousel,0)).observe(sec,{childList:true,subtree:true});}
+ });
+ document.addEventListener('keydown',runKey);
+ const oldRender=window.renderQuizQuestion;
+ if(typeof oldRender==='function')window.renderQuizQuestion=function(){const r=oldRender.apply(this,arguments);setTimeout(()=>{addLegend();installSessionHooks()},0);return r};
+ const oldPaint=window.paintImgs;
+ if(typeof oldPaint==='function')window.paintImgs=function(){const r=oldPaint.apply(this,arguments);setTimeout(installImageCarousel,0);return r};
+ // Reintentar hooks tras cargar scripts en orden
+ setTimeout(()=>{addThemeSwitch();installSessionHooks();addLegend()},500);
+})();
+</script>
+
 </body>
 </html>
