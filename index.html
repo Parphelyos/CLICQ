@@ -66,11 +66,26 @@ button.avatar{border:0;padding:0;overflow:hidden;cursor:pointer}
 .syncmenu .sm-note{padding:6px 10px 2px;font-size:11px;color:var(--muted)}
 @media(max-width:600px){.syncpill{padding:6px 10px;font-size:11px}.syncmenu{right:-4px}}
 </style>
+<style>
+.brandmark.logo{background:#fff;padding:4px;overflow:hidden;box-shadow:0 7px 18px #0006}.brandmark.logo img{width:100%;height:100%;object-fit:contain;display:block}
+#sb-toggle{margin-left:auto;background:#1d2d4d;border:0;color:#cfe0ff;border-radius:9px;width:28px;height:28px;font-weight:800;flex:none}#sb-toggle:hover{background:#2a4070}
+.app{transition:grid-template-columns .2s}
+body.sb-collapsed .app{grid-template-columns:76px minmax(0,1fr)}body.sb-collapsed .sidebar{padding:19px 9px;align-items:center}body.sb-collapsed .brand{padding:0;flex-direction:column;gap:10px}body.sb-collapsed .brandtext,body.sb-collapsed .navlabel,body.sb-collapsed .navtext,body.sb-collapsed .sidebottom{display:none}body.sb-collapsed .nav{width:100%;margin-top:0}body.sb-collapsed .nav button{justify-content:center;padding:13px 5px}body.sb-collapsed .navicon{font-size:19px}body.sb-collapsed #sb-toggle{margin-left:0}
+@media(max-width:920px){#sb-toggle{display:none}}
+.qimgs{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}.qimgs img{max-width:100%;max-height:340px;border-radius:10px;border:1px solid #e2e8f0;cursor:zoom-in;background:#fff}
+.imgthumb{position:relative;display:inline-block}.imgthumb img{height:72px;border-radius:8px;border:1px solid #e2e8f0;display:block}.imgthumb button{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:0;background:#e5484d;color:#fff;font-size:12px;line-height:1;padding:0}
+#img-zoom{position:fixed;inset:0;background:#0c1831e6;z-index:90;display:none;align-items:center;justify-content:center;padding:20px;cursor:zoom-out}#img-zoom.open{display:flex}#img-zoom img{max-width:100%;max-height:100%;border-radius:10px;background:#fff}
+details.qnote{margin:10px 0;border:1px solid #e2e8f0;border-radius:12px;padding:10px 14px;background:#fbfcfe}details.qnote summary{cursor:pointer;font-weight:800;font-size:13px}
+details.resdet{margin:0 0 6px;border-radius:10px}details.resdet>summary{cursor:pointer;list-style:none}details.resdet>summary::-webkit-details-marker{display:none}
+.reslist{margin:4px 0 12px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden}.resrow{display:flex;gap:10px;padding:9px 12px;border-top:1px solid #eef2f7;font-size:13px;align-items:flex-start}.resrow:first-child{border-top:0}.resrow .st{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:800}
+.reftbl{width:100%;border-collapse:collapse;font-size:13px}.reftbl td{padding:7px 8px;border-top:1px solid #eef2f7;vertical-align:top}.reftbl td:nth-child(2){font-weight:700;white-space:nowrap}.refcat{font-size:12px;font-weight:800;letter-spacing:.5px;color:#3158e5;margin:16px 0 4px}
+</style>
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
 </head>
 <body>
 <div class="app">
 <aside class="sidebar">
-  <div class="brand"><div class="brandmark">C</div><div class="brandtext"><div class="brandname">ClinQ</div><div class="brandtag">MEDICAL QUESTION BANK</div></div></div>
+  <div class="brand"><div class="brandmark logo"><img alt="ClinQ" src="data:image/png;base64,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"></div><div class="brandtext"><div class="brandname">ClinQ</div><div class="brandtag">MEDICAL QUESTION BANK</div></div><button id="sb-toggle" type="button" title="Contraer menú" aria-label="Contraer o expandir menú">«</button></div>
   <div style="width:100%"><div class="navlabel">MENÚ PRINCIPAL</div><nav class="nav">
     <button class="active" data-view="home"><span class="navicon">▦</span><span class="navtext">Resumen</span></button>
     <button data-view="library"><span class="navicon">▤</span><span class="navtext">Mi banco</span></button>
@@ -81,7 +96,7 @@ button.avatar{border:0;padding:0;overflow:hidden;cursor:pointer}
   <div class="sidebottom"><strong>🔒 Tus datos son solo tuyos</strong>Se guardan en este navegador y, si inicias sesión con Google, en un archivo oculto de tu propio Drive. No se suben a ningún servidor de ClinQ. <a href="privacy.html" style="color:#9cb4ff">Política de privacidad</a></div>
 </aside>
 <main class="main">
-  <header class="topbar"><div><div class="eyebrow" id="eyebrow">TU ESPACIO DE ESTUDIO</div><h1 class="pagetitle" id="pagetitle">Tu banco médico</h1></div><div class="topright"><button class="syncpill out" id="sync-pill" type="button">☁ Iniciar sesión con Google</button><button class="avatar" id="sync-avatar" type="button" title="Cuenta y sincronización">CQ</button><div class="syncmenu" id="sync-menu"></div></div></header>
+  <header class="topbar"><div><div class="eyebrow" id="eyebrow">TU ESPACIO DE ESTUDIO</div><h1 class="pagetitle" id="pagetitle">Tu banco médico</h1></div><div class="topright"><button class="btn outline small" id="ref-btn" type="button">🧪 Valores normales</button><button class="syncpill out" id="sync-pill" type="button">☁ Iniciar sesión con Google</button><button class="avatar" id="sync-avatar" type="button" title="Cuenta y sincronización">CQ</button><div class="syncmenu" id="sync-menu"></div></div></header>
   <section class="view active" id="view-home">
     <div class="hero"><div><h2>Estudia con tus propios bancos de preguntas.</h2><p>Importa tus materiales, convierte preguntas en sesiones de práctica y registra qué necesitas repasar. Inspirado en el flujo de bancos tipo USMLE.</p></div><div class="hero-actions"><button class="btn light" onclick="showView('import')">⇧ Importar documentos</button><button class="btn ghost" onclick="startQuiz('practice')">▶ Empezar a practicar</button></div></div>
     <div class="stats">
@@ -144,7 +159,7 @@ button.avatar{border:0;padding:0;overflow:hidden;cursor:pointer}
     <div class="progressdetail"><div class="progressbox"><h4>Rendimiento por documento</h4><div id="source-bars" class="muted smalltext">Aún no hay suficientes datos para mostrar rendimiento.</div></div><div class="progressbox"><h4>Cómo usar el seguimiento</h4><div class="step"><div class="stepnum">1</div><div><strong>Repasa los errores</strong><p>Filtra el banco por “Por repasar” para volver a intentar preguntas falladas.</p></div></div><div class="step" style="margin-top:14px"><div class="stepnum">2</div><div><strong>Marca preguntas complejas</strong><p>Usa la estrella para guardarlas en una lista prioritaria.</p></div></div><div class="step" style="margin-top:14px"><div class="stepnum">3</div><div><strong>Haz respaldos</strong><p>Exporta tu banco en JSON si vas a cambiar de navegador o computadora.</p></div></div></div></div>
   </section>
 </main></div>
-<div class="modalback" id="edit-modal"><div class="modal"><div class="modalhead"><h3 id="edit-modal-title">Editar pregunta</h3><button class="iconbtn" onclick="closeEdit()">×</button></div><input id="edit-id" type="hidden"><label for="edit-stem">Enunciado</label><textarea id="edit-stem" class="field"></textarea><div id="edit-options"></div><div class="generator-grid" style="margin-top:10px"><div><label for="edit-subject">Especialidad / categoría</label><input id="edit-subject" class="field" placeholder="Ej. Orthopedics and Traumatology"></div><div><label for="edit-source">Banco donde se guardará</label><select id="edit-source" class="field" onchange="onSourceSelect()" style="width:100%"></select><input id="edit-source-new" class="field" placeholder="Nombre del nuevo banco" style="width:100%;margin-top:6px;display:none"></div></div><label for="edit-answer">Respuesta correcta</label><select id="edit-answer" class="field"><option value="">No indicada</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select><label for="edit-explanation">Explicación (opcional)</label><textarea id="edit-explanation" class="field" placeholder="Por qué es correcta y por qué no las otras opciones…"></textarea><div class="modalactions"><button class="btn outline" onclick="closeEdit()">Cancelar</button><button class="btn primary" onclick="saveEdit()">Guardar cambios</button></div></div></div>
+<div class="modalback" id="edit-modal"><div class="modal"><div class="modalhead"><h3 id="edit-modal-title">Editar pregunta</h3><button class="iconbtn" onclick="closeEdit()">×</button></div><input id="edit-id" type="hidden"><label for="edit-stem">Enunciado</label><textarea id="edit-stem" class="field"></textarea><div id="edit-options"></div><div class="generator-grid" style="margin-top:10px"><div><label for="edit-subject">Especialidad / categoría</label><input id="edit-subject" class="field" placeholder="Ej. Orthopedics and Traumatology"></div><div><label for="edit-source">Banco donde se guardará</label><select id="edit-source" class="field" onchange="onSourceSelect()" style="width:100%"></select><input id="edit-source-new" class="field" placeholder="Nombre del nuevo banco" style="width:100%;margin-top:6px;display:none"></div></div><label for="edit-answer">Respuesta correcta</label><select id="edit-answer" class="field"><option value="">No indicada</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select><label for="edit-explanation">Explicación (opcional)</label><textarea id="edit-explanation" class="field" placeholder="Por qué es correcta y por qué no las otras opciones…"></textarea><label>Imágenes del caso (opcional)</label><div id="edit-imgs" style="display:flex;gap:10px;flex-wrap:wrap;margin:6px 0"></div><div class="toolbar"><button type="button" class="btn outline small" onclick="document.getElementById('edit-img-file').click()">🖼 Añadir imagen</button><input id="edit-img-file" type="file" accept="image/*" multiple hidden><span class="smalltext muted">También puedes pegar una captura con Ctrl+V.</span></div><div class="modalactions"><button class="btn outline" onclick="closeEdit()">Cancelar</button><button class="btn primary" onclick="saveEdit()">Guardar cambios</button></div></div></div>
 <div class="toast" id="toast"></div>
 <script>
 const DBKEY='clinq_bank_v1';
@@ -270,7 +285,7 @@ function parseStructuredJSON(raw,source){
   const fullStem=[vignette,stem].filter(Boolean).join(' ').replace(/\s+/g,' ').trim();if(fullStem.length<8)return;
   const distractors=q.distractorAnalysis&&typeof q.distractorAnalysis==='object'?Object.entries(q.distractorAnalysis).map(([k,v])=>`${k}: ${String(v||'').trim()}`).filter(x=>!/:\s*$/.test(x)).join('\n'):'';const refs=Array.isArray(q.sourceReferences)?q.sourceReferences.map(r=>[r.sourceTitle,r.chapterSection,r.relevance].filter(Boolean).join(' — ')).filter(Boolean).join('\n'):'';const extra=[q.attendingTip,q.keyLearningPoint,q.hint?`Pista: ${q.hint}`:'',q.educationalObjective?`Objetivo educativo: ${q.educationalObjective}`:'',distractors?`Análisis de distractores:\n${distractors}`:'',refs?`Referencias del documento:\n${refs}`:''].filter(x=>typeof x==='string'&&x.trim()).join('\n\n');
   let explanation=String(q.explanation||q.rationale||'').trim();if(extra)explanation=[explanation,extra].filter(Boolean).join('\n\n');
-  bankItems.push({id:uid(),stem:fullStem,options:unique,answer,explanation,source,created:Date.now()+bankItems.length,updated:Date.now(),attempts:0,correctCount:0,flagged:false,origin:'imported-json',subject:inferSpecialty(fullStem,source,q.subject||inherited.subject||''),difficultyLabel:q.difficultyLabel||inherited.difficultyLabel||'',educationalObjective:q.educationalObjective||inherited.educationalObjective||'',sourceQuestionId:(q.id||inherited.id||'')+suffix});
+  bankItems.push({images:collectImages(q,inherited),id:uid(),stem:fullStem,options:unique,answer,explanation,source,created:Date.now()+bankItems.length,updated:Date.now(),attempts:0,correctCount:0,flagged:false,origin:'imported-json',subject:inferSpecialty(fullStem,source,q.subject||inherited.subject||''),difficultyLabel:q.difficultyLabel||inherited.difficultyLabel||'',educationalObjective:q.educationalObjective||inherited.educationalObjective||'',sourceQuestionId:(q.id||inherited.id||'')+suffix});
  };
  for(const q of roots){if(!q||typeof q!=='object')continue;add(q,{});if(Array.isArray(q.variants))q.variants.forEach((v,i)=>add(v,q,`-V${i+1}`))}
  if(!bankItems.length)return null;
@@ -770,6 +785,169 @@ document.addEventListener('keyup',e=>{if((e.code==='Space'||e.key===' ')&&quizKe
  toggleFlag=function(id){openFolderModal(id)};
  const _u=updateQuizPreview;updateQuizPreview=function(){_u();const el=document.getElementById('quiz-folders-sum');if(!el)return;const k=currentQuizConfig().folders.length,n=folderNames().length;el.textContent=k?'· '+k+(k===1?' carpeta marcada':' carpetas marcadas'):'· '+n+(n===1?' carpeta':' carpetas')};
 })();
+</script>
+<script>
+/* ===== Menú lateral retraíble ===== */
+(function(){const btn=document.getElementById('sb-toggle');if(!btn)return;
+ const apply=c=>{document.body.classList.toggle('sb-collapsed',c);btn.textContent=c?'»':'«';btn.title=c?'Expandir menú':'Contraer menú';try{localStorage.setItem('clinq_sb',c?'1':'0')}catch(e){}};
+ btn.onclick=()=>apply(!document.body.classList.contains('sb-collapsed'));
+ let c=false;try{c=localStorage.getItem('clinq_sb')==='1'}catch(e){}apply(c)})();
+
+/* ===== Imágenes: utilidades ===== */
+function imgFromFile(file,max=1000){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.78))};im.onerror=rej;im.src=fr.result};fr.onerror=rej;fr.readAsDataURL(file)})}
+function imgsHTML(a){a=(a||[]).filter(Boolean);return a.length?`<div class="qimgs">${a.map(u=>`<img src="${esc(u)}" alt="Imagen" loading="lazy" onclick="zoomImg(this.src)">`).join('')}</div>`:''}
+function thumbsHTML(a,fn){return (a||[]).map((u,i)=>`<span class="imgthumb"><img src="${esc(u)}" alt="" onclick="zoomImg(this.src)"><button type="button" onclick="${fn}(${i})" title="Quitar">×</button></span>`).join('')}
+function pastedImages(e){return [...(e.clipboardData?.items||[])].filter(i=>i.kind==='file'&&/^image\//.test(i.type)).map(i=>i.getAsFile()).filter(Boolean)}
+function zoomImg(src){let z=document.getElementById('img-zoom');if(!z){z=document.createElement('div');z.id='img-zoom';z.innerHTML='<img alt="">';z.onclick=()=>z.classList.remove('open');document.body.appendChild(z)}z.firstChild.src=src;z.classList.add('open')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('img-zoom')?.classList.remove('open')});
+function collectImages(q,inh){const out=[];const add=v=>{if(!v)return;if(Array.isArray(v))return v.forEach(add);if(typeof v==='object')return add(v.url||v.src||v.data||v.href);if(typeof v==='string'&&/^(data:image\/|https?:\/\/)/i.test(v.trim())&&!out.includes(v.trim()))out.push(v.trim())};
+ [q,inh||{}].forEach(o=>['images','image','imageUrl','imageURL','imageUrls','img','figure','figures','media'].forEach(k=>add(o[k])));return out}
+(function(){const _rs=renderQuestionStem;renderQuestionStem=function(q){return _rs(q)+imgsHTML(q.images)}})();
+
+/* ===== Imágenes en el editor de preguntas ===== */
+let editImgs=[];
+function renderEditImgs(){const h=document.getElementById('edit-imgs');if(h)h.innerHTML=thumbsHTML(editImgs,'removeEditImg')||'<span class="smalltext muted">Sin imágenes</span>'}
+function removeEditImg(i){editImgs.splice(i,1);renderEditImgs()}
+async function addEditImgs(files){for(const f of files){try{editImgs.push(await imgFromFile(f))}catch(e){notify('No se pudo leer la imagen')}}renderEditImgs()}
+document.getElementById('edit-img-file').onchange=e=>{addEditImgs([...e.target.files]);e.target.value=''};
+document.addEventListener('paste',e=>{if(!document.getElementById('edit-modal').classList.contains('open'))return;const f=pastedImages(e);if(f.length){e.preventDefault();addEditImgs(f)}});
+(function(){const _oe=openEdit;openEdit=function(id,preview){_oe.apply(this,arguments);const q=(preview?importPreview:bank).find(x=>x.id===id);editImgs=((q&&q.images)||[]).slice();renderEditImgs()};
+ const _am=addManualQuestion;addManualQuestion=function(){_am.apply(this,arguments);editImgs=[];renderEditImgs()};
+ const _se=saveEdit;saveEdit=function(){const fid=document.getElementById('edit-id').value,man=fid.startsWith('manual:'),pre=fid.startsWith('preview:'),id=fid.replace(/^(preview:|manual:)/,''),q=man?manualDraft:(pre?importPreview:bank).find(x=>x.id===id);if(q)q.images=editImgs.slice();return _se.apply(this,arguments)}})();
+
+/* ===== Notas del alumno (texto + imágenes) en cada pregunta ===== */
+const qnoteOpen={};
+function injectQNote(){if(!currentQuiz||currentQuiz.finished)return;const q=bank.find(x=>x.id===currentQuiz.questions[currentQuiz.index]),at=document.querySelector('.option-disclosure');if(!q||!at||document.getElementById('qnote'))return;
+ const d=document.createElement('details');d.className='qnote';d.id='qnote';d.open=!!qnoteOpen[q.id];
+ d.innerHTML=`<summary>📝 Mis notas <span class="muted" id="qnote-n" style="font-weight:600"></span></summary><textarea id="qnote-t" class="field" rows="3" placeholder="Escribe tu nota… (puedes pegar imágenes con Ctrl+V)" style="margin-top:8px"></textarea><div class="toolbar" style="margin-top:6px"><button type="button" class="btn outline small" id="qnote-add">🖼 Añadir imagen</button><input type="file" id="qnote-f" accept="image/*" multiple hidden></div><div id="qnote-i" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px"></div>`;
+ at.parentNode.insertBefore(d,at);const t=d.querySelector('#qnote-t');t.value=q.myNote||'';
+ const sum=()=>{const n=(q.myNote?1:0)+(q.noteImages||[]).length;d.querySelector('#qnote-n').textContent=n?'· con contenido':''},draw=()=>{d.querySelector('#qnote-i').innerHTML=thumbsHTML(q.noteImages,'removeNoteImg');sum()};
+ window.removeNoteImg=i=>{(q.noteImages||[]).splice(i,1);q.updated=Date.now();persistBank();draw()};
+ const add=async fs=>{q.noteImages=q.noteImages||[];for(const f of fs){try{q.noteImages.push(await imgFromFile(f))}catch(e){}}q.updated=Date.now();persistBank();draw()};
+ d.ontoggle=()=>{qnoteOpen[q.id]=d.open};let tm;t.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{q.myNote=t.value;q.updated=Date.now();persistBank();sum()},500)};t.onblur=()=>{clearTimeout(tm);if((q.myNote||'')!==t.value){q.myNote=t.value;q.updated=Date.now();persistBank();sum()}};
+ t.onpaste=e=>{const f=pastedImages(e);if(f.length){e.preventDefault();add(f)}};d.querySelector('#qnote-add').onclick=()=>d.querySelector('#qnote-f').click();d.querySelector('#qnote-f').onchange=e=>{add([...e.target.files]);e.target.value=''};draw()}
+(function(){const _rq=renderQuizQuestion;renderQuizQuestion=function(){_rq.apply(this,arguments);try{injectQNote()}catch(e){}}})();
+
+/* ===== Imágenes en la nota de un subrayado (pegar con Ctrl+V) ===== */
+(function(){const _sh=showHlPop;showHlPop=function(mark){_sh.apply(this,arguments);try{const p=document.getElementById('hl-pop'),ta=document.getElementById('hl-note');if(!p||!ta||!hlCur||p.querySelector('#hl-imgs'))return;const q=bank.find(x=>x.id===hlCur.qid),key=hlCur.text;if(!q)return;
+ const box=document.createElement('div');box.id='hl-imgs';box.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-top:6px';p.appendChild(box);const hint=document.createElement('div');hint.className='smalltext muted';hint.textContent='Pega una imagen (Ctrl+V) para añadirla a esta nota.';p.appendChild(hint);
+ const draw=()=>{box.innerHTML=thumbsHTML((q.highlightImages||{})[key],'removeHlImg')};window.removeHlImg=i=>{q.highlightImages[key].splice(i,1);persistBank();draw()};
+ ta.addEventListener('paste',async e=>{const f=pastedImages(e);if(!f.length)return;e.preventDefault();q.highlightImages=q.highlightImages||{};q.highlightImages[key]=q.highlightImages[key]||[];for(const x of f){try{q.highlightImages[key].push(await imgFromFile(x,800))}catch(er){}}persistBank();draw()});draw()}catch(e){}}})();
+
+/* ===== Resultados: ver qué preguntas pertenecen a cada disciplina ===== */
+(function(){const _g=groupSessionResults;groupSessionResults=function(qs,keyFn){const out=_g(qs,keyFn);out.forEach(([k,g])=>{g.items=qs.filter(q=>keyFn(q)===k).map(q=>({q,given:currentQuiz.answers[q.id]}))});return out};
+ resultBars=function(entries){const ids=currentQuiz?currentQuiz.questions:[],specs=availableSpecialties();return entries.map(([name,g])=>{const pct=g.gradable?Math.round(g.correct/g.gradable*100):null,c=specs.includes(name)?specColor(name):'#3158e5';
+  const rows=(g.items||[]).map(({q,given})=>{let st,bg,det='';if(given===undefined){st='–';bg='#94a3b8';det='Sin responder'}else if(!q.answer){st='?';bg='#f5a524';det='Sin clave · tu respuesta: '+given}else if(given===q.answer){st='✓';bg='#12a46f';det='Correcta · '+given}else{st='✗';bg='#e5484d';det='Tu respuesta: '+given+' · Correcta: '+q.answer}
+   return `<div class="resrow"><span class="st" style="background:${bg}">${st}</span><div style="min-width:0"><div><strong>#${ids.indexOf(q.id)+1}</strong> ${esc(String(q.stem||'').slice(0,150))}${String(q.stem||'').length>150?'…':''}</div><div class="smalltext muted">${esc(det)}</div></div></div>`}).join('');
+  return `<details class="resdet"><summary><div class="baritem"><div class="barlabel"><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${c};margin-right:7px"></i>${esc(name)} <span class="muted" style="font-weight:600">▸ ver ${g.total} pregunta(s)</span></span><strong>${pct===null?'Sin clave':pct+'%'}</strong></div><div class="barbg"><div class="barfill" style="width:${pct||0}%;background:${c}"></div></div><div class="smalltext muted" style="margin-top:4px">${g.correct} correctas de ${g.gradable} respondidas con clave · ${g.total} pregunta(s) en la sesión</div></div></summary><div class="reslist">${rows}</div></details>`}).join('')}})();
+
+/* ===== Valores normales (referencia rápida) ===== */
+const REF_DATA=`Hematología|Hemoglobina|H 13.5–17.5 · M 12.0–15.5 g/dL
+Hematología|Hematocrito|H 41–53 · M 36–46 %
+Hematología|Eritrocitos|H 4.5–5.9 · M 4.1–5.1 ×10⁶/µL
+Hematología|VCM|80–100 fL
+Hematología|HCM|27–33 pg
+Hematología|CHCM|32–36 g/dL
+Hematología|RDW|11.5–14.5 %
+Hematología|Leucocitos|4,500–11,000 /µL
+Hematología|Neutrófilos|40–70 %
+Hematología|Linfocitos|20–40 %
+Hematología|Monocitos|2–8 %
+Hematología|Eosinófilos|1–4 %
+Hematología|Basófilos|0–1 %
+Hematología|Plaquetas|150,000–400,000 /µL
+Hematología|Reticulocitos|0.5–1.5 %
+Hematología|VSG|H 0–15 · M 0–20 mm/h
+Hematología|Ferritina|H 24–336 · M 11–307 ng/mL
+Hematología|Hierro sérico|60–170 µg/dL
+Hematología|TIBC|240–450 µg/dL
+Hematología|Saturación de transferrina|20–50 %
+Hematología|Vitamina B12|200–900 pg/mL
+Hematología|Folato|2.7–17 ng/mL
+Coagulación|TP|11–13.5 s
+Coagulación|INR|0.8–1.1 (anticoagulado: 2–3)
+Coagulación|TTPa|25–35 s
+Coagulación|Fibrinógeno|200–400 mg/dL
+Coagulación|Dímero D|< 500 ng/mL FEU
+Electrolitos|Sodio|135–145 mEq/L
+Electrolitos|Potasio|3.5–5.0 mEq/L
+Electrolitos|Cloro|96–106 mEq/L
+Electrolitos|Bicarbonato|22–28 mEq/L
+Electrolitos|Calcio total|8.5–10.2 mg/dL
+Electrolitos|Calcio iónico|4.6–5.3 mg/dL (1.15–1.32 mmol/L)
+Electrolitos|Magnesio|1.5–2.0 mg/dL
+Electrolitos|Fósforo|2.5–4.5 mg/dL
+Electrolitos|Brecha aniónica|8–12 mEq/L
+Electrolitos|Osmolaridad sérica|275–295 mOsm/kg
+Química|Glucosa en ayunas|70–99 mg/dL
+Química|Glucosa 2 h (PTOG)|< 140 mg/dL
+Química|HbA1c|< 5.7 % (prediabetes 5.7–6.4 · diabetes ≥ 6.5)
+Química|BUN (urea)|7–20 mg/dL
+Química|Creatinina|H 0.7–1.3 · M 0.6–1.1 mg/dL
+Química|TFG|> 90 mL/min/1.73 m²
+Química|Ácido úrico|H 3.4–7.0 · M 2.4–6.0 mg/dL
+Química|Albúmina|3.5–5.0 g/dL
+Química|Proteínas totales|6.0–8.3 g/dL
+Química|Lactato|0.5–2.2 mmol/L
+Hígado y páncreas|AST|10–40 U/L
+Hígado y páncreas|ALT|7–56 U/L
+Hígado y páncreas|Fosfatasa alcalina|44–147 U/L
+Hígado y páncreas|GGT|9–48 U/L
+Hígado y páncreas|Bilirrubina total|0.1–1.2 mg/dL
+Hígado y páncreas|Bilirrubina directa|0–0.3 mg/dL
+Hígado y páncreas|LDH|140–280 U/L
+Hígado y páncreas|Amilasa|30–110 U/L
+Hígado y páncreas|Lipasa|0–160 U/L
+Corazón|Troponina I|< 0.04 ng/mL (varía según ensayo)
+Corazón|CK total|H 39–308 · M 26–192 U/L
+Corazón|CK-MB|< 5 ng/mL
+Corazón|BNP|< 100 pg/mL
+Corazón|NT-proBNP|< 125 pg/mL
+Lípidos|Colesterol total|< 200 mg/dL
+Lípidos|LDL|< 100 mg/dL (óptimo)
+Lípidos|HDL|H > 40 · M > 50 mg/dL
+Lípidos|Triglicéridos|< 150 mg/dL
+Endocrino y hueso|TSH|0.4–4.0 mUI/L
+Endocrino y hueso|T4 libre|0.8–1.8 ng/dL
+Endocrino y hueso|T3 total|80–200 ng/dL
+Endocrino y hueso|Cortisol (mañana)|6–23 µg/dL
+Endocrino y hueso|PTH|10–65 pg/mL
+Endocrino y hueso|Vitamina D (25-OH)|30–100 ng/mL
+Endocrino y hueso|PSA|< 4.0 ng/mL
+Inflamación|PCR|< 1.0 mg/dL (< 10 mg/L)
+Inflamación|Procalcitonina|< 0.1 ng/mL
+Gasometría arterial|pH|7.35–7.45
+Gasometría arterial|PaO₂|80–100 mmHg
+Gasometría arterial|PaCO₂|35–45 mmHg
+Gasometría arterial|HCO₃⁻|22–26 mEq/L
+Gasometría arterial|Exceso de base|−2 a +2 mEq/L
+Gasometría arterial|SaO₂|95–100 %
+Orina|Densidad|1.003–1.030
+Orina|pH|4.5–8.0
+Orina|Proteínas 24 h|< 150 mg
+Orina|Albúmina/creatinina|< 30 mg/g
+Líquido cefalorraquídeo|Presión de apertura|70–180 mmH₂O
+Líquido cefalorraquídeo|Leucocitos|0–5 /µL
+Líquido cefalorraquídeo|Proteínas|15–45 mg/dL
+Líquido cefalorraquídeo|Glucosa|40–70 mg/dL (> 60 % de la sérica)
+Líquido sinovial|Normal|Claro · < 200 leucocitos/µL · PMN < 25 %
+Líquido sinovial|No inflamatorio (artrosis)|200–2,000 leucocitos/µL
+Líquido sinovial|Inflamatorio|2,000–50,000 leucocitos/µL
+Líquido sinovial|Séptico|> 50,000 leucocitos/µL · PMN > 75 %
+Signos vitales|Frecuencia cardíaca|60–100 lpm
+Signos vitales|Frecuencia respiratoria|12–20 rpm
+Signos vitales|Presión arterial|< 120/80 mmHg
+Signos vitales|Temperatura|36.1–37.2 °C
+Signos vitales|SpO₂|95–100 %
+Signos vitales|IMC|18.5–24.9 kg/m²`.split('\n').map(l=>l.split('|'));
+(function(){const b=document.getElementById('ref-btn'),m=document.createElement('div');m.className='modalback';m.id='ref-modal';
+ m.innerHTML='<div class="modal" style="max-width:760px"><div class="modalhead"><h3>🧪 Valores normales (adultos)</h3><button class="iconbtn" type="button" id="ref-x">×</button></div><input id="ref-q" class="field" style="width:100%" placeholder="Buscar: hemoglobina, sodio, TSH, líquido sinovial…" autocomplete="off"><div id="ref-body"></div><div class="notice" style="margin-top:12px">Rangos de referencia aproximados para adultos. Varían según el laboratorio, la edad y el sexo (H = hombre, M = mujer). Confirma siempre con el rango de tu laboratorio.</div></div>';
+ document.body.appendChild(m);const body=m.querySelector('#ref-body'),q=m.querySelector('#ref-q');
+ const norm=t=>t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+ function draw(){const f=norm(q.value.trim());let h='',cat='',rows='';const flush=()=>{if(rows)h+=`<div class="refcat">${esc(cat.toUpperCase())}</div><table class="reftbl">${rows}</table>`;rows=''};
+  REF_DATA.forEach(([c,n,v])=>{if(f&&!norm(c+' '+n+' '+v).includes(f))return;if(c!==cat){flush();cat=c}rows+=`<tr><td>${esc(n)}</td><td>${esc(v)}</td></tr>`});flush();body.innerHTML=h||'<p class="muted">Sin resultados.</p>'}
+ const open=()=>{q.value='';draw();m.classList.add('open');setTimeout(()=>q.focus(),30)},close=()=>m.classList.remove('open');
+ b.onclick=open;m.querySelector('#ref-x').onclick=close;q.oninput=draw;m.addEventListener('mousedown',e=>{if(e.target===m)close()});m.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')close()})})();
 </script>
 </body>
 </html>
