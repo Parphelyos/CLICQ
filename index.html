@@ -82,6 +82,7 @@ details.resdet{margin:0 0 6px;border-radius:10px}details.resdet>summary{cursor:p
 </style>
 <style>
 .sidebar{position:relative}
+#sb-toggle{display:none!important}.brandmark.logo{cursor:pointer}
 .brandmark.logo{flex:none;width:46px;height:46px;background:transparent;padding:0;box-shadow:none;border-radius:0}.brandmark.logo img{width:100%;height:100%;object-fit:contain}
 .brandtag{font-size:10px;letter-spacing:.2px}
 #sb-toggle{position:absolute;right:-13px;top:32px;margin:0;width:26px;height:26px;border-radius:50%;background:#fff;color:#101d34;border:1px solid #d6deec;box-shadow:0 3px 10px rgba(16,29,52,.25);z-index:46;font-size:13px;line-height:1;padding:0}#sb-toggle:hover{background:#eef3ff}
@@ -966,6 +967,9 @@ Signos vitales|IMC|18.5–24.9 kg/m²`.split('\n').map(l=>l.split('|'));
  chips.onclick=e=>{const b=e.target.closest('button[data-c]');if(!b)return;cur=b.dataset.c;draw()};
  const open=()=>{q.value='';cur='';draw();m.classList.add('open');setTimeout(()=>q.focus(),30)},close=()=>m.classList.remove('open');
  window.openRefModal=open;m.querySelector('#ref-x').onclick=close;q.oninput=draw;m.addEventListener('mousedown',e=>{if(e.target===m)close()});m.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')close()})})();
+</script>
+<script>
+(function(){const l=document.querySelector(".brandmark.logo"),b=document.getElementById("sb-toggle");if(l&&b){l.title="Clic: fijar o contraer el menú";l.onclick=()=>b.click()}})();
 </script>
 </body>
 </html>
