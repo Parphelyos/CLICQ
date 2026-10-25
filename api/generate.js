@@ -1,5 +1,5 @@
 // Función serverless para Vercel: recibe texto de un PDF y devuelve casos/preguntas en JSON.
-// Variables de entorno en Vercel: GEMINI_API_KEY (obligatoria), ALLOWED_ORIGIN (opcional, separadas por coma), GEMINI_MODEL (opcional).
+// Variables de entorno en Vercel: GEMINI_API_KEY (obligatoria), ALLOWED_ORIGIN (opcional, separadas por coma), GEMINI_MODEL (opcional; por defecto gemini-3.8-flash).
 const MAX_CHARS = 30000, LIMIT = 20, WINDOW_MS = 60000, hits = new Map();
 
 const SYS = 'Eres un asistente que prepara preguntas de opción múltiple para estudiantes de medicina. Respondes SOLO con JSON válido.';
@@ -39,16 +39,20 @@ module.exports = async (req, res) => {
   if (!b.text || String(b.text).length < 200) return res.status(400).json({ error: 'Texto insuficiente.' });
 
   try {
-    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYS }] },
-        contents: [{ role: 'user', parts: [{ text: prompt(b) }] }],
-        generationConfig: { responseMimeType: 'application/json', temperature: b.mode === 'fidelity' ? 0.1 : 0.5 },
-      }),
-    });
+    const models = [process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-3.1-flash-lite'].filter(Boolean);
+    let r;
+    for (const model of models) {
+      r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYS }] },
+          contents: [{ role: 'user', parts: [{ text: prompt(b) }] }],
+          generationConfig: { responseMimeType: 'application/json', temperature: b.mode === 'fidelity' ? 0.1 : 0.5 },
+        }),
+      });
+      if (r.status !== 404) break; // modelo retirado o inexistente: prueba el siguiente
+    }
     if (r.status === 429) return res.status(429).json({ error: 'Se alcanzó el límite del servicio de IA. Inténtalo en un minuto.' });
     if (!r.ok) return res.status(502).json({ error: 'El servicio de IA no respondió (' + r.status + ').' });
     const j = await r.json();
