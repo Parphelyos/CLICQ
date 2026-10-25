@@ -116,7 +116,7 @@ body.sb-collapsed .sidebar:hover .navicon{font-size:18px}
 .wk-item{margin-top:10px}.wk-item:first-child{margin-top:0}
 .wk-links{display:flex;flex-wrap:wrap;gap:6px 14px}
 /* Cajas de notas más grandes */
-details.qnote textarea{width:100%;min-height:180px;font-size:14px;line-height:1.5;resize:vertical}
+details.qnote textarea{width:100%;min-height:140px;max-height:70vh;max-height:70dvh;font-size:14px;line-height:1.5;resize:none;overflow-y:hidden;overflow-wrap:anywhere;transition:height .08s ease}
 .hlpop{width:min(420px,calc(100vw - 16px))}.hlpop textarea{min-height:140px;font-size:14px;line-height:1.5}
 /* iPhone / Safari */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -882,6 +882,21 @@ function injectQNote(){if(!currentQuiz||currentQuiz.finished)return;const q=bank
  d.ontoggle=()=>{qnoteOpen[q.id]=d.open};let tm;t.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{q.myNote=t.value;q.updated=Date.now();persistBank();sum()},500)};t.onblur=()=>{clearTimeout(tm);if((q.myNote||'')!==t.value){q.myNote=t.value;q.updated=Date.now();persistBank();sum()}};
  t.onpaste=e=>{const f=pastedImages(e);if(f.length){e.preventDefault();add(f)}};d.querySelector('#qnote-add').onclick=()=>d.querySelector('#qnote-f').click();d.querySelector('#qnote-f').onchange=e=>{add([...e.target.files]);e.target.value=''};draw()}
 (function(){const _rq=renderQuizQuestion;renderQuizQuestion=function(){_rq.apply(this,arguments);try{injectQNote()}catch(e){}try{const c=document.querySelector('.quizcard');if(c&&currentQuiz&&!currentQuiz.finished&&!c.querySelector('.refbtn'))c.insertAdjacentHTML('afterbegin','<button type="button" class="btn outline small refbtn" onclick="openRefModal()">🧪 Valores normales</button>')}catch(e){}}})();
+/* ===== "Mis notas": la caja se adapta al texto y a la pantalla ===== */
+function qnoteFit(t){
+ if(!t||!t.isConnected)return;
+ const d=t.closest('details');if(d&&!d.open)return;           // cerrada: se ajusta al abrirla
+ const vh=(window.visualViewport&&visualViewport.height)||window.innerHeight||600;
+ const max=Math.max(160,Math.round(vh*0.7));                   // nunca más del 70 % de la pantalla visible
+ t.style.height='auto';
+ const need=t.scrollHeight+2;
+ t.style.height=Math.min(need,max)+'px';
+ t.style.overflowY=need>max?'auto':'hidden';                   // con scroll interno solo si no cabe
+}
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='qnote-t')qnoteFit(e.target)});
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.id==='qnote'&&d.open)qnoteFit(d.querySelector('#qnote-t'))},true);
+(function(){const refit=()=>qnoteFit(document.getElementById('qnote-t'));window.addEventListener('resize',refit);window.addEventListener('orientationchange',()=>setTimeout(refit,200));if(window.visualViewport)visualViewport.addEventListener('resize',refit)})();
+(function(){const _rq2=renderQuizQuestion;renderQuizQuestion=function(){_rq2.apply(this,arguments);try{qnoteFit(document.getElementById('qnote-t'))}catch(e){}}})();
 
 /* ===== Imágenes en la nota de un subrayado (pegar con Ctrl+V) ===== */
 (function(){const _sh=showHlPop;showHlPop=function(mark){_sh.apply(this,arguments);try{const p=document.getElementById('hl-pop'),ta=document.getElementById('hl-note');if(!p||!ta||!hlCur||p.querySelector('#hl-imgs'))return;const q=bank.find(x=>x.id===hlCur.qid),key=hlCur.text;if(!q)return;
@@ -1112,7 +1127,7 @@ function tutorAddNote(text) {
   const q = currentQuiz && bank.find((x) => x.id === currentQuiz.questions[currentQuiz.index]);
   if (!q || !text) return;
   q.myNote = (q.myNote ? q.myNote + "\n\n" : "") + text; q.updated = Date.now(); persistBank();
-  const t = document.getElementById("qnote-t"); if (t) t.value = q.myNote;
+  const t = document.getElementById("qnote-t"); if (t) { t.value = q.myNote; qnoteFit(t); }
   notify("Añadido a tus notas");
 }
 function renderTutor(rect, M) {
