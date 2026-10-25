@@ -98,6 +98,17 @@ body.sb-collapsed .sidebar:hover .navicon{font-size:18px}
 .quizcard{position:relative}.refbtn{float:right;margin:0 0 8px 14px}
 .refchips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 2px}.refchips button{border:1px solid #d6deec;background:#fff;border-radius:99px;padding:4px 11px;font-size:12px;font-weight:650;color:#51627a}.refchips button.on{background:#3158e5;border-color:#3158e5;color:#fff}
 </style>
+<style>
+.tutorsw{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#3158e5;border:1px solid #cfdaff;background:#f3f6ff;border-radius:10px;padding:7px 10px;cursor:pointer}
+#wiki-pop{position:fixed;z-index:80;display:none;background:#fff;border:1px solid #d6deec;border-radius:14px;box-shadow:0 16px 48px rgba(16,29,52,.28);padding:12px 14px;font-size:13px}
+#wiki-pop .wk-h{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.4px;color:#3158e5;margin-bottom:8px}#wiki-pop .wk-h>span:first-child{flex:1}
+.wk-langs{display:flex;gap:4px}.wk-l{border:1px solid #d6deec;background:#fff;border-radius:7px;padding:2px 7px;font-size:11px;font-weight:700;color:#51627a}.wk-l.on{background:#3158e5;border-color:#3158e5;color:#fff}
+.wk-x-btn{border:0;background:transparent;font-size:18px;line-height:1;color:#66758a;padding:0 2px}
+.wk-t{font-weight:800;font-size:15px;margin-bottom:2px}.wk-x{line-height:1.5}.wk-f{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px}
+.wk-a{color:#3158e5;font-weight:700;text-decoration:none}.wk-a:hover{text-decoration:underline}
+.wk-n{border:1px solid #cfdaff;background:#f3f6ff;color:#3158e5;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700}
+.wk-lic{margin-top:8px;font-size:10px;color:#7f8ea5}
+</style>
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
 </head>
 <body>
@@ -970,6 +981,124 @@ Signos vitales|IMC|18.5–24.9 kg/m²`.split('\n').map(l=>l.split('|'));
 </script>
 <script>
 (function(){const l=document.querySelector(".brandmark.logo"),b=document.getElementById("sb-toggle");if(l&&b){l.title="Clic: fijar o contraer el menú";l.onclick=()=>b.click()}})();
+</script>
+<script>
+/* ===== Modo tutor: definiciones rápidas de Wikipedia al seleccionar un término =====
+   Solo se activa al seleccionar texto. Las consultas exitosas se guardan en este dispositivo
+   (IndexedDB, claves `wiki:`, 30 días); nunca se exportan, sincronizan ni envían a otro sitio. */
+const WIKI_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const WIKI_LICENSE = "CC BY-SA 4.0";
+const BIG_WIKI_PREFIX = "wiki:";
+const BIG = { on: !!window.indexedDB };
+/* Almacén local: copia en memoria + IndexedDB (sin localStorage) */
+const _wk = new Map(); let _wdb = null;
+function wkOpen() { return new Promise((res) => { try { const r = indexedDB.open("clinq_wiki", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => res(null); r.onblocked = () => res(null); } catch (e) { res(null); } }); }
+function wkTx(mode, fn) { try { if (!_wdb) return; fn(_wdb.transaction("kv", mode).objectStore("kv")); } catch (e) {} }
+const lsGet = (k) => (_wk.has(k) ? _wk.get(k) : null);
+const lsSet = (k, json) => { try { _wk.set(k, JSON.parse(json)); } catch (e) { return; } wkTx("readwrite", (st) => st.put(json, k)); };
+const lsRemove = (k) => { _wk.delete(k); wkTx("readwrite", (st) => st.delete(k)); };
+const lsKeysWithPrefix = (p) => [..._wk.keys()].filter((k) => k.startsWith(p));
+async function wkInit() {
+  if (!BIG.on) return;
+  _wdb = await wkOpen(); if (!_wdb) { BIG.on = false; return; }
+  await new Promise((res) => { try { const rq = _wdb.transaction("kv", "readonly").objectStore("kv").openCursor(); rq.onsuccess = () => { const c = rq.result; if (c) { try { _wk.set(c.key, JSON.parse(c.value)); } catch (e) {} c.continue(); } else res(); }; rq.onerror = () => res(); } catch (e) { res(); } });
+  wikiCacheSweep();
+}
+const normalizeWikiTerm = (term) => cleanDefineTerm(term).normalize("NFC").toLowerCase();
+const WIKI_STOPWORDS = new Set(["the","this","that","with","from","have","been","were","will","most","next","best","which","what","when","than","none","following","likely","patient","patients","blood","pain","disease","treatment","therapy","test","tests","case","step","management","diagnosis","history","symptom","symptoms","sign","signs","drug","drugs","year","years","old","man","woman","male","female","child","para","pero","como","cuál","cual","paciente","pacientes","sangre","dolor","enfermedad","tratamiento","siguiente","mujer","hombre","niño","años"]);
+const wikiSkipTerm = (term) => { const n = normalizeWikiTerm(term); return [...n].length < 4 || !/\p{L}/u.test(n) || WIKI_STOPWORDS.has(n); };
+const wikiCacheKey = (lang, term) => `${BIG_WIKI_PREFIX}${wikiLang(lang)}:${normalizeWikiTerm(term)}`;
+const wikiFresh = (e) => !!e && typeof e === "object" && typeof e.extract === "string" && !!e.extract && Number.isFinite(e.retrievedAt) && Date.now() - e.retrievedAt < WIKI_TTL_MS && e.retrievedAt <= Date.now() + 60000;
+function wikiCacheGet(lang, term) {
+  if (!BIG.on) return null;
+  const key = wikiCacheKey(lang, term), e = lsGet(key);
+  if (e == null) return null;
+  if (wikiFresh(e)) return e;
+  lsRemove(key); return null;
+}
+function wikiCachePut(lang, term, d) {
+  if (!BIG.on || !d || !d.extract) return;
+  lsSet(wikiCacheKey(lang, term), JSON.stringify({ extract: d.extract, url: d.page || "", license: WIKI_LICENSE, retrievedAt: Date.now(), title: d.title || "", desc: d.desc || "" }));
+}
+function wikiCacheSweep() { if (!BIG.on) return; lsKeysWithPrefix(BIG_WIKI_PREFIX).forEach((k) => { if (!wikiFresh(lsGet(k))) lsRemove(k); }); }
+const wikiLang = (lang) => (/^[a-z]{2,3}$/.test(lang) ? lang : "en");
+const wikiSearchUrl = (lang, term) => `https://${wikiLang(lang)}.wikipedia.org/w/index.php?search=${encodeURIComponent(term)}`;
+const safeWikiUrl = (u) => (typeof u === "string" && /^https:\/\/[a-z-]+\.wikipedia\.org\//.test(u) ? u : null);
+function cleanDefineTerm(raw) { return String(raw || "").replace(/\s+/g, " ").replace(/^[\s"'“”‘’(\[{¿¡]+|[\s"'“”‘’.,;:!?)\]}]+$/g, "").trim(); }
+function clipExtract(text, max = 400) {
+  const s = String(text || "").trim();
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max), end = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("? "), cut.lastIndexOf("! "));
+  return end >= max * 0.5 ? cut.slice(0, end + 1) : cut.replace(/\s+\S*$/, "") + "…";
+}
+/* Consulta a Wikipedia (resumen por título; si no existe, búsqueda del mejor título) */
+async function wikiFetchSummary(lang, title, signal) {
+  const r = await fetch(`https://${wikiLang(lang)}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g, "_"))}?redirect=true`, { signal, headers: { Accept: "application/json" } });
+  return r.ok ? r.json() : null;
+}
+async function wikiLookup(lang, term, signal) {
+  const t = cleanDefineTerm(term);
+  let j = await wikiFetchSummary(lang, t, signal);
+  if (!j || !j.extract) {
+    const s = await fetch(`https://${wikiLang(lang)}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(t)}&limit=1&namespace=0&format=json&origin=*`, { signal });
+    if (s.ok) { const a = await s.json(), nt = a && a[1] && a[1][0]; if (nt) j = await wikiFetchSummary(lang, nt, signal); }
+  }
+  if (!j || !j.extract) return null;
+  const page = safeWikiUrl(j.content_urls && j.content_urls.desktop && j.content_urls.desktop.page) || "";
+  if (j.type === "disambiguation") return { disambig: true, title: j.title || t, page };
+  return { title: j.title || t, desc: j.description || "", extract: clipExtract(j.extract), page };
+}
+/* Interfaz */
+const tutorOn = () => { try { return localStorage.getItem("clinq_tutor") === "1"; } catch (e) { return false; } };
+let wikiTok = 0, wikiCur = null, wikiAbort = null;
+const guessLang = (txt) => (/[áéíóúñ¿¡]|\b(el|la|los|las|del|que|con|para|por|una|paciente)\b/i.test(txt || "") ? "es" : "en");
+function wikiPopEl() { let p = document.getElementById("wiki-pop"); if (!p) { p = document.createElement("div"); p.id = "wiki-pop"; document.body.appendChild(p); } return p; }
+function hideWikiPop() { const p = document.getElementById("wiki-pop"); if (p) p.style.display = "none"; wikiCur = null; wikiTok++; if (wikiAbort) { try { wikiAbort.abort(); } catch (e) {} wikiAbort = null; } }
+function placeWikiPop(rect) { const p = wikiPopEl(); p.style.display = "block"; const w = Math.min(360, innerWidth - 20); p.style.width = w + "px"; const h = p.offsetHeight; let top = rect.bottom + 8; if (top + h > innerHeight - 8 && rect.top - h - 8 > 8) top = rect.top - h - 8; p.style.top = Math.max(8, top) + "px"; p.style.left = Math.max(10, Math.min(rect.left, innerWidth - w - 10)) + "px"; }
+function renderWikiPop(rect, term, lang, state, d) {
+  const p = wikiPopEl(), langs = ["en", "es"].map((l) => `<button type="button" class="wk-l ${l === lang ? "on" : ""}" data-l="${l}">${l.toUpperCase()}</button>`).join("");
+  let body;
+  if (state === "loading") body = '<div class="smalltext muted">Buscando en Wikipedia…</div>';
+  else if (state === "none") body = `<div class="smalltext">No encontré un artículo claro para «${esc(term)}».</div><a class="wk-a" target="_blank" rel="noopener noreferrer" href="${esc(wikiSearchUrl(lang, term))}">Buscar en Wikipedia ↗</a>`;
+  else if (state === "error") body = '<div class="smalltext">No se pudo consultar Wikipedia (revisa tu conexión).</div>';
+  else if (d.disambig) body = `<div class="smalltext">«${esc(d.title)}» tiene varios significados.</div><a class="wk-a" target="_blank" rel="noopener noreferrer" href="${esc(d.page || wikiSearchUrl(lang, term))}">Ver opciones ↗</a>`;
+  else { const url = safeWikiUrl(d.url || d.page); body = `<div class="wk-t">${esc(d.title)}</div>${d.desc ? `<div class="smalltext muted" style="margin-bottom:6px">${esc(d.desc)}</div>` : ""}<div class="wk-x">${esc(d.extract)}</div><div class="wk-f">${url ? `<a class="wk-a" target="_blank" rel="noopener noreferrer" href="${esc(url)}">Leer en Wikipedia ↗</a>` : ""}<button type="button" class="wk-n">➕ A mis notas</button></div><div class="wk-lic">Texto de Wikipedia · ${WIKI_LICENSE}</div>`; }
+  p.innerHTML = `<div class="wk-h"><span>🎓 Modo tutor</span><span class="wk-langs">${langs}</span><button type="button" class="wk-x-btn" aria-label="Cerrar">×</button></div>${body}`;
+  placeWikiPop(rect);
+  p.querySelector(".wk-x-btn").onclick = hideWikiPop;
+  p.querySelectorAll(".wk-l").forEach((b) => (b.onclick = () => runWiki(rect, term, b.dataset.l)));
+  const nb = p.querySelector(".wk-n"); if (nb) nb.onclick = () => { const q = currentQuiz && bank.find((x) => x.id === currentQuiz.questions[currentQuiz.index]); if (!q) return; q.myNote = (q.myNote ? q.myNote + "\n\n" : "") + `${d.title}: ${d.extract} (Wikipedia, ${WIKI_LICENSE})`; q.updated = Date.now(); persistBank(); const t = document.getElementById("qnote-t"); if (t) t.value = q.myNote; notify("Definición añadida a tus notas"); };
+}
+async function runWiki(rect, term, lang) {
+  wikiCur = { term, lang }; const tok = ++wikiTok; if (wikiAbort) { try { wikiAbort.abort(); } catch (e) {} }
+  const c = wikiCacheGet(lang, term); if (c) { renderWikiPop(rect, term, lang, "ok", c); return; }
+  renderWikiPop(rect, term, lang, "loading");
+  wikiAbort = typeof AbortController !== "undefined" ? new AbortController() : null;
+  try {
+    const d = await wikiLookup(lang, term, wikiAbort && wikiAbort.signal);
+    if (tok !== wikiTok) return;
+    if (!d) renderWikiPop(rect, term, lang, "none"); else { if (!d.disambig) wikiCachePut(lang, term, d); renderWikiPop(rect, term, lang, "ok", d); }
+  } catch (e) { if (tok === wikiTok && !(e && e.name === "AbortError")) renderWikiPop(rect, term, lang, "error"); }
+}
+function onWikiSelect() {
+  if (!tutorOn() || !currentQuiz || currentQuiz.finished) return;
+  const sel = window.getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+  const raw = sel.toString(), term = cleanDefineTerm(raw);
+  if (!term || term.length > 60 || term.split(" ").length > 6 || wikiSkipTerm(term)) return;
+  const r = sel.getRangeAt(0), host = (r.commonAncestorContainer.nodeType === 1 ? r.commonAncestorContainer : r.commonAncestorContainer.parentElement);
+  if (!host || !host.closest(".quizcard") || host.closest("textarea,input,#qnote,.quiztop,.refbtn,#wiki-pop")) return;
+  if (wikiCur && wikiCur.term === term && document.getElementById("wiki-pop").style.display === "block") return;
+  let rect = null; try { rect = r.getBoundingClientRect(); } catch (e) {}
+  if (!rect || (!rect.width && !rect.height)) rect = host.getBoundingClientRect();
+  const q = bank.find((x) => x.id === currentQuiz.questions[currentQuiz.index]);
+  runWiki(rect, term, guessLang(q ? q.stem : term));
+}
+let wikiT; ["mouseup", "touchend", "keyup"].forEach((ev) => document.addEventListener(ev, (e) => { if (e.target && e.target.closest && e.target.closest("#wiki-pop")) return; clearTimeout(wikiT); wikiT = setTimeout(onWikiSelect, 180); }));
+document.addEventListener("mousedown", (e) => { if (!(e.target.closest && e.target.closest("#wiki-pop"))) { const s = window.getSelection(); if (!s || s.isCollapsed) hideWikiPop(); } });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideWikiPop(); });
+/* Interruptor "Modo tutor" en la barra de la pregunta */
+(function () { const _rq = renderQuizQuestion; renderQuizQuestion = function () { _rq.apply(this, arguments); hideWikiPop(); try { const t = document.querySelector(".quiztop"); if (t && currentQuiz && !currentQuiz.finished && !t.querySelector(".tutorsw")) { const l = document.createElement("label"); l.className = "tutorsw"; l.title = "Al seleccionar un término se consulta Wikipedia (solo se envía ese término)."; l.innerHTML = `<input type="checkbox" ${tutorOn() ? "checked" : ""}> 🎓 Modo tutor`; l.firstChild.onchange = (e) => { try { localStorage.setItem("clinq_tutor", e.target.checked ? "1" : "0"); } catch (er) {} if (!e.target.checked) hideWikiPop(); else notify("Modo tutor activado: selecciona un término para ver su definición."); }; t.insertBefore(l, t.lastElementChild); } } catch (e) {} }; })();
+wkInit();
 </script>
 </body>
 </html>
