@@ -106,52 +106,27 @@ button.avatar{border:0;padding:0;overflow:hidden;cursor:pointer}
       <div class="panel">
         <div class="sectionhead"><div><h3>Sube tus documentos</h3><p>Selecciona uno o varios archivos de tu computadora.</p></div></div>
         <div class="dropzone" id="dropzone"><div class="uploadicon">⇧</div><h3>Arrastra y suelta tus archivos aquí</h3><p>o selecciónalos desde tu dispositivo</p><input type="file" id="fileinput" multiple accept=".pdf,.docx,.doc,.txt,.md,.csv,.xlsx,.xls,.json" hidden><button class="btn primary" onclick="document.getElementById('fileinput').click()">Elegir archivos</button><div class="filetypes"><span class="filetype">PDF</span><span class="filetype">WORD</span><span class="filetype">EXCEL</span><span class="filetype">TXT</span><span class="filetype">CSV</span><span class="filetype">MD</span><span class="filetype">JSON</span></div></div>
-        <div class="privacy"><span>🔐</span><div><strong>Procesamiento local por defecto.</strong> El archivo se lee dentro de tu navegador y no se envía a ningún servicio mientras importas o detectas preguntas. Solo si eliges “Generar con IA”, el texto se envía a la API de OpenAI. La app usa bibliotecas públicas para leer algunos formatos.</div></div>
+        <div class="privacy"><span>🔐</span><div><strong>Procesamiento local por defecto.</strong> El archivo se lee dentro de tu navegador y no se envía a ningún servicio mientras importas o detectas preguntas. Ningún archivo sale de tu dispositivo. La app usa bibliotecas públicas para leer algunos formatos.</div></div>
         <div id="import-status" class="smalltext muted" style="margin-top:13px"></div>
         <div id="preview-area" class="preview"></div>
       </div>
       <div class="panel"><div class="sectionhead"><div><h3>¿Tu banco no está en un archivo compatible?</h3><p>Pega el texto directamente.</p></div></div><textarea id="paste-text" class="field textimport" placeholder="Pega aquí las preguntas, incluyendo las opciones A–E y las respuestas si están disponibles..."></textarea><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:10px"><span class="smalltext muted">Admite texto de opción múltiple y JSON estructurado de Clicq/USMLE (incluye bloques y variantes).</span><button class="btn primary" onclick="parsePastedText()">Analizar texto</button></div><div class="howsteps"><div class="step"><div class="stepnum">1</div><div><strong>Extrae las preguntas</strong><p>Busca preguntas numeradas y opciones etiquetadas A–E.</p></div></div><div class="step"><div class="stepnum">2</div><div><strong>Revisa la vista previa</strong><p>Confirma que el enunciado y las opciones quedaron bien separados.</p></div></div><div class="step"><div class="stepnum">3</div><div><strong>Guárdalas en tu banco</strong><p>Las preguntas y tu progreso quedan en el almacenamiento local del navegador.</p></div></div></div><div class="notice">Los PDF escaneados como imágenes pueden necesitar OCR y no siempre se extraerán. Para mejores resultados, usa un PDF con texto seleccionable o pega el texto extraído. Los formatos muy distintos pueden requerir una revisión manual.</div></div>
     </div>
     <div class="panel" style="margin-top:18px">
-      <div class="sectionhead"><div><h3>Prompt USMLE Step 2 CK</h3><p>Copia el prompt completo y pégalo en tu modelo de IA. Después, importa aquí el JSON que genere.</p></div><button class="btn primary" type="button" onclick="copyStep2Prompt()">⧉ Copiar prompt</button></div>
-      <textarea id="step2-prompt" class="field textimport" readonly spellcheck="false" aria-label="Prompt completo de generación de preguntas"></textarea>
-      <div class="smalltext muted" style="margin-top:8px">Incluye 40 preguntas principales, 2 variantes por pregunta, dificultad 8/24/8 y salida JSON compatible con el importador de Clicq.</div>
-    </div>
-    <div class="panel" style="margin-top:18px">
-      <div class="sectionhead"><div><h3>Formato JSON: banco vs. generación con IA</h3><p>Activa el modo que necesitas y copia el prompt correspondiente. Ambos formatos se pueden importar aquí.</p></div></div>
-      <label style="display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #dbe3ee;border-radius:10px"><input type="checkbox" id="json-bank-mode" checked onchange="updateJSONMode()"><span><strong>Modo banco de preguntas</strong><br><span class="smalltext muted">Activado: extracción fiel del documento, sin variantes. Desactivado: generación de preguntas nuevas con IA.</span></span></label>
+      <div class="sectionhead"><div><h3>Prompt para tu IA o NotebookLM</h3><p>Elige el modo, copia el prompt, pégalo en tu IA y luego importa aquí el JSON que genere.</p></div></div>
+      <label style="display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #dbe3ee;border-radius:10px"><input type="checkbox" id="json-bank-mode" checked onchange="updateJSONMode()"><span><strong>Modo banco de preguntas</strong><br><span class="smalltext muted">Activado: extracción fiel del documento, sin variantes. Desactivado: generación de 40 preguntas nuevas estilo USMLE Step 2 CK con 2 variantes cada una.</span></span></label>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px"><strong id="json-mode-title">Prompt para extraer un banco existente</strong><button class="btn primary small" onclick="copyJSONModePrompt()">⧉ Copiar prompt</button></div>
       <textarea id="json-mode-prompt" class="field textimport" readonly spellcheck="false" style="margin-top:8px;min-height:230px" aria-label="Prompt JSON según modo"></textarea>
       <div class="notice" style="margin-top:8px">El interruptor cambia el prompt que se copia; no convierte automáticamente un formato en el otro. Al importar un JSON, Clicq detecta tanto el esquema de bloques con <code>correctAnswer</code> como los respaldos propios de Clicq.</div>
     </div>
-    <div class="panel generator-panel">
-      <div class="sectionhead"><div><h3>Crear preguntas desde apuntes</h3><p>Puedes generar preguntas aunque el documento no tenga signos de interrogación ni opciones A–E.</p></div><span class="pill blue">Nuevo</span></div>
-      <div class="generator-grid">
-        <div>
-          <label for="notes-text">Texto de estudio</label>
-          <textarea id="notes-text" class="field textimport" placeholder="Sube un PDF/Word arriba o pega aquí tus apuntes: fisiopatología, definiciones, criterios diagnósticos, tratamientos, tablas convertidas a texto…"></textarea>
-          <div class="toolbar">
-            <input id="notes-source" class="field" style="flex:1;min-width:180px" value="Apuntes importados" placeholder="Nombre del tema o documento">
-            <select id="gen-count" class="field" aria-label="Cantidad de preguntas"><option value="5">5 preguntas</option><option value="10" selected>10 preguntas</option><option value="15">15 preguntas</option><option value="20">20 preguntas</option><option value="30">30 preguntas</option><option value="50">50 preguntas</option><option value="75">75 preguntas</option><option value="100">100 preguntas</option></select>
-          </div>
-          <label for="gen-style">Estilo (para generación con IA)</label>
-          <select id="gen-style" class="field"><option value="clinical">Viñeta clínica estilo USMLE</option><option value="direct">Repaso directo de conceptos</option></select>
-          <div class="generator-actions"><button id="local-gen-btn" class="btn outline" onclick="generateQuestionsLocal()">✦ Generar sin IA</button><button id="ai-gen-btn" class="btn primary" onclick="generateQuestionsAI()">✦ Generar con IA</button></div>
-          <div class="genhint">“Sin IA” usa reglas y relaciones explícitas que encuentra en tus apuntes; funciona localmente, pero es menos flexible. La generación con IA puede interpretar apuntes y redactar viñetas clínicas completas. En esta versión, Gemini requiere una clave de AI Studio; iniciar sesión en Google dentro de una página web no autoriza automáticamente esta app a llamar al modelo. La generación local no inventa una historia clínica completa ni sustituye la revisión médica.</div>
-        </div>
-        <div>
-          <label for="ai-provider">Proveedor de IA</label>
-          <select id="ai-provider" class="field" onchange="setProviderUI()"><option value="gemini" selected>Google Gemini (con cuenta Google)</option><option value="openai">OpenAI</option></select>
-          <label for="notes-api-key">Clave de acceso del proveedor</label>
-          <input id="notes-api-key" class="field" type="password" autocomplete="off" spellcheck="false" placeholder="Pega tu clave de Gemini aquí">
-          <label for="notes-model">Modelo de IA</label>
-          <input id="notes-model" class="field" value="gemini-2.5-flash" autocomplete="off" spellcheck="false">
-          <label class="api-consent"><input type="checkbox" id="ai-consent"><span>Acepto enviar mis apuntes al proveedor seleccionado para generar preguntas.</span></label>
-          <div class="notice" id="provider-notice">Con tu cuenta Google, abre <a id="provider-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a> para crear una clave de Gemini. Esta app HTML no puede usar solo la sesión de Google como autorización de modelo: para eliminar la clave manual hace falta configurar OAuth de Google Cloud y un flujo de autenticación compatible. Puede haber cuotas gratuitas o límites según la cuenta, el país y el modelo. No publiques esta app con una clave incrustada.</div>
-          <div id="generator-status" class="smalltext muted" style="margin-top:12px" aria-live="polite"></div>
-        </div>
-      </div>
+    <div class="panel generator-panel" id="nblm-panel">
+      <div class="sectionhead"><div><h3>Conectar con NotebookLM</h3><p>Usa tu cuaderno de NotebookLM como fuente de preguntas, sin claves de API.</p></div><span class="pill gold">Próximamente</span></div>
+      <label for="nblm-url">Enlace de tu cuaderno</label>
+      <div class="toolbar" style="margin-top:6px"><input id="nblm-url" class="field" style="flex:1;min-width:220px" placeholder="https://notebooklm.google.com/notebook/…" autocomplete="off" spellcheck="false"><button class="btn outline" type="button" onclick="nblmSave()">Guardar enlace</button><button class="btn primary" type="button" onclick="nblmOpen()">↗ Abrir cuaderno</button></div>
+      <div class="notice">Esta sección está lista para conectarse. Cuando tengas el cuaderno, la integración se completa aquí. Mientras tanto, copia el prompt de arriba, pégalo en el chat de tu cuaderno e importa el JSON que te devuelva.</div>
+      <div id="generator-status" class="smalltext muted" style="margin-top:12px" aria-live="polite"></div>
     </div>
+    <div hidden aria-hidden="true"><textarea id="notes-text"></textarea><input id="notes-source" value="Apuntes importados"><select id="gen-count"><option value="10">10</option></select><select id="gen-style"><option value="clinical">c</option></select><select id="ai-provider"><option value="gemini">g</option></select><input id="notes-api-key"><input id="notes-model" value="gemini-2.5-flash"><input type="checkbox" id="ai-consent"><div id="provider-notice"><a id="provider-link" href="#">x</a></div><button id="local-gen-btn" type="button"></button><button id="ai-gen-btn" type="button"></button></div>
   </section>
   <section class="view" id="view-library">
     <div class="sectionhead"><div><h3>Mi banco de preguntas</h3><p id="library-subtitle">Tus preguntas guardadas localmente.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn outline small" onclick="exportBank()">↧ Exportar respaldo</button><button class="btn outline small" onclick="backupInput.click()">↥ Importar respaldo</button><button class="btn outline small" onclick="addManualQuestion()">＋ Crear pregunta manual</button><button class="btn primary small" onclick="showView('import')">＋ Importar</button><button class="btn danger small" onclick="deleteEntireBank()">🗑 Borrar banco completo</button></div></div>
@@ -483,7 +458,7 @@ const BANK_EXTRACTION_PROMPT = `Extrae las preguntas del documento especificado 
   }]
 }
 REGLAS: 1. Copia los enunciados y opciones EXACTAMENTE como aparecen. 2. En vignette inicia con el número original: "Pregunta 1: ...". 3. En options.text deja solo la opción limpia; elimina flechas, símbolos y notas explicativas pegadas. 4. Pasa las explicaciones individuales de cada opción incorrecta a distractorAnalysis por letra; la explicación de la correcta va en explanation. 5. Detecta la especialidad en subject (por ejemplo Orthopedics and Traumatology, Ophthalmology, Emergency Medicine, Otolaryngology, Neurosurgery, Urology o Vascular Surgery). 6. variants siempre debe ser []. 7. stem debe ser "Seleccione la opción correcta:" o el enunciado directo. Usa comillas dobles y escapa caracteres especiales. 8. correctAnswer debe ser solo la letra de la respuesta correcta; si no se puede identificar con seguridad, usa cadena vacía. 9. No inventes datos, opciones, respuestas, explicaciones ni referencias. Retorna únicamente el objeto JSON válido.`;
-function updateJSONMode(){const bankMode=document.getElementById('json-bank-mode')?.checked!==false;const title=document.getElementById('json-mode-title'),box=document.getElementById('json-mode-prompt');if(!box)return;title.textContent=bankMode?'Prompt para extraer un banco existente':'Prompt para generar preguntas nuevas con IA';box.value=bankMode?BANK_EXTRACTION_PROMPT:STEP2_CK_PROMPT;}
+function updateJSONMode(){const bankMode=document.getElementById('json-bank-mode')?.checked!==false;const title=document.getElementById('json-mode-title'),box=document.getElementById('json-mode-prompt');if(!box)return;title.textContent=bankMode?'Prompt para extraer un banco existente':'Prompt para generar preguntas nuevas (USMLE Step 2 CK)';box.value=bankMode?BANK_EXTRACTION_PROMPT:STEP2_CK_PROMPT;}
 function copyJSONModePrompt(){updateJSONMode();const box=document.getElementById('json-mode-prompt');box.focus();box.select();try{if(document.execCommand('copy')){notify('Prompt JSON copiado.');return}}catch(e){}navigator.clipboard?.writeText(box.value).then(()=>notify('Prompt JSON copiado.')).catch(()=>notify('Selecciona el texto y cópialo manualmente.'))}
 function copyStep2Prompt(){const box=document.getElementById('step2-prompt');if(!box)return;box.value=STEP2_CK_PROMPT;box.focus();box.select();try{const ok=document.execCommand('copy');if(ok){notify('Prompt copiado. Ya puedes pegarlo en tu IA.');return}}catch(e){}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(STEP2_CK_PROMPT).then(()=>notify('Prompt copiado. Ya puedes pegarlo en tu IA.')).catch(()=>notify('Selecciona el texto del prompt y cópialo manualmente.'));}else{notify('Selecciona el texto del prompt y cópialo manualmente.')}}
 function parsePastedText(){let raw=document.getElementById('paste-text').value.trim();if(!raw){notify('Pega primero el texto del banco.');return}importPreview=parseText(raw,'Texto pegado');const d=parseText.lastDiagnostics||{};document.getElementById('import-status').textContent=importPreview.length?`${importPreview.length} pregunta(s) detectadas en el texto pegado.`+(d.candidates>d.parsed?` Se reconocieron ${d.candidates} bloques y ${d.parsed} tenían opciones; los demás no tenían opciones detectables o requieren revisión.`:''):'No detecté preguntas de opción múltiple. Puedes crear preguntas desde el texto en el panel “Crear preguntas desde apuntes”.';renderPreview()}
@@ -548,7 +523,7 @@ function importBackup(file){let r=new FileReader();r.onload=()=>{try{
 // Respaldo restaurable desde la sección de banco
 const backupInput=document.createElement('input');backupInput.type='file';backupInput.accept='.json,application/json';backupInput.hidden=true;backupInput.addEventListener('change',()=>{if(backupInput.files?.[0])importBackup(backupInput.files[0]);backupInput.value=''});document.body.appendChild(backupInput);
 
-document.getElementById('step2-prompt').value=STEP2_CK_PROMPT;updateJSONMode();
+updateJSONMode();
 loadSessions();refreshAll();if(currentQuiz)renderQuizQuestion();else renderQuizStart();
 /* ==== Sincronización con Google Drive (carpeta oculta appDataFolder) ==== */
 const GOOGLE_CLIENT_ID=''; // Opcional: pega aquí tu ID de cliente OAuth. Si lo dejas vacío, la app te lo pedirá al iniciar sesión.
@@ -557,6 +532,7 @@ const CQS_SCOPE='https://www.googleapis.com/auth/drive.appdata openid email prof
 const CQS_KEYS=[DBKEY,SESSKEY];
 const cqs={token:null,exp:0,client:null,pending:null,busy:false,again:false,timer:null,retry:null,rev:0,state:'out',msg:'',armed:false,lastTry:0,lastFocus:0,applying:false};
 let cqsMeta=(()=>{try{return JSON.parse(localStorage.getItem(CQS_META_KEY)||'{}')||{}}catch(e){return {}}})();
+function cqsNote(msg){try{const k='clinq_drive_note_ts',last=+localStorage.getItem(k)||0;if(Date.now()-last<30*60*1000)return;localStorage.setItem(k,String(Date.now()))}catch(e){}notify(msg)}
 function cqsSaveMeta(){try{localStorage.setItem(CQS_META_KEY,JSON.stringify(cqsMeta))}catch(e){}}
 function cqsClientId(){return (window.CLINQ_GOOGLE_CLIENT_ID||GOOGLE_CLIENT_ID||localStorage.getItem(CQS_CID_KEY)||'').trim()}
 function cqsTokenOk(){return !!cqs.token&&Date.now()<cqs.exp}
@@ -677,12 +653,12 @@ async function cqsSync(){
   if(cqsMeta.fileId){try{remoteV=(await (await cqsApi('https://www.googleapis.com/drive/v3/files/'+cqsMeta.fileId+'?fields=version')).json()).version}catch(e){if(e.status===404){cqsMeta.fileId=null;cqsMeta.version=null}else throw e}}
   if(!cqsMeta.fileId){const f=await cqsFindFile();if(f){cqsMeta.fileId=f.id;remoteV=f.version}}
   const rev0=cqs.rev;
-  if(!cqsMeta.fileId){await cqsPush();notify('Respaldo creado en tu Drive')}
+  if(!cqsMeta.fileId){await cqsPush();cqsNote('Respaldo creado en tu Drive')}
   else if(remoteV!==cqsMeta.version){
    const remote=await cqsDownload(),first=!cqsMeta.version;
    const localChanged=cqsMeta.dirty||cqs.rev!==rev0||(first&&cqsHasData());
-   if(!localChanged){cqsApplyRemote(remote);cqsMeta.version=remoteV;cqsMeta.dirty=false;cqsSaveMeta();notify('Datos cargados desde tu Drive')}
-   else{cqsMerge(remote);cqsMeta.version=remoteV;cqsMeta.dirty=true;cqsSaveMeta();await cqsPush();notify('Datos combinados con tu Drive')}}
+   if(!localChanged){cqsApplyRemote(remote);cqsMeta.version=remoteV;cqsMeta.dirty=false;cqsSaveMeta();cqsNote('Datos cargados desde tu Drive')}
+   else{cqsMerge(remote);cqsMeta.version=remoteV;cqsMeta.dirty=true;cqsSaveMeta();await cqsPush();cqsNote('Datos combinados con tu Drive')}}
   else if(cqsMeta.dirty){await cqsPush()}
   cqsMeta.lastSync=Date.now();cqsSaveMeta();
   cqsSetStatus(cqsMeta.dirty?'pending':'ok');
@@ -746,6 +722,18 @@ function updateQuizPreview(){const el=document.getElementById('quiz-preview');if
  ${cfg.sources.length?`<div class="smalltext muted" style="margin-top:8px">${cfg.excludeSources?'Excluyendo':'Solo'} ${cfg.sources.length} banco(s)</div>`:''}`}
 (function(){const qa=document.getElementById('quiz-area');['change','input'].forEach(ev=>qa.addEventListener(ev,()=>{if(!currentQuiz)updateQuizPreview()}));
  const _r=renderQuizStart;renderQuizStart=function(){_r.apply(this,arguments);updateQuizPreview()}})();
+</script>
+<script>
+/* ---- Atajos: Espacio abre/cierra opciones; 1-5 = A-E ---- */
+function nblmSave(){const v=document.getElementById('nblm-url').value.trim();try{localStorage.setItem('clinq_nblm_url',v)}catch(e){}notify(v?'Enlace del cuaderno guardado':'Enlace borrado')}
+function nblmOpen(){const v=document.getElementById('nblm-url').value.trim()||'https://notebooklm.google.com/';window.open(/^https:\/\//.test(v)?v:'https://notebooklm.google.com/','_blank','noopener')}
+try{document.getElementById('nblm-url').value=localStorage.getItem('clinq_nblm_url')||''}catch(e){}
+function quizKeysActive(e){if(!currentQuiz||currentQuiz.finished||!document.getElementById('view-practice').classList.contains('active'))return false;if(e.ctrlKey||e.metaKey||e.altKey)return false;if(document.querySelector('.modalback.open'))return false;const t=e.target,tag=t&&t.tagName;if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable))return false;return !!document.querySelector('.option-disclosure')}
+document.addEventListener('keydown',e=>{if(!quizKeysActive(e))return;
+ if(e.code==='Space'||e.key===' '){e.preventDefault();const d=document.querySelector('.option-disclosure');if(e.target&&e.target.blur&&e.target.tagName==='BUTTON')e.target.blur();if(!e.repeat)d.open=!d.open;return}
+ const i='12345'.indexOf(e.key);if(i<0)return;const opts=[...document.querySelectorAll('.option-disclosure .option')];const b=opts[i];if(!b||b.disabled)return;e.preventDefault();
+ const d=document.querySelector('.option-disclosure');if(!d.open)d.open=true;setOptionsOpen(currentQuiz.questions[currentQuiz.index],true);b.click()});
+document.addEventListener('keyup',e=>{if((e.code==='Space'||e.key===' ')&&quizKeysActive(e))e.preventDefault()});
 </script>
 </body>
 </html>
