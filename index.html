@@ -2101,6 +2101,7 @@ wkInit();
     const q = curQ(), s = tImg.get(M.lang + "|" + M.term.toLowerCase()) || { st: "loading", items: [] };
     const own = q ? [...(q.images || []), ...(q.noteImages || [])].filter((u) => typeof u === "string" && u) : [];
     let h = '<div class="wk-st">🖼 Imágenes</div>';
+    h += `<div class="wk-gi"><input id="wk-gi-q" class="field" type="search" value="${esc(M.term)}" autocomplete="off" aria-label="Texto para buscar en Google Imágenes"><button type="button" class="btn outline small" id="wk-gi-go">Abrir Google Imágenes ↗</button></div><div class="smalltext muted">Escribe o corrige el texto y ábrelo en Google Imágenes en otra pestaña.</div>`;
     if (own.length) h += '<div class="smalltext muted">De esta pregunta y tus notas</div><div class="wk-ims">' + own.map((u, i) => { const inf = infoOf(q, u); return `<button type="button" class="wk-im" data-o="${i}"><img src="${esc(u)}" alt="" loading="lazy"><span>${esc((inf && inf.term) || "Ampliar")}</span></button>`; }).join("") + "</div>";
     h += `<div class="smalltext muted" style="margin-top:8px">Wikimedia Commons + Openverse · «${esc(M.term)}» · desliza para ver más</div>`;
     h += `<div class="wk-gl"><strong>Imágenes encontradas para:</strong> ${esc(M.term)} <span class="smalltext muted">· Resultados visuales dentro del tutor</span></div>`;
@@ -2109,6 +2110,10 @@ wkInit();
     else if (!s.items.length) h += '<div class="smalltext muted">Commons y Openverse no devolvieron imágenes para esta frase. Prueba otro término en el buscador de arriba; para algunos términos médicos se consultan variantes en inglés automáticamente.</div>';
     else h += '<div class="wk-ims">' + s.items.map((it, i) => `<button type="button" class="wk-im" data-c="${i}"><img src="${esc(it.thumb)}" alt="" loading="lazy" decoding="async"><span>${esc(it.title)}</span></button>`).join("") + '</div><div class="wk-lic">Se muestran miniaturas compatibles siempre que la fuente las facilite; cada imagen conserva su licencia y fuente al ampliarla.</div>';
     sec.innerHTML = h;
+    const giq = sec.querySelector('#wk-gi-q'), gigo = sec.querySelector('#wk-gi-go');
+    const giOpen = () => { const v = ((giq && giq.value) || M.term || '').trim(); if (!v) return; const qq = typeof tutorGoogleImagesQuery === 'function' ? tutorGoogleImagesQuery(v) : v; window.open('https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(qq), '_blank', 'noopener,noreferrer'); };
+    if (gigo) gigo.onclick = giOpen;
+    if (giq) giq.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); giOpen(); } };
     sec.querySelectorAll("[data-o]").forEach((b) => {
       const img = b.querySelector("img"), label = b.querySelector("span");
       if (img) img.addEventListener("error", () => markImageUnavailable(img, b, label, null), { once: true });
@@ -2581,6 +2586,8 @@ async function visionDetect(dataUrl,auto){
    if(/^[a-e1-5]$/.test(key)){if(answerOption(key))handled(e);return;}
    if(key===' '||key==='spacebar'){
      const d=document.querySelector('.option-disclosure');if(!d)return;
+     const sqid=currentQuiz.questions[currentQuiz.index],sanswered=currentQuiz.answers&&currentQuiz.answers[sqid]!==undefined;
+     if(sanswered){handled(e);if(typeof nextQuestion==='function')nextQuestion();return}
      handled(e);d.open=!d.open;if(typeof setOptionsOpen==='function')setOptionsOpen(currentQuiz.questions[currentQuiz.index],d.open);return;
    }
    if(key==='arrowleft'){if(typeof previousQuestion==='function'&&currentQuiz.index>0){handled(e);previousQuestion()}return;}
@@ -2598,7 +2605,7 @@ async function visionDetect(dataUrl,auto){
  function addLegend(){
    const host=$('quiz-area');if(!host||!document.querySelector('.quizcard'))return;
    host.querySelector('.kbdlegend')?.remove();
-   const rows=[['M','Marcar / quitar marca'],['H','Subrayar texto'],['T','Activar/desactivar tutor'],['V','Valores normales'],['N','Modo día/noche'],['O','Omitir pregunta'],['A–E / 1–5','Elegir respuesta'],['← / →','Anterior / siguiente'],['Espacio','Abrir/cerrar opciones'],['Enter','Siguiente (si se puede)'],['Esc','Cerrar ventanas del tutor']];
+   const rows=[['M','Marcar / quitar marca'],['H','Subrayar texto'],['T','Activar/desactivar tutor'],['V','Valores normales'],['N','Modo día/noche'],['O','Omitir pregunta'],['A–E / 1–5','Elegir respuesta'],['← / →','Anterior / siguiente'],['Espacio','Abrir/cerrar opciones · si ya respondiste, pasa a la siguiente'],['Enter','Siguiente (si se puede)'],['Esc','Cerrar ventanas del tutor']];
    const d=document.createElement('div');d.className='kbdlegend';d.innerHTML='<strong>⌨ Atajos de teclado</strong>'+rows.map(x=>'<span><kbd>'+x[0]+'</kbd>'+x[1]+'</span>').join('');host.appendChild(d);
  }
  document.addEventListener('DOMContentLoaded',()=>{
@@ -2628,5 +2635,8 @@ html.dark .session-name-create label,html.dark .session-name-create .smalltext{c
 .recent-bank-card{display:flex;align-items:center;gap:12px;min-width:0}.recent-bank-main{flex:1;min-width:0}.recent-bank-main strong{display:block;overflow-wrap:anywhere}.recent-bank-main span,.recent-bank-main small{display:block;color:var(--muted,#66758a);font-size:12px;margin-top:4px}
 html.dark .recent-bank-card .recent-bank-main span,html.dark .recent-bank-card .recent-bank-main small{color:#b7c5da!important}
 @media(max-width:620px){.recent-bank-card{flex-wrap:wrap}.recent-bank-card .btn{margin-left:46px}.wk-gsearch-row{align-items:stretch}}
+.wk-gi{display:flex;gap:8px;align-items:center;margin:6px 0 2px}.wk-gi input{flex:1;min-width:0}.wk-gi .btn{flex:none}
+html.dark .wk-gi .btn{background:#1b2b46!important;color:#eaf0ff!important;border-color:#5875b7!important}
+@media(max-width:620px){.wk-gi{flex-wrap:wrap}}
 </style>
 </body></html>
