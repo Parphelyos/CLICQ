@@ -484,6 +484,19 @@ body.pl-open #pl-dock{display:flex}
  body.pl-open .main{padding-bottom:64vh}
 }
 </style>
+<style id="day-css">
+.day-tools{display:flex;gap:14px;margin:0 0 8px;font-size:12px}
+.day-tools button{border:0;background:none;color:var(--blue);font-weight:700;padding:2px 0;cursor:pointer}
+.day-f{border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--panel)}
+.day-f>summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;cursor:pointer;font-weight:800;font-size:13px;list-style:none}
+.day-f>summary::-webkit-details-marker{display:none}
+.day-f>summary::before{content:'▸';color:var(--muted);transition:transform .15s;display:inline-block;width:12px}
+.day-f[open]>summary::before{transform:rotate(90deg)}
+.day-f .dn{font-weight:600;color:var(--muted);font-size:12px}
+.day-f .dtag{font-size:10.5px;font-weight:800;color:var(--blue);background:var(--blue2);padding:2px 8px;border-radius:99px}
+.day-f .day-all{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer}
+.day-f .day-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding:0 12px 12px}
+</style>
 </head>
 <body>
 <div class="app">
@@ -3177,4 +3190,47 @@ const _pp=parsePastedText;
 parsePastedText=async function(){const keep=renderPreview;renderPreview=function(){};try{_pp()}finally{renderPreview=keep}await finish()};
 })();
 </script>
+<script>
+/* ===================== SESIÓN DE ESTUDIO: bancos agrupados por día de importación ===================== */
+(function(){
+const KEY='clinq_day_open';
+const rj=()=>{try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return {}}};
+const sv=o=>{try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}};
+const day=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+function title(k){
+  if(k==='0000')return{t:'Sin fecha de importación',tag:''};
+  const[y,m,d]=k.split('-').map(Number);let t=new Date(y,m-1,d).toLocaleDateString('es-DO',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  return{t:t.charAt(0).toUpperCase()+t.slice(1),tag:k===day(Date.now())?'Hoy':k===day(Date.now()-864e5)?'Ayer':''}}
+function group(){
+  const host=document.getElementById('quiz-sources');if(!host||host.dataset.byDay)return;
+  const labs=[...host.querySelectorAll(':scope>label')];if(!labs.length)return;
+  const first={};bank.forEach(q=>{const s=q.source||'Texto pegado',c=Number(q.created)||0;if(c&&(!(s in first)||c<first[s]))first[s]=c});
+  const days={};labs.forEach(l=>{const v=l.querySelector('input').value,k=first[v]?day(first[v]):'0000';(days[k]=days[k]||[]).push(l)});
+  const keys=Object.keys(days).sort().reverse(),saved=rj();
+  host.dataset.byDay='1';host.style.display='block';host.innerHTML='';
+  const tools=document.createElement('div');tools.className='day-tools';
+  tools.innerHTML='<button type="button" data-a="1">Expandir todas</button><button type="button" data-a="0">Contraer todas</button>';
+  host.appendChild(tools);
+  keys.forEach((k,idx)=>{
+    const ls=days[k],nq=ls.reduce((n,l)=>n+bank.filter(q=>(q.source||'Texto pegado')===l.querySelector('input').value).length,0),ti=title(k);
+    const f=document.createElement('details');f.className='day-f';f.dataset.k=k;
+    f.open=k in saved?!!saved[k]:idx===0;
+    const sm=document.createElement('summary');
+    sm.innerHTML='<span>📁 '+esc(ti.t)+'</span>'+(ti.tag?'<span class="dtag">'+ti.tag+'</span>':'')+'<span class="dn">· '+ls.length+(ls.length===1?' banco':' bancos')+' · '+nq+(nq===1?' pregunta':' preguntas')+'</span><span class="dn dsel"></span><label class="day-all" title="Marcar o desmarcar todos los bancos de este día"><input type="checkbox" class="day-all-cb" aria-label="Marcar todos los bancos de este día"> Todo</label>';
+    const g=document.createElement('div');g.className='day-grid';ls.forEach(l=>g.appendChild(l));
+    f.append(sm,g);host.appendChild(f);
+    if(g.querySelector('.quiz-source-check:checked'))f.open=true;
+    sm.addEventListener('click',e=>{if(e.target.closest('.day-all'))return;setTimeout(()=>{const o=rj();o[k]=f.open;sv(o)},0)});
+    sm.querySelector('.day-all-cb').addEventListener('change',e=>{const cbs=[...g.querySelectorAll('.quiz-source-check')];cbs.forEach(c=>c.checked=e.target.checked);sync();cbs[0].dispatchEvent(new Event('change',{bubbles:true}))});
+  });
+  function sync(){host.querySelectorAll('.day-f').forEach(f=>{const cbs=[...f.querySelectorAll('.quiz-source-check')],n=cbs.filter(c=>c.checked).length,a=f.querySelector('.day-all-cb');a.checked=n===cbs.length;a.indeterminate=n>0&&n<cbs.length;f.querySelector('.dsel').textContent=n?'· '+n+(n===1?' marcado':' marcados'):''})}
+  host.addEventListener('change',e=>{if(e.target.classList&&e.target.classList.contains('quiz-source-check'))sync()});
+  tools.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const o=rj();host.querySelectorAll('.day-f').forEach(f=>{f.open=b.dataset.a==='1';o[f.dataset.k]=f.open});sv(o)});
+  sync();
+}
+const _rs=renderQuizStart;renderQuizStart=function(){const r=_rs.apply(this,arguments);try{group()}catch(e){}return r};
+try{group()}catch(e){}
+})();
+</script>
 </body></html>
+  
