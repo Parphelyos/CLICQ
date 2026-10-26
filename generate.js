@@ -61,10 +61,10 @@ module.exports = async (req, res) => {
               generationConfig: { responseMimeType: 'application/json', temperature: b.mode === 'fidelity' ? 0.1 : def ? 0.2 : 0.5, maxOutputTokens: def ? 512 : 8192 },
             }),
           });
-          if (r.status !== 404 && r.status < 500) break; // modelo inexistente, saturado o lento: prueba el siguiente
+          if (r.status !== 404 && r.status !== 429 && r.status < 500) break; // modelo inexistente, sin cuota (cada modelo tiene la suya), saturado o lento: prueba el siguiente
         } catch (e) { r = null; }
       }
-      if (r && r.ok) break;
+      if (r && (r.ok || r.status === 429)) break; // con 429 no se reintenta: gastaría más cuota
     }
     if (!r) return res.status(504).json({ error: 'La IA tardó demasiado. Prueba con menos casos o una sección más corta.' });
     if (r.status === 429) return res.status(429).json({ error: 'Se alcanzó el límite del servicio de IA. Inténtalo en un minuto.' });

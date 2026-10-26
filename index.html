@@ -1902,7 +1902,7 @@ async function runWiki(rect, term, lang) {
   if (!cached) jobs.push((async () => { try { const d = await limit(wikiLookup(lang, term, sig)); if (tok !== wikiTok) return; if (d && !d.disambig) { wikiCachePut(lang, term, d); M.wiki = { st: "ok", d }; } else { let rel = []; try { rel = await limit(wikiRelated(lang, term, sig)); } catch (e) {} M.wiki = d && d.disambig ? { st: "disambig", d, rel } : { st: rel.length ? "related" : "none", rel }; } } catch (e) { if (live(e)) M.wiki = { st: "error" }; } paint(); })());
   if (M.med.st === "loading") jobs.push((async () => { try { const items = await limit(medlineLookup(lang, term, sig)); M.med = { st: "ok", items }; } catch (e) { if (live(e)) M.med = { st: "error" }; } paint(); })());
   if (M.ep.st === "loading") jobs.push((async () => { try { const items = await limit(epmcLookup(term, sig)); M.ep = { st: "ok", items }; } catch (e) { if (live(e)) M.ep = { st: "error" }; } paint(); })());
-  if (M.ai.st === "loading") jobs.push((async () => { try { M.ai = { st: "ok", text: await aiDefine(term, sig) }; } catch (e) { if (live(e)) M.ai = { st: "error", msg: e.message === "nosrv" ? "falta configurar el servidor de IA" : e.message }; } paint(); })());
+  if (M.ai.st === "loading") jobs.push((async () => { try { await new Promise((ok) => setTimeout(ok, 600)); if (tok !== wikiTok) return; M.ai = { st: "ok", text: await aiDefine(term, sig) }; } catch (e) { if (live(e)) M.ai = { st: "error", msg: e.message === "nosrv" ? "falta configurar el servidor de IA" : e.message }; } paint(); })());
   await Promise.all(jobs);
   tutorMem.set(mk, { ai: M.ai.st === "ok" ? M.ai : undefined, med: M.med.st === "ok" ? M.med : undefined, ep: M.ep.st === "ok" ? M.ep : undefined });
 }
