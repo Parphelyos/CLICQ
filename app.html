@@ -524,7 +524,7 @@ body.pl-open #pl-dock{display:flex}
     <div class="importgrid">
       <div class="panel">
         <div class="sectionhead"><div><h3>Sube tus documentos</h3><p>Selecciona uno o varios archivos de tu computadora.</p></div></div>
-        <div class="dropzone" id="dropzone"><div class="uploadicon">⇧</div><h3>Arrastra y suelta tus archivos aquí</h3><p>o selecciónalos desde tu dispositivo</p><input type="file" id="fileinput" multiple="" accept=".pdf,.docx,.doc,.txt,.md,.csv,.xlsx,.xls,.json" hidden=""><button class="btn primary" onclick="document.getElementById('fileinput').click()">Elegir archivos</button><div class="filetypes"><span class="filetype">PDF</span><span class="filetype">WORD</span><span class="filetype">EXCEL</span><span class="filetype">TXT</span><span class="filetype">CSV</span><span class="filetype">MD</span><span class="filetype">JSON</span></div></div>
+        <div class="dropzone" id="dropzone"><div class="uploadicon">⇧</div><h3>Arrastra y suelta tus archivos aquí</h3><p>o selecciónalos desde tu dispositivo<br><span class="smalltext">Casos en JSON con imágenes: elige el JSON junto con sus imágenes, o todo dentro de un .zip.</span></p><input type="file" id="fileinput" multiple="" accept=".pdf,.docx,.doc,.txt,.md,.csv,.xlsx,.xls,.json,.zip,.png,.jpg,.jpeg,.gif,.webp,.bmp,.svg" hidden=""><button class="btn primary" onclick="document.getElementById('fileinput').click()">Elegir archivos</button><div class="filetypes"><span class="filetype">PDF</span><span class="filetype">WORD</span><span class="filetype">EXCEL</span><span class="filetype">TXT</span><span class="filetype">CSV</span><span class="filetype">MD</span><span class="filetype">JSON</span></div></div>
         <div class="privacy"><span>🔐</span><div><strong>Procesamiento local por defecto.</strong> El archivo se lee dentro de tu navegador y no se envía a ningún servicio mientras importas o detectas preguntas. Ningún archivo sale de tu dispositivo. La app usa bibliotecas públicas para leer algunos formatos.</div></div>
         <div id="import-status" class="smalltext muted" style="margin-top:13px"></div>
         <div id="preview-area" class="preview"></div>
@@ -941,6 +941,7 @@ function extractAnswerKeyMap(text){let map={};const rx=/(?:answer\s*key|clave\s+
 function parseStructuredJSON(raw,source){
  let data;try{data=JSON.parse(String(raw||'').replace(/^\uFEFF/, '').trim())}catch(e){return null}
  const bankItems=[];
+ window.__imgAssets=(data&&typeof data==='object'&&!Array.isArray(data))?(['assets','imageAssets','imageMap','images','media'].map(k=>data[k]).find(v=>v&&typeof v==='object'&&!Array.isArray(v))||{}):{};
  const isQuestion=x=>x&&typeof x==='object'&&Array.isArray(x.options)&&(x.stem||x.vignette||x.question||x.prompt);
  let roots=[];
  if(Array.isArray(data))roots=data;
@@ -956,11 +957,11 @@ function parseStructuredJSON(raw,source){
   const unique=[];const seen=new Set();for(const o of opts){if(!seen.has(o.key)){seen.add(o.key);unique.push(o)}}
   if(unique.length<2)return;
   let answer=String(q.correctAnswer??q.answer??q.correct_answer??'').trim().toUpperCase();const am=answer.match(/\b([A-E])\b/);answer=am?am[1]:'';if(!unique.some(o=>o.key===answer))answer='';
-  const vignette=String(q.vignette||q.case||q.clinicalVignette||'').trim();const stem=String(q.stem||q.question||q.prompt||'').trim();
+  const inl=[],strip=t=>String(t||'').replace(/!\[[^\]]*\]\(\s*([^)\s]+)[^)]*\)/g,(m,u)=>{inl.push(u);return ' '}).replace(/<img\b[^>]*?\bsrc=["']([^"']+)["'][^>]*>/gi,(m,u)=>{inl.push(u);return ' '});const vignette=strip(q.vignette||q.case||q.clinicalVignette).trim();const stem=strip(q.stem||q.question||q.prompt).trim();
   const fullStem=[vignette,stem].filter(Boolean).join(' ').replace(/\s+/g,' ').trim();if(fullStem.length<8)return;
   const distractors=q.distractorAnalysis&&typeof q.distractorAnalysis==='object'?Object.entries(q.distractorAnalysis).map(([k,v])=>`${k}: ${String(v||'').trim()}`).filter(x=>!/:\s*$/.test(x)).join('\n'):'';const refs=Array.isArray(q.sourceReferences)?q.sourceReferences.map(r=>[r.sourceTitle,r.chapterSection,r.relevance].filter(Boolean).join(' — ')).filter(Boolean).join('\n'):'';const extra=[q.attendingTip,q.keyLearningPoint,q.hint?`Pista: ${q.hint}`:'',q.educationalObjective?`Objetivo educativo: ${q.educationalObjective}`:'',distractors?`Análisis de distractores:\n${distractors}`:'',refs?`Referencias del documento:\n${refs}`:''].filter(x=>typeof x==='string'&&x.trim()).join('\n\n');
   let explanation=String(q.explanation||q.rationale||'').trim();if(extra)explanation=[explanation,extra].filter(Boolean).join('\n\n');
-  bankItems.push({images:collectImages(q,inherited),id:uid(),stem:fullStem,options:unique,answer,explanation,source,created:Date.now()+bankItems.length,updated:Date.now(),attempts:0,correctCount:0,flagged:false,origin:'imported-json',subject:inferSpecialty(fullStem,source,q.subject||inherited.subject||''),difficultyLabel:q.difficultyLabel||inherited.difficultyLabel||'',educationalObjective:q.educationalObjective||inherited.educationalObjective||'',sourceQuestionId:(q.id||inherited.id||'')+suffix});
+  bankItems.push({images:collectImages(q,inherited,null,inl),expImages:collectImages(q,inherited,EXPKEYS),id:uid(),stem:fullStem,options:unique,answer,explanation,source,created:Date.now()+bankItems.length,updated:Date.now(),attempts:0,correctCount:0,flagged:false,origin:'imported-json',subject:inferSpecialty(fullStem,source,q.subject||inherited.subject||''),difficultyLabel:q.difficultyLabel||inherited.difficultyLabel||'',educationalObjective:q.educationalObjective||inherited.educationalObjective||'',sourceQuestionId:(q.id||inherited.id||'')+suffix});
  };
  for(const q of roots){if(!q||typeof q!=='object')continue;add(q,{});if(Array.isArray(q.variants))q.variants.forEach((v,i)=>add(v,q,`-V${i+1}`))}
  if(!bankItems.length)return null;
@@ -1138,7 +1139,7 @@ const BANK_EXTRACTION_PROMPT = `Extrae las preguntas del documento especificado 
       "id": "string", "subject": "string", "difficultyRating": 3,
       "difficultyLabel": "Easy|Medium|Hard", "vignette": "string",
       "keyInfoPhrases": ["string"], "stem": "string",
-      "options": [{"key": "A", "text": "string"}], "correctAnswer": "string",
+      "options": [{"key": "A", "text": "string"}], "correctAnswer": "string", "images": ["URL, data:image/... o nombre de archivo (opcional)"],
       "attendingTip": "string", "explanation": "string", "keyLearningPoint": "string",
       "distractorAnalysis": {"OPCION_INCORRECTA_KEY": "string"}, "hint": "string",
       "educationalObjective": "string",
@@ -1534,8 +1535,23 @@ function thumbsHTML(a,fn){return (a||[]).map((u,i)=>`<span class="imgthumb"><img
 function pastedImages(e){return [...(e.clipboardData?.items||[])].filter(i=>i.kind==='file'&&/^image\//.test(i.type)).map(i=>i.getAsFile()).filter(Boolean)}
 function zoomImg(src){let z=document.getElementById('img-zoom');if(!z){z=document.createElement('div');z.id='img-zoom';z.innerHTML='<img alt="">';z.onclick=()=>z.classList.remove('open');document.body.appendChild(z)}z.firstChild.src=src;z.classList.add('open')}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('img-zoom')?.classList.remove('open')});
-function collectImages(q,inh){const out=[];const add=v=>{if(!v)return;if(Array.isArray(v))return v.forEach(add);if(typeof v==='object')return add(v.url||v.src||v.data||v.href);if(typeof v==='string'&&/^(data:image\/|https?:\/\/)/i.test(v.trim())&&!out.includes(v.trim()))out.push(v.trim())};
- [q,inh||{}].forEach(o=>['images','image','imageUrl','imageURL','imageUrls','img','figure','figures','media'].forEach(k=>add(o[k])));return out}
+const IMGKEYS=['images','image','imageUrl','imageURL','imageUrls','img','imgs','figure','figures','media','imageBase64','image_base64','imagesBase64','imageData','imagen','imagenes','imágenes','foto','fotos','picture','pictures','photo','photos','attachments','exhibit','exhibits','caseImages','case_images','stemImages','vignetteImages'];
+const EXPKEYS=['expImages','explanationImages','explanation_images','explanationImage','rationaleImages','imagenesExplicacion'];
+const IMG_B64={iVBOR:'png','/9j/':'jpeg',R0lGO:'gif',UklGR:'webp',PHN2Z:'svg+xml',PD94b:'svg+xml'};
+function imgRef(v,mime){
+ if(typeof v!=='string')return null;const t=v.trim();if(!t)return null;
+ if(/^data:image\//i.test(t)||/^https?:\/\//i.test(t))return t;
+ const A=window.__imgAssets||{};
+ if(Object.prototype.hasOwnProperty.call(A,t)){const a=A[t],o=a&&typeof a==='object',r=imgRef(o?(a.url||a.src||a.data||a.base64):a,o?(a.mimeType||a.mime):mime);if(r&&r!==t)return r}
+ const c=t.replace(/^base64,/,'').replace(/\s+/g,'');
+ if(c.length>60&&/^[A-Za-z0-9+/]+={0,2}$/.test(c)){const k=Object.keys(IMG_B64).find(x=>c.startsWith(x)),m=/^image\//.test(mime||'')?mime:(k?'image/'+IMG_B64[k]:'');if(m)return 'data:'+m+';base64,'+c}
+ if(/\.(png|jpe?g|gif|webp|bmp|svg|avif)(\?.*)?$/i.test(t)&&!/^[a-z]+:/i.test(t))return 'file:'+t;
+ return null}
+function collectImages(q,inh,keys,extra){
+ const out=[],push=r=>{if(r&&!out.includes(r))out.push(r)};
+ const one=(v,m)=>{if(Array.isArray(v))return v.forEach(x=>one(x,m));if(v&&typeof v==='object')return add(v);push(imgRef(v,m))};
+ const add=v=>{if(v==null)return;if(Array.isArray(v))return v.forEach(add);if(typeof v==='object'){const m=v.mimeType||v.mime_type||v.mime||v.contentType||v.type;return one(v.url||v.src||v.href||v.data||v.base64||v.b64||v.content||v.path||v.file||v.filename,m)}one(v)};
+ [q,inh||{}].forEach(o=>(keys||IMGKEYS).forEach(k=>add(o[k])));(extra||[]).forEach(u=>push(imgRef(u)));return out}
 (function(){const _rs=renderQuestionStem;renderQuestionStem=function(q){const h=_rs(q),im=imgsHTML(q.images,q);if(!im)return h;const m=h.match(/Selecci[oó]n[ae] la respuesta correcta/i);const i=m?h.indexOf(m[0]):-1;return i<0?h+im:h.slice(0,i)+im+h.slice(i)}})();
 /* Quitar la imagen de una pregunta: la X aparece al pasar el cursor sobre ella */
 function removeQuestionImg(qid,i){const q=bank.find(x=>String(x.id)===String(qid));if(!q||!Array.isArray(q.images))return;q.images.splice(i,1);q.updated=Date.now();persistBank();notify('Imagen quitada del caso.');if(document.getElementById('view-practice')?.classList.contains('active')&&typeof renderQuizQuestion==='function')renderQuizQuestion();if(document.getElementById('view-library')?.classList.contains('active')&&typeof renderLibrary==='function')renderLibrary();if(typeof renderHome==='function')renderHome()}
@@ -3043,6 +3059,69 @@ const _sv=showView;showView=function(n){const r=_sv.apply(this,arguments);
   if(n==='pdflib'){closeDock();renderList().then(docs=>{if(!cur){const id=localStorage.getItem(LAST),d=docs.find(x=>x.id===id)||docs[0];if(d)load(d.id)}})}return r};
 try{addBtn()}catch(e){}
 openDB().then(renderList).catch(()=>{$('pl-list').innerHTML='<div class="pl-empty">Tu navegador no permite guardar documentos (¿modo privado?).</div>'});
+})();
+</script>
+<script>
+/* ===================== IMPORTADOR JSON: imágenes de los casos ===================== */
+(function(){
+const EXT=/\.(png|jpe?g|gif|webp|bmp|svg|avif)$/i,MT={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',bmp:'image/bmp',svg:'image/svg+xml',avif:'image/avif'};
+const isImg=f=>/^image\//.test(f.type)||EXT.test(f.name),base=n=>String(n).split(/[\\/]/).pop().toLowerCase(),noext=n=>n.replace(/\.[^.]+$/,'');
+let sib=new Map();
+function find(ref){let b=ref.replace(/^file:/,'').split('?')[0];try{b=decodeURIComponent(b)}catch(e){}b=base(b);return sib.get(b)||[...sib.entries()].find(([k])=>noext(k)===noext(b))?.[1]||null}
+const readURL=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(f)});
+async function toData(ref,R){
+ try{
+  if(ref.startsWith('data:')){if(ref.length<150000||/^data:image\/svg/i.test(ref))return ref;return await imgFromFile(await (await fetch(ref)).blob())}
+  if(ref.startsWith('file:')){const f=find(ref);if(!f){R.missing.add(base(ref.slice(5)));return null}return /svg/i.test(f.type+f.name)?await readURL(f):await imgFromFile(f)}
+  try{const r=await fetch(ref,{mode:'cors'});if(r.ok){const b=await r.blob();if(/^image\//.test(b.type))return /svg/.test(b.type)?await readURL(b):await imgFromFile(b)}}catch(e){}
+  R.linked++;return ref;
+ }catch(e){R.failed++;return ref.startsWith('http')?ref:null}
+}
+async function resolveAll(list){
+ const R={linked:0,failed:0,missing:new Set()},cache=new Map();let n=0;
+ const one=r=>{if(!cache.has(r))cache.set(r,toData(r,R));return cache.get(r)};
+ for(const q of list)for(const k of ['images','expImages']){const a=q[k];if(!Array.isArray(a)||!a.length)continue;const out=[];for(const r of a){const d=await one(r);if(d)out.push(d)}q[k]=out;n+=out.length}
+ return{R,n}}
+function report(R,n){const p=[];if(n)p.push(`🖼 ${n} imagen(es) añadidas a los casos`);if(R.linked)p.push(`${R.linked} se dejaron como enlace porque el sitio no permite incrustarlas (necesitarán conexión)`);if(R.missing.size)p.push('No encontré: '+[...R.missing].join(', ')+' — elígelas junto al JSON o inclúyelas en un .zip');if(R.failed)p.push(`${R.failed} no se pudieron leer`);return p.length?' '+p.join('. ')+'.':''}
+async function expand(files){
+ const rest=[];sib=new Map();
+ for(const f of files){
+  if(/\.zip$/i.test(f.name)){
+   try{const Z=await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js','JSZip'),z=await Z.loadAsync(f);
+    for(const e of Object.values(z.files)){if(e.dir||/(^|\/)(__MACOSX|\.)/.test(e.name))continue;const nm=base(e.name),b=await e.async('blob');
+     if(EXT.test(nm))sib.set(nm,new File([b],nm,{type:MT[nm.split('.').pop()]||b.type}));else if(/\.(json|txt|md|csv)$/i.test(nm))rest.push(new File([b],e.name.split('/').pop()))}
+   }catch(err){notify('No se pudo abrir el ZIP: '+(err.message||err))}
+  }else if(isImg(f))sib.set(base(f.name),f);else rest.push(f);
+ }
+ return rest}
+async function finish(){
+ const st=document.getElementById('import-status');
+ if(importPreview.some(q=>(q.images&&q.images.length)||(q.expImages&&q.expImages.length))){
+  const prev=st.textContent;st.textContent=prev+' Procesando imágenes…';
+  const{R,n}=await resolveAll(importPreview);st.textContent=prev+report(R,n);
+ }
+ renderPreview();
+}
+/* miniaturas en la vista previa */
+const _rp=renderPreview;
+renderPreview=function(){const r=_rp.apply(this,arguments);try{
+ document.querySelectorAll('#preview-area .previewitem').forEach((el,i)=>{const q=importPreview[i];if(!q||el.querySelector('.pl-prevthumbs'))return;
+  const a=(q.images||[]),b=(q.expImages||[]);if(!a.length&&!b.length)return;
+  const d=document.createElement('div');d.className='pl-prevthumbs';d.style.cssText='display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px';
+  const im=u=>`<img src="${esc(u)}" alt="" style="height:70px;max-width:130px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:zoom-in" onclick="zoomImg(this.src)">`;
+  d.innerHTML=a.map(im).join('')+(b.length?'<span class="smalltext muted">Explicación:</span>'+b.map(im).join(''):'');
+  const t=el.querySelector('.previewstem');if(t)t.after(d)});}catch(e){}return r};
+/* enganche con la importación */
+const _hf=handleFiles;
+handleFiles=async function(files){
+ const rest=await expand(files);
+ if(!rest.length){if(sib.size)notify('Las imágenes se usan junto a un JSON: elígelos juntos o ponlos en un .zip.');return}
+ const keep=renderPreview;renderPreview=function(){};
+ try{await _hf(rest)}finally{renderPreview=keep}
+ await finish();
+};
+const _pp=parsePastedText;
+parsePastedText=async function(){const keep=renderPreview;renderPreview=function(){};try{_pp()}finally{renderPreview=keep}await finish()};
 })();
 </script>
 </body></html>
