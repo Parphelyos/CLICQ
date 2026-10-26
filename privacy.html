@@ -28,7 +28,7 @@ a{color:#335eea}.muted{color:#68778d;font-size:14px}
 
 <h2>Creación de casos con IA (función opcional)</h2>
 <p>Si usas «Crear casos desde un PDF», el PDF se lee en tu navegador. Solo cuando pulsas «Crear casos», el texto de las secciones que elegiste se envía a una función del servidor de ClinQ (alojada en Vercel), que lo reenvía al servicio de IA Google Gemini para generar o extraer las preguntas. Ese texto se usa únicamente para esa solicitud: ClinQ no lo guarda, no lo vende ni lo usa para publicidad. Google procesa el texto según los términos de la API de Gemini, y Vercel puede registrar datos técnicos de la solicitud (como la dirección IP) por seguridad. No envíes documentos que no tengas derecho a usar ni información personal de pacientes. Si no usas esta función, ningún texto de tus documentos sale de tu dispositivo.</p>
-<p>Las consultas del Modo tutor envían solo el término seleccionado a Wikipedia, Wikimedia Commons, MedlinePlus y Europe PMC.</p>
+<p>Las consultas del Modo tutor envían el término que seleccionas a Wikipedia, Wikimedia Commons, MedlinePlus y Europe PMC. Para el «Resumen rápido», el término y un fragmento del enunciado de la pregunta (hasta 400 caracteres, solo para aclarar el significado) se envían al servidor de ClinQ y a Google Gemini; ClinQ no guarda ese texto.</p>
 
 <h2>Dónde van tus datos</h2>
 <p>Tus datos viajan entre tu navegador y tu cuenta de Google Drive. ClinQ no mantiene una base de datos propia, no recibe copia de tus bancos, notas ni progreso, no los vende, no los comparte con terceros y no los usa para publicidad.</p>
