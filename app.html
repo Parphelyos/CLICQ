@@ -78,7 +78,7 @@ html.dark .recent-bank-main span,html.dark .recent-bank-main small{color:#c2d0e5
 <!-- Google Drive Sync Setup -->
 <script>
   // Pega aquí TU ID de cliente OAuth (termina en .apps.googleusercontent.com)
-  window.CLINQ_GOOGLE_CLIENT_ID = "254152852718-1umbi74ltam3e1m197ni71nrbgvaa8c8.apps.googleusercontent.com";
+  window.CLINQ_GOOGLE_CLIENT_ID = "";
   // URL de tu función en Vercel, p. ej. "https://clinq-api.vercel.app/api/generate"
   window.CLINQ_API_URL = "https://clinq-api.vercel.app/api/generate";
 </script>
@@ -1174,7 +1174,7 @@ function toggleFlag(id){const q=bank.find(q=>q.id===id);if(q){q.flagged=!q.flagg
 
 function renderQuizStart(){if(currentQuiz)return;document.getElementById('quiz-area').innerHTML=`<div class="emptybank panel"><div class="emptyicon">🧠</div><h2>Listo para practicar</h2><p>Elige el modo y trabaja con preguntas de tu banco personal. Puedes mezclar las preguntas o concentrarte en las que necesitas repasar.</p><div class="toolbar" style="justify-content:center"><select class="field" id="quiz-status"><option value="all">Cualquier estado</option><option value="wrong">Solo respondidas mal</option><option value="omitted">Solo omitidas</option><option value="correct">Solo respondidas bien</option><option value="unanswered">Nunca respondidas</option><option value="flagged">Solo marcadas para repasar ★</option></select><select class="field" id="quiz-count"><option value="10">10 preguntas</option><option value="20">20 preguntas</option><option value="40">40 preguntas</option><option value="60">60 preguntas</option><option value="100">100 preguntas</option><option value="all">Todas las preguntas</option></select><select class="field" id="quiz-order" aria-label="Orden de las preguntas"><option value="random">Orden aleatorio</option><option value="bank">Orden del banco</option></select><label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#66758a"><input id="quiz-review" type="checkbox"> Solo repaso</label></div><details id="quiz-sources-wrap" class="panel" style="margin:0 auto 16px;max-width:760px;text-align:left;padding:14px"><summary style="cursor:pointer;font-weight:800;font-size:13px">Bancos / documentos <span id="quiz-sources-sum" class="muted" style="font-weight:600"></span></summary><div class="smalltext muted" style="margin:8px 0 10px">Marca uno o varios (por ejemplo A + B). Si no marcas ninguno, se usan todos.</div><div id="quiz-sources" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">${sourceNames().map(sn=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;border:1px solid #e2e8f0;border-radius:9px"><input type="checkbox" class="quiz-source-check" value="${esc(sn)}"><span>${esc(sn)} <span class="muted">(${bank.filter(q=>(q.source||'Texto pegado')===sn).length})</span></span></label>`).join('')}</div><label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;margin-top:10px"><input id="quiz-source-exclude" type="checkbox"> Excluir los marcados (usar todos menos estos)</label></details><details id="quiz-folders-wrap" class="panel" style="margin:0 auto 16px;max-width:760px;text-align:left;padding:14px"><summary style="cursor:pointer;font-weight:800;font-size:13px">⭐ Marcadas <span id="quiz-folders-sum" class="muted" style="font-weight:600"></span></summary><div class="smalltext muted" style="margin:8px 0 10px">Marca una o varias carpetas para estudiar solo las preguntas que guardaste en ellas. Si no marcas ninguna, no se filtra por carpeta.</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">${folderNames().map(f=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;border:1px solid #e2e8f0;border-radius:9px"><input type="checkbox" class="quiz-folder-check" value="${esc(f)}"><span>📁 ${esc(f)} <span class="muted">(${bank.filter(q=>folderOf(q)===f).length})</span></span></label>`).join('')}</div></details><div class="panel" style="margin:0 auto 16px;max-width:760px;text-align:left;padding:14px"><div style="font-weight:800;font-size:13px;margin-bottom:4px">Especialidades del banco</div><div class="smalltext muted" style="margin-bottom:10px">Marca una o varias. Si no marcas ninguna, se usarán todas las especialidades.</div><div id="quiz-specialties" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">${availableSpecialties().map(sp=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;border:1px solid #e2e8f0;border-radius:9px"><input type="checkbox" class="quiz-specialty-check" value="${esc(sp)}"><span>${esc(sp)} <span class="muted">(${bank.filter(q=>inferSpecialty(q.stem,q.source,q.subject)===sp).length})</span></span></label>`).join('')}</div></div><div id="quiz-preview" class="panel" style="margin:0 auto 16px;max-width:760px;padding:14px;border-color:#b4c3ff;background:#f8faff"></div><div class="panel session-name-create" style="margin:0 auto 14px;max-width:760px;padding:14px;text-align:left"><label for="quiz-session-name" style="display:block;font-size:13px;font-weight:800;margin-bottom:7px">Nombre de la sesión (opcional)</label><input id="quiz-session-name" class="field" type="text" maxlength="90" placeholder="Ej. Uveítis, repaso renal, simulacro de cirugía" style="width:100%"><div class="smalltext muted" style="margin-top:5px">Puedes ponerle nombre antes de empezar y cambiarlo después desde Sesiones abiertas.</div></div><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap"><button class="btn primary" onclick="startQuiz('practice')">▶ Modo práctica</button><button class="btn outline" onclick="startQuiz('exam')">⏱️ Modo examen</button></div></div>`+sessionsPanelHTML();applyQuizConfig()}
 function startQuiz(mode,onlyId=null){if(!bank.length){notify('Primero importa preguntas a tu banco.');showView('import');return}let chosen;if(onlyId){chosen=bank.filter(q=>q.id===onlyId)}else{const cfg=currentQuizConfig();saveQuizConfig();let src=cfg.source,onlyReview=cfg.review,quizStatus=cfg.status,count=cfg.count,checkedSpecialties=cfg.specialties;chosen=quizPool(cfg);if(cfg.order==='random')shuffle(chosen);if(count!=='all')chosen=chosen.slice(0,Number(count))}if(!chosen.length){notify('No hay preguntas que coincidan con esos filtros.');return}[...new Set(chosen.map(q=>q.source||'Texto pegado'))].forEach(name=>touchBankActivity(name,'opened'));const requestedName=(document.getElementById('quiz-session-name')?.value||'').trim();currentQuiz={sid:'s_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),mode,label:requestedName||sessionLabel(mode,chosen,onlyId),questions:chosen.map(q=>q.id),index:0,answers:{},finished:false,started:Date.now(),updated:Date.now()};sessions.push(currentQuiz);saveSessions();showView('practice');renderQuizQuestion()}
-function renderQuizQuestion(){let host=document.getElementById('quiz-area');if(!currentQuiz)return renderQuizStart();saveSessions();if(currentQuiz.finished){renderQuizResults();return}let q=bank.find(x=>x.id===currentQuiz.questions[currentQuiz.index]);if(!q){currentQuiz.index++;return renderQuizQuestion()}let idx=currentQuiz.index+1,total=currentQuiz.questions.length,chosen=currentQuiz.answers[q.id],revealed=currentQuiz.mode==='practice'&&chosen!==undefined;let options=q.options||[];host.innerHTML=`<div class="quizwrap"><div class="quiztop"><button class="btn outline small" onclick="exitQuiz()" title="Tu sesión queda guardada">← Sesiones</button><div class="smalltext muted">${currentQuiz.mode==='exam'?'Modo examen':'Modo práctica'} · Pregunta ${idx} de ${total}</div><button class="btn outline small" onclick="addManualQuestion()">＋ Crear pregunta</button><button class="btn outline small" onclick="toggleFlag('${q.id}')">${q.flagged?'★ Marcada':'☆ Marcar para repasar'}</button><button class="btn danger small" onclick="finishQuiz()">Finalizar sesión</button></div><div class="progressline"><div style="width:${Math.round((idx-1)/total*100)}%"></div></div><div class="quizcard"><div class="quizstem hlf" id="quiz-stem-${q.id}" data-qid="${q.id}" data-field="stem">${renderQuestionStem(q)}</div><div id="stem-tools"></div>${q.flagged?`<div class="notice" style="margin:8px 0;user-select:none;-webkit-user-select:none">★ Marcada para repasar · Próxima revisión: ${q.nextReviewAt?new Date(q.nextReviewAt).toLocaleString('es-DO',{dateStyle:'medium',timeStyle:'short'}):'mañana'}</div>`:''}<details class="option-disclosure" ${currentQuiz.optionsOpen?.[q.id]?'open':''} ontoggle="setOptionsOpen('${q.id}',this.open)"><summary><span>Opciones de respuesta</span><span class="disclosure-hint">${currentQuiz.optionsOpen?.[q.id]?'Haz clic para ocultarlas':'Abrir para responder'}</span></summary><div class="options">${options.map(o=>{let cls='option';if(chosen===o.key)cls+=' selected';if(revealed&&q.answer===o.key)cls+=' correct';if(revealed&&chosen===o.key&&q.answer&&chosen!==q.answer)cls+=' incorrect';let disabled=(currentQuiz.mode==='practice'&&chosen!==undefined)||currentQuiz.finished;return `<div role="button" tabindex="${disabled?'-1':'0'}" aria-disabled="${disabled?'true':'false'}" class="${cls}" onclick="optClick(event,'${q.id}','${o.key}')"><span class="letter">${o.key}</span><span class="hlf" data-qid="${q.id}" data-field="opt:${o.key}">${renderHL(q,'opt:'+o.key)}</span></div>`}).join('')}</div></details>${revealed?`<div class="feedback ${!q.answer?'neutral':chosen===q.answer?'good':'bad'}"><strong>${!q.answer?'Respuesta no configurada':chosen===q.answer?'✓ Correcto':'✕ Incorrecto'+(q.answer?' · Respuesta: '+q.answer:'')}</strong>${q.explanation?'\n\n<span class="hlf" data-qid="'+q.id+'" data-field="exp">'+renderHL(q,'exp')+'</span>':!q.answer?'\nEdita esta pregunta para añadir la clave correcta y su explicación.':''}</div>`:''}</div><div class="quizdock"><details class="dockfold" ${currentQuiz.dockOpen?.[q.id]!==false?'open':''} ontoggle="setDockFold('${q.id}',this.open,this)"><summary><span class="quizdock-title">Corregir esta pregunta</span><span class="dockfold-hint">${currentQuiz.dockOpen?.[q.id]!==false?'Ocultar':'Mostrar'}</span></summary><div class="smalltext muted" style="margin-bottom:10px">Si la clave del documento está equivocada, puedes corregirla aquí. Los cambios se guardan en el banco original.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${q.needsCorrection?'primary':'outline'} small" onclick="toggleNeedsCorrection('${q.id}')">${q.needsCorrection?'✓ Marcada para corregir':'⚑ Marcar como incorrecta'}</button><button class="btn outline small" onclick="openEdit('${q.id}')">✎ Editar pregunta y respuesta correcta</button><button class="btn danger small" onclick="deleteQuestion('${q.id}')">🗑 Borrar del banco original</button></div></details><div class="quizbottom"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn outline" onclick="previousQuestion()" ${currentQuiz.index===0?'disabled':''}>← Anterior</button><button class="btn outline" onclick="skipQuestion()">${currentQuiz.mode==='exam'?'Saltar por ahora':'Omitir pregunta'}</button></div>${currentQuiz.mode==='practice'?(chosen!==undefined?(idx<total?`<button class="btn primary" onclick="nextQuestion()">Siguiente pregunta →</button>`:'<span class="smalltext muted" style="align-self:center">Última pregunta: finaliza desde el botón superior.</span>'):'<span class="smalltext muted" style="align-self:center">Selecciona una opción o finaliza la sesión.</span>'):(idx<total?`<button class="btn primary" onclick="nextQuestion()">Siguiente →</button>`:'<span class="smalltext muted" style="align-self:center">Última pregunta: finaliza desde el botón superior.</span>')}</div></div></div>`}
+function renderQuizQuestion(){let host=document.getElementById('quiz-area');if(!currentQuiz)return renderQuizStart();saveSessions();if(currentQuiz.finished){renderQuizResults();return}let q=bank.find(x=>x.id===currentQuiz.questions[currentQuiz.index]);if(!q){currentQuiz.index++;return renderQuizQuestion()}let idx=currentQuiz.index+1,total=currentQuiz.questions.length,chosen=currentQuiz.answers[q.id],revealed=currentQuiz.mode==='practice'&&chosen!==undefined;let options=q.options||[];host.innerHTML=`<div class="quizwrap"><div class="quiztop"><button class="btn outline small" onclick="exitQuiz()" title="Tu sesión queda guardada">← Sesiones</button><div class="smalltext muted">${currentQuiz.mode==='exam'?'Modo examen':'Modo práctica'} · Pregunta ${idx} de ${total}</div><button class="btn outline small" onclick="addManualQuestion()">＋ Crear pregunta</button><button class="btn outline small" onclick="toggleFlag('${q.id}')">${q.flagged?'★ Marcada':'☆ Marcar para repasar'}</button><button class="btn danger small" onclick="finishQuiz()">Finalizar sesión</button></div><div class="progressline"><div style="width:${Math.round((idx-1)/total*100)}%"></div></div><div class="quizcard"><div class="casebar"><div id="stem-tools"></div></div><div class="quizstem hlf" id="quiz-stem-${q.id}" data-qid="${q.id}" data-field="stem">${renderQuestionStem(q)}</div>${q.flagged?`<div class="notice" style="margin:8px 0;user-select:none;-webkit-user-select:none">★ Marcada para repasar · Próxima revisión: ${q.nextReviewAt?new Date(q.nextReviewAt).toLocaleString('es-DO',{dateStyle:'medium',timeStyle:'short'}):'mañana'}</div>`:''}<details class="option-disclosure" ${currentQuiz.optionsOpen?.[q.id]?'open':''} ontoggle="setOptionsOpen('${q.id}',this.open)"><summary><span>Opciones de respuesta</span><span class="disclosure-hint">${currentQuiz.optionsOpen?.[q.id]?'Haz clic para ocultarlas':'Abrir para responder'}</span></summary><div class="options">${options.map(o=>{let cls='option';if(chosen===o.key)cls+=' selected';if(revealed&&q.answer===o.key)cls+=' correct';if(revealed&&chosen===o.key&&q.answer&&chosen!==q.answer)cls+=' incorrect';let disabled=(currentQuiz.mode==='practice'&&chosen!==undefined)||currentQuiz.finished;return `<div role="button" tabindex="${disabled?'-1':'0'}" aria-disabled="${disabled?'true':'false'}" class="${cls}" onclick="optClick(event,'${q.id}','${o.key}')"><span class="letter">${o.key}</span><span class="hlf" data-qid="${q.id}" data-field="opt:${o.key}">${renderHL(q,'opt:'+o.key)}</span></div>`}).join('')}</div></details>${revealed?`<div class="feedback ${!q.answer?'neutral':chosen===q.answer?'good':'bad'}"><strong>${!q.answer?'Respuesta no configurada':chosen===q.answer?'✓ Correcto':'✕ Incorrecto'+(q.answer?' · Respuesta: '+q.answer:'')}</strong>${q.explanation?'\n\n<span class="hlf" data-qid="'+q.id+'" data-field="exp">'+renderHL(q,'exp')+'</span>':!q.answer?'\nEdita esta pregunta para añadir la clave correcta y su explicación.':''}</div>`:''}</div><div class="quizdock"><details class="dockfold" ${currentQuiz.dockOpen?.[q.id]===true?'open':''} ontoggle="setDockFold('${q.id}',this.open,this)"><summary><span class="quizdock-title">Corregir esta pregunta</span><span class="dockfold-hint">${currentQuiz.dockOpen?.[q.id]===true?'Ocultar':'Mostrar'}</span></summary><div class="smalltext muted" style="margin-bottom:10px">Si la clave del documento está equivocada, puedes corregirla aquí. Los cambios se guardan en el banco original.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${q.needsCorrection?'primary':'outline'} small" onclick="toggleNeedsCorrection('${q.id}')">${q.needsCorrection?'✓ Marcada para corregir':'⚑ Marcar como incorrecta'}</button><button class="btn outline small" onclick="openEdit('${q.id}')">✎ Editar pregunta y respuesta correcta</button><button class="btn danger small" onclick="deleteQuestion('${q.id}')">🗑 Borrar del banco original</button></div></details><div class="quizbottom"><div class="casenav"><button class="btn outline small" onclick="previousQuestion()" ${currentQuiz.index===0?'disabled':''}>← Anterior</button><button class="btn outline small" onclick="skipQuestion()">${currentQuiz.mode==='exam'?'Saltar por ahora':'Omitir pregunta'}</button></div>${currentQuiz.mode==='practice'?(chosen!==undefined?(idx<total?`<button class="btn primary" onclick="nextQuestion()">Siguiente pregunta →</button>`:'<span class="smalltext muted" style="align-self:center">Última pregunta: finaliza desde el botón superior.</span>'):'<span class="smalltext muted" style="align-self:center">Selecciona una opción o finaliza la sesión.</span>'):(idx<total?`<button class="btn primary" onclick="nextQuestion()">Siguiente →</button>`:'<span class="smalltext muted" style="align-self:center">Última pregunta: finaliza desde el botón superior.</span>')}</div></div></div>`}
 function setOptionsOpen(id,isOpen){if(!currentQuiz)return;currentQuiz.optionsOpen=currentQuiz.optionsOpen||{};currentQuiz.optionsOpen[id]=!!isOpen;saveSessions()}
 function setDockFold(qid,open,el){if(!currentQuiz)return;currentQuiz.dockOpen=currentQuiz.dockOpen||{};currentQuiz.dockOpen[qid]=!!open;saveSessions();if(el&&el.querySelector){const h=el.querySelector('.dockfold-hint');if(h)h.textContent=open?'Ocultar':'Mostrar'}}
 function chooseAnswer(id,key){if(!currentQuiz||currentQuiz.finished)return;const q=bank.find(q=>q.id===id);if(!q)return;if(currentQuiz.mode==='practice'&&currentQuiz.answers[id]!==undefined)return;currentQuiz.answers[id]=key;if(currentQuiz.mode==='practice'){q.attempts=(q.attempts||0)+1;if(q.answer&&key===q.answer)q.correctCount=(q.correctCount||0)+1;q.updated=Date.now();try{localStorage.setItem(DBKEY,JSON.stringify(bank))}catch(e){}}renderQuizQuestion();refreshAll()}
@@ -1245,7 +1245,6 @@ function cqsMenu(){
  const u=cqsMeta.user,inn=!!cqsMeta.signedIn;
  m.innerHTML=(inn&&u?'<div class="sm-user"><strong>'+esc(u.name||'Cuenta de Google')+'</strong><span>'+esc(u.email||'')+'</span></div>':'<div class="sm-user"><strong>Sin sesión</strong><span>Tus datos solo están en este navegador.</span></div>')
   +(inn?'<button onclick="cqsMenuAct(\'sync\')">↻ Sincronizar ahora</button><button onclick="cqsMenuAct(\'out\')">⎋ Cerrar sesión</button>':'<button onclick="cqsMenuAct(\'in\')">☁ Iniciar sesión con Google</button>')
-  +(!inn?'<div class="sm-note">Al iniciar sesión, ClinQ pide tu nombre, correo y foto de perfil, y acceso a su propia carpeta oculta de Drive para guardar tu banco. No puede ver tus demás archivos. <a href="https://parphelyos.github.io/ClinQ/privacy.html" target="_blank" rel="noopener">Política de privacidad</a></div>':'')
   +(!(window.CLINQ_GOOGLE_CLIENT_ID||GOOGLE_CLIENT_ID)?'<button onclick="cqsMenuAct(\'cid\')">⚙ Cambiar ID de cliente</button>':'')
   +(inn&&cqsMeta.lastSync?'<div class="sm-note">Última sincronización: '+esc(new Date(cqsMeta.lastSync).toLocaleString('es-DO',{dateStyle:'short',timeStyle:'short'}))+'</div>':'');
  m.style.display='block'}
@@ -1857,9 +1856,9 @@ function renderTutor(rect, M) {
   let fallbackSummary = "", fallbackSource = "";
   if (W.st !== "ok" && Md.st === "ok" && Md.items.length && Md.items.some(x => x.summary)) { const item=Md.items.find(x=>x.summary);fallbackSummary=clipExtract(item.summary,520);fallbackSource=`${item.title} · MedlinePlus (NIH)`; }
   if (W.st !== "ok" && !fallbackSummary && M.ep.st === "ok" && M.ep.items.length && M.ep.items.some(x=>x.abstract)) { const item=M.ep.items.find(x=>x.abstract);fallbackSummary=clipExtract(item.abstract,520);fallbackSource=`${item.title} · resumen del abstract indexado en Europe PMC`; }
-  const quickSummary = W.st === "ok" ? "" : (fallbackSummary ? `<div class="wk-t">Resumen rápido · ${esc(fallbackSource)}</div><div class="wk-x">${esc(fallbackSummary)}</div><div class="wk-f"><span class="wk-lic">Texto extraído de la fuente; no generado por IA.</span>${noteBtn(`${fallbackSource}: ${fallbackSummary}`)}</div>` : `<div class="smalltext muted">${Md.st === "loading" || M.ep.st === "loading" ? "Preparando un resumen alternativo a partir de fuentes disponibles…" : "No hay un resumen extraíble para este término en las fuentes consultadas."}</div>`);
+  const quickSummary = M.ai.st === "ok" ? `<div class="wk-x">${esc(M.ai.text)}</div><div class="wk-f"><span class="wk-lic">Resumen generado por IA (Gemini). Verifícalo con las fuentes de abajo.</span>${noteBtn(`Resumen rápido de «${M.term}»: ${M.ai.text} (generado por IA)`)}</div>` : M.ai.st === "error" ? `<div class="smalltext muted">No se pudo generar el resumen (${esc(M.ai.msg || "error")}).</div>` : '<div class="smalltext muted">Generando resumen rápido…</div>';
   const q = encodeURIComponent(term);
-  p.innerHTML = `<div class="wk-h"><span>🎓 Modo tutor · ${esc(term)}</span><span class="wk-langs">${langs}</span><button type="button" class="wk-x-btn" aria-label="Cerrar">×</button></div><div class="wk-gsearch" aria-label="Búsqueda dentro del tutor"><label for="wk-google-query">Buscar otro término sin salir del tutor</label><div class="wk-gsearch-row"><input id="wk-google-query" class="field" type="search" value="${esc(term)}" autocomplete="off" aria-label="Término para buscar"><button class="btn primary small" id="wk-inline-search" type="button">Buscar</button><button class="btn small" id="wk-google-open" type="button" title="Abre Google con esta búsqueda en otra pestaña">Abrir en Google ↗</button></div><small>«Buscar» muestra imágenes y resúmenes dentro del tutor; «Abrir en Google ↗» abre tu frase en Google en otra pestaña.</small></div><div class="wk-body">${W.st !== "ok" ? sec("🧾 Resumen rápido", quickSummary, "wk-quick-summary") : ""}${sec("📚 Wikipedia", w)}<div class="wk-sec" id="wk-imgs"><div class="wk-st">🖼️ Imágenes relacionadas</div><div class="smalltext muted">Buscando imágenes…</div></div></div>`;
+  p.innerHTML = `<div class="wk-h"><span>🎓 Modo tutor · ${esc(term)}</span><span class="wk-langs">${langs}</span><button type="button" class="wk-x-btn" aria-label="Cerrar">×</button></div><div class="wk-gsearch" aria-label="Búsqueda dentro del tutor"><label for="wk-google-query">Buscar otro término sin salir del tutor</label><div class="wk-gsearch-row"><input id="wk-google-query" class="field" type="search" value="${esc(term)}" autocomplete="off" aria-label="Término para buscar"><button class="btn primary small" id="wk-inline-search" type="button">Buscar</button><button class="btn small" id="wk-google-open" type="button" title="Abre Google con esta búsqueda en otra pestaña">Abrir en Google ↗</button></div><small>«Buscar» muestra imágenes y resúmenes dentro del tutor; «Abrir en Google ↗» abre tu frase en Google en otra pestaña.</small></div><div class="wk-body">${sec("🧾 Resumen rápido", quickSummary, "wk-quick-summary")}${sec("📚 Wikipedia", w)}<div class="wk-sec" id="wk-imgs"><div class="wk-st">🖼️ Imágenes relacionadas</div><div class="smalltext muted">Buscando imágenes…</div></div></div>`;
   const gInput=p.querySelector('#wk-google-query'),searchBtn=p.querySelector('#wk-inline-search');
   const searchInline=()=>{const value=(gInput&&gInput.value||'').trim();if(value)runWiki(rect,value,lang);};
   if(searchBtn)searchBtn.addEventListener('click',searchInline);
@@ -1873,11 +1872,27 @@ function renderTutor(rect, M) {
   p.querySelectorAll(".wk-rel").forEach((b) => (b.onclick = () => runWiki(rect, b.dataset.t, lang)));
 }
 
+const AI_DEF_TTL = 14 * 864e5;
+async function aiDefine(term, sig) {
+  const url = window.CLINQ_API_URL || (function () { try { return localStorage.getItem("clinq_api_url") || ""; } catch (e) { return ""; } })() || (/vercel\.app$/.test(location.hostname) ? "/api/generate" : "");
+  if (!url) throw new Error("nosrv");
+  const ck = "clinq_ai_def:" + normalizeWikiTerm(term);
+  try { const c = JSON.parse(localStorage.getItem(ck) || "null"); if (c && c.t && Date.now() - c.ts < AI_DEF_TTL) return c.t; } catch (e) {}
+  let cx = ""; try { const q = bank.find((x) => x.id === currentQuiz.questions[currentQuiz.index]); if (q) cx = String(q.stem || "").slice(0, 400); } catch (e) {}
+  const ac = new AbortController(), to = setTimeout(() => ac.abort(), 50000); if (sig) sig.addEventListener("abort", () => ac.abort());
+  try {
+    const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "define", term: term.slice(0, 200), context: cx }), signal: ac.signal });
+    const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Error " + r.status);
+    const t = String(j.summary || "").trim(); if (!t) throw new Error("respuesta vacía");
+    try { localStorage.setItem(ck, JSON.stringify({ t, ts: Date.now() })); } catch (e) {} return t;
+  } catch (e) { if (e.name === "AbortError" && !(sig && sig.aborted)) throw new Error("La IA tardó demasiado."); throw e; }
+  finally { clearTimeout(to); }
+}
 async function runWiki(rect, term, lang) {
   wikiCur = { term, lang }; const tok = ++wikiTok; if (wikiAbort) { try { wikiAbort.abort(); } catch (e) {} }
   wikiAbort = typeof AbortController !== "undefined" ? new AbortController() : null;
   const sig = wikiAbort && wikiAbort.signal, mk = lang + "|" + normalizeWikiTerm(term), mem = tutorMem.get(mk) || {};
-  const M = { term, lang, wiki: { st: "loading" }, med: mem.med || { st: "loading" }, ep: mem.ep || { st: "loading" } };
+  const M = { term, lang, wiki: { st: "loading" }, med: mem.med || { st: "loading" }, ep: mem.ep || { st: "loading" }, ai: mem.ai || { st: "loading" } };
   const cached = wikiCacheGet(lang, term); if (cached) M.wiki = { st: "ok", d: cached };
   const paint = () => { if (tok === wikiTok) renderTutor(rect, M); };
   const limit = (pr) => Promise.race([pr, new Promise((_, rj) => setTimeout(() => rj(new Error("timeout")), 10000))]);
@@ -1887,8 +1902,9 @@ async function runWiki(rect, term, lang) {
   if (!cached) jobs.push((async () => { try { const d = await limit(wikiLookup(lang, term, sig)); if (tok !== wikiTok) return; if (d && !d.disambig) { wikiCachePut(lang, term, d); M.wiki = { st: "ok", d }; } else { let rel = []; try { rel = await limit(wikiRelated(lang, term, sig)); } catch (e) {} M.wiki = d && d.disambig ? { st: "disambig", d, rel } : { st: rel.length ? "related" : "none", rel }; } } catch (e) { if (live(e)) M.wiki = { st: "error" }; } paint(); })());
   if (M.med.st === "loading") jobs.push((async () => { try { const items = await limit(medlineLookup(lang, term, sig)); M.med = { st: "ok", items }; } catch (e) { if (live(e)) M.med = { st: "error" }; } paint(); })());
   if (M.ep.st === "loading") jobs.push((async () => { try { const items = await limit(epmcLookup(term, sig)); M.ep = { st: "ok", items }; } catch (e) { if (live(e)) M.ep = { st: "error" }; } paint(); })());
+  if (M.ai.st === "loading") jobs.push((async () => { try { await new Promise((ok) => setTimeout(ok, 600)); if (tok !== wikiTok) return; M.ai = { st: "ok", text: await aiDefine(term, sig) }; } catch (e) { if (live(e)) M.ai = { st: "error", msg: e.message === "nosrv" ? "falta configurar el servidor de IA" : e.message }; } paint(); })());
   await Promise.all(jobs);
-  tutorMem.set(mk, { med: M.med.st === "ok" ? M.med : undefined, ep: M.ep.st === "ok" ? M.ep : undefined });
+  tutorMem.set(mk, { ai: M.ai.st === "ok" ? M.ai : undefined, med: M.med.st === "ok" ? M.med : undefined, ep: M.ep.st === "ok" ? M.ep : undefined });
 }
 function onWikiSelect() {
   if (!tutorOn() || !currentQuiz || currentQuiz.finished) return;
@@ -2690,5 +2706,81 @@ html.dark .feedback .expimgs-zone .btn.outline{background:#ffffff18;border-color
 html.dark .quizdock details.dockfold>summary:hover{background:#22314c!important}
 html.dark .dockfold-hint{color:#9fb1cf!important}
 @media(max-width:620px){.quizdock details.dockfold>summary{padding:6px 6px}}
+
+/* ===== Barra de herramientas arriba del caso (sustituye a los botones flotantes) ===== */
+.casebar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;margin:0 0 14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.casenav{display:flex;flex-wrap:wrap;gap:8px}
+#stem-tools{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto;min-width:0}
+#stem-tools .refbtn,#stem-tools .hlquick,#stem-tools .casepaste{float:none!important;clear:none!important;margin:0!important}
+.casebar .btn{font-size:12px!important;padding:6px 11px!important;white-space:nowrap}
+.casebar .btn:disabled{opacity:.45;cursor:default}
+.quizbottom{justify-content:flex-end}
+.quizbottom>*{margin-left:auto}
+.kbdlegend span{flex-wrap:wrap;min-width:0;max-width:100%}
+@media(max-width:600px){
+ .kbdlegend span{white-space:normal}
+ .casebar{flex-direction:column;align-items:stretch}
+ .casenav{width:100%}.casenav .btn{flex:1 1 0}
+ #stem-tools{width:100%;justify-content:flex-start;margin-left:0}
+ #stem-tools>.refbtn,#stem-tools .hlq-b,#stem-tools .casepaste .btn{flex:1 1 auto}
+ #stem-tools>.hlquick,#stem-tools>.casepaste{flex:1 1 auto}
+ .casebar .btn{font-size:10.5px!important;padding:5px 6px!important}
+ #stem-tools{gap:6px}
+ #stem-tools .hlquick,#stem-tools .casepaste{gap:6px}
+ #stem-tools .hlquick,#stem-tools .casepaste{display:flex}
+ #stem-tools .hlquick .hlq-b,#stem-tools .casepaste .btn{flex:1 1 auto}
+ .quizbottom>*{margin-left:0;width:100%}
+ .quizbottom .btn{width:100%}
+}
+</style>
+<style>
+/* Anterior / Omitir dentro del recuadro, en la parte inferior */
+.casebar{justify-content:flex-end}
+.quizbottom{justify-content:space-between;align-items:center}
+.quizbottom>*{margin-left:0}
+.quizbottom>.casenav{width:auto;margin-right:auto;display:flex;gap:8px;flex-wrap:wrap}
+.quizbottom>.casenav .btn:disabled{opacity:.45;cursor:default}
+.quizbottom>.btn.primary,.quizbottom>span{margin-left:auto}
+@media(max-width:600px){.quizbottom>.casenav{width:100%}.quizbottom>.casenav .btn{flex:1 1 0}.quizbottom>.btn.primary,.quizbottom>span{margin-left:0}}
+</style>
+<style>
+/* Compacto para móviles (iPhone 13 Pro = 390 px): barra inferior, menos relleno, texto y botones más pequeños */
+@media(max-width:480px){
+html,body{overflow-x:hidden}
+.app{display:block;min-height:100dvh}
+.sidebar{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;min-height:0;max-height:none;z-index:70;flex-direction:row;align-items:center;justify-content:center;gap:0;padding:3px 6px calc(3px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 18px rgba(0,0,0,.28);overflow:visible}
+.sidebar .brand,.sidebar .sidebottom,.sidebar .navlabel,.sidebar .navtext{display:none!important}
+.sidebar>div{width:100%}
+.nav{display:flex;flex-direction:row;gap:2px;width:100%}
+.nav button{flex:1 1 0;min-width:0;padding:9px 0;justify-content:center}
+.navicon{font-size:18px}
+.main{padding:10px 10px calc(62px + env(safe-area-inset-bottom,0px))}
+.topbar{margin-bottom:12px;gap:8px}
+.eyebrow{font-size:10px}
+.pagetitle{font-size:19px;line-height:1.2}
+.hero{padding:14px;gap:10px;border-radius:16px}
+.hero h2{font-size:17px;line-height:1.25}
+.hero p{font-size:12.5px;line-height:1.45}
+.hero .btn{width:100%}
+.stats{gap:8px}.stat{padding:10px;border-radius:12px}.statnum{font-size:19px}
+.quickgrid{gap:8px}.quickcard{padding:11px;gap:10px;border-radius:12px}
+.panel{padding:12px;border-radius:14px}
+.btn{font-size:13px;padding:9px 12px}
+.btn.small{font-size:12px;padding:6px 9px}
+.quizcard{padding:12px;border-radius:14px}
+.quizstem{font-size:15px;line-height:1.5}
+.quiztop{gap:6px}
+.quiztop .btn{flex:1 1 auto;font-size:12px;padding:7px 8px}
+.option{padding:11px 12px;gap:10px;border-radius:12px;font-size:14.5px;line-height:1.45}
+.letter{height:28px;width:28px;font-size:13px;border-radius:8px}
+.option-disclosure>summary{padding:12px 14px}
+.quizdock{padding:10px 12px}
+.quizbottom{gap:6px}
+.quizbottom>.casenav{display:flex;gap:6px;width:100%}
+.quizbottom .btn{padding:9px 8px;font-size:13px;min-height:40px}
+.casebar .btn{font-size:11px!important;padding:6px 7px!important}
+.kbdlegend{display:none}
+.field,input,select,textarea{font-size:16px}
+}
 </style>
 </body></html>
