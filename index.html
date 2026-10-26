@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Si usas verificación por etiqueta meta en Search Console, pega aquí la línea que te dan:
+<meta name="google-site-verification" content="CODIGO_DE_GOOGLE">
+-->
 <title>ClinQ — Medical question bank for exam study | Banco de preguntas médicas</title>
 <meta name="description" content="ClinQ is a web app where medical students build and practice their own question banks: import PDF/Word/Excel files, practice or exam mode, notes and highlights, and results by specialty. Optional Google sign-in syncs your data to your own Google Drive.">
 <link rel="canonical" href="https://parphelyos.github.io/ClinQ/">
@@ -42,18 +45,10 @@ main{padding-bottom:40px}
 .card p{margin:8px 0}.card ul{margin:8px 0;padding-left:22px}.card li{margin:5px 0}
 .tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--blue);background:var(--soft);padding:3px 10px;border-radius:99px;margin-bottom:8px}
 .note{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:12px 15px;font-size:14.5px;color:var(--muted);margin:14px 0}
-.doc{max-width:860px}
-.doc h2{font-size:24px;margin:0 0 4px}.doc h3{font-size:17px;margin:26px 0 4px}
-.langnav{display:flex;gap:10px;margin:22px 0 4px}
-.langnav a{padding:7px 16px;border:1px solid var(--line);border-radius:99px;background:var(--card);text-decoration:none;font-weight:700;font-size:14px}
-.meta{color:var(--muted);font-size:14px;margin:0 0 6px}
-table{border-collapse:collapse;width:100%;font-size:15px;margin:10px 0}
-th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}th{background:var(--soft)}
-@media(max-width:600px){table,thead,tbody,tr,th,td{display:block}thead{display:none}td{border-top:0}tr{border:1px solid var(--line);margin:8px 0;border-radius:10px;overflow:hidden}td::before{content:attr(data-h);display:block;font-weight:800;font-size:12px;color:var(--muted)}}
 footer.site{border-top:1px solid var(--line);margin-top:30px;padding:24px 0 40px;color:var(--muted);font-size:14px}
 footer.site .links{display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:10px}
 code{background:var(--soft);padding:1px 6px;border-radius:6px;font-size:.92em;overflow-wrap:anywhere;word-break:break-word}
-body,.card,li,p,td,th,.meta{overflow-wrap:anywhere}
+body,.card,li,p,td,th{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -96,6 +91,7 @@ body,.card,li,p,td,th,.meta{overflow-wrap:anywhere}
 <li><strong>Access to ClinQ’s own hidden application-data folder in your Google Drive</strong> (scope <code>drive.appdata</code>) — only to save and restore one file, <code>clinq-data.json</code>, that contains your question bank and study sessions. ClinQ cannot see or change any other file in your Drive.</li>
 </ul>
 <p>ClinQ does not have its own servers that store your data. See the <a href="https://parphelyos.github.io/ClinQ/privacy.html">Privacy Policy</a> for details, including how to delete your data.</p>
+<p><strong>Google API Services User Data Policy:</strong> ClinQ’s use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" rel="noopener">Google API Services User Data Policy</a>, including the Limited Use requirements. ClinQ does not sell your data, does not use it for advertising, and does not allow humans to read it.</p>
 <div class="note">ClinQ is an educational tool. It is not medical advice and must not be used for patient care.</div>
 </section>
 
@@ -120,6 +116,7 @@ body,.card,li,p,td,th,.meta{overflow-wrap:anywhere}
 <li><strong>Acceso a la carpeta oculta de datos de la aplicación de ClinQ en tu Google Drive</strong> (permiso <code>drive.appdata</code>) — solo para guardar y restaurar un archivo, <code>clinq-data.json</code>, con tu banco de preguntas y tus sesiones de estudio. ClinQ no puede ver ni modificar ningún otro archivo de tu Drive.</li>
 </ul>
 <p>ClinQ no tiene servidores propios que almacenen tus datos. Consulta la <a href="https://parphelyos.github.io/ClinQ/privacy.html">Política de privacidad</a> para ver los detalles, incluido cómo borrar tus datos.</p>
+<p><strong>Política de datos de usuario de los servicios de API de Google:</strong> el uso y la transferencia a cualquier otra app de la información recibida de las API de Google se ajustarán a la <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" rel="noopener">Política de datos de usuario de los servicios de API de Google</a>, incluidos los requisitos de uso limitado. ClinQ no vende tus datos, no los usa para publicidad y no permite que personas los lean.</p>
 <div class="note">ClinQ es una herramienta educativa. No constituye consejo médico y no debe usarse para la atención de pacientes.</div>
 </section>
 </div>
@@ -131,7 +128,8 @@ body,.card,li,p,td,th,.meta{overflow-wrap:anywhere}
 <a href="https://parphelyos.github.io/ClinQ/privacy.html">Privacy Policy · Política de privacidad</a>
 <a href="https://parphelyos.github.io/ClinQ/terms.html">Terms of Service · Condiciones del servicio</a>
 <a href="https://parphelyos.github.io/ClinQ/app.html">Open ClinQ · Abrir ClinQ</a>
-<a href="mailto:tu-correo@ejemplo.com">tu-correo@ejemplo.com</a>
+<!-- CAMBIA este correo por el tuyo real (el mismo de asistencia en Google Cloud) -->
+<a href="mailto:TU-CORREO-REAL@gmail.com">Contact · Contacto: TU-CORREO-REAL@gmail.com</a>
 </div>
 <div>© 2026 ClinQ. ClinQ is an independent study tool and is not affiliated with, endorsed by, or sponsored by Google, USMLE, NBME or any exam body. · ClinQ es una herramienta de estudio independiente y no está afiliada ni respaldada por Google, USMLE, NBME ni ningún organismo examinador.</div>
 </div></footer>
