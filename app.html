@@ -2783,4 +2783,46 @@ html,body{overflow-x:hidden}
 .field,input,select,textarea{font-size:16px}
 }
 </style>
+<style id="clinq-casenav-in-card">
+/* Anterior / Omitir / Siguiente dentro de la tarjeta del caso */
+.quizcard .quizbottom{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.qarrow{position:absolute;top:50%;transform:translateY(-50%);z-index:5;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:26px;line-height:1;
+  box-shadow:var(--shadow);display:grid;place-items:center;padding:0;cursor:pointer}
+.qarrow.l{left:-20px}.qarrow.r{right:-20px}
+.qarrow:hover:not(:disabled){border-color:var(--blue);color:var(--blue)}
+.qarrow:disabled{opacity:.35;cursor:default}
+@media(max-width:920px){.qarrow{display:none}}
+</style>
+<script>
+(function(){
+  function setupCaseNav(){
+    if(!currentQuiz||currentQuiz.finished)return;
+    const card=document.querySelector('.quizcard');
+    if(!card)return;
+    const bar=document.querySelector('.quizdock .quizbottom');
+    if(bar&&bar.parentNode!==card)card.appendChild(bar);
+    if(!card.querySelector('.qarrow')){
+      const mk=(cls,txt,label,delta)=>{
+        const b=document.createElement('button');
+        b.type='button';b.className='qarrow '+cls;b.textContent=txt;
+        b.title=label;b.setAttribute('aria-label',label);
+        b.onclick=()=>navQuestion(delta);
+        return b;
+      };
+      const L=mk('l','‹','Caso anterior',-1),R=mk('r','›','Caso siguiente',1);
+      L.disabled=currentQuiz.index===0;
+      R.disabled=currentQuiz.index>=currentQuiz.questions.length-1;
+      card.append(L,R);
+    }
+  }
+  const _render=renderQuizQuestion;
+  renderQuizQuestion=function(){
+    const r=_render.apply(this,arguments);
+    try{setupCaseNav()}catch(e){}
+    return r;
+  };
+  try{setupCaseNav()}catch(e){}
+})();
+</script>
 </body></html>
