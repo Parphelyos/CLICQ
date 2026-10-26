@@ -431,6 +431,59 @@ html.dark .preview-toolbar{background:#141f32!important;border-color:#354661!imp
 @media(prefers-reduced-motion:reduce){html.dark .option,html.dark .btn{transition:none!important}}
 </style>
 
+<style id="pl-css">
+#view-pdflib{min-width:0}
+.pl-grid{display:grid;grid-template-columns:270px minmax(0,1fr);gap:16px;align-items:start}
+.pl-drop{display:block;border:2px dashed var(--line);border-radius:12px;padding:16px;text-align:center;color:var(--muted);cursor:pointer;margin-bottom:12px;font-size:13px}
+.pl-drop.over{border-color:var(--blue);background:var(--blue2)}
+.pl-drop input,.pl-up input{display:none}
+.pl-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:10px;cursor:pointer;border:1px solid transparent}
+.pl-item:hover{background:var(--blue2)}.pl-item.on{background:var(--blue2);border-color:var(--blue)}
+.pl-item .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;font-size:13px}
+.pl-item small{display:block;color:var(--muted);font-weight:500;font-size:11px}
+.pl-x{border:0;background:none;color:var(--muted);font-size:18px;line-height:1;padding:4px 6px;border-radius:6px}.pl-x:hover{color:var(--red)}
+.pl-empty{color:var(--muted);font-size:13px;padding:4px 2px}
+#pl-vhost{height:calc(100vh - 150px);min-height:460px;padding:0!important;overflow:hidden;display:flex}
+#plv{flex:1;min-width:0;display:flex;flex-direction:column;height:100%;background:var(--panel)}
+.pl-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line)}
+.pl-bar .t{flex:1;min-width:90px;font-weight:800;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl-bar input{width:50px;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);text-align:center}
+.pl-bar .btn{min-width:34px;padding:6px 9px}
+.pl-body{flex:1;min-height:0;position:relative;display:flex}
+#pl-scroll{flex:1;min-width:0;overflow:auto;background:var(--blue2);padding:12px;text-align:center}
+.pl-ph{color:var(--muted);padding:50px 12px;font-size:13px}
+.pl-page{position:relative;margin:0 auto 12px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.25);text-align:left}
+.pl-page canvas{display:block;width:100%;height:100%}
+.pl-hls{position:absolute;inset:0;pointer-events:none}
+.pl-hl{position:absolute;mix-blend-mode:multiply;border-radius:2px}
+.pl-page .textLayer{position:absolute;inset:0;overflow:hidden;line-height:1;--scale-factor:1;user-select:text;-webkit-user-select:text}
+.pl-page .textLayer span,.pl-page .textLayer br{color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0 0}
+.pl-page .textLayer ::selection{background:rgba(51,94,234,.35)}
+#pl-hlp{display:none;position:absolute;top:0;right:0;bottom:0;width:min(280px,92%);background:var(--panel);border-left:1px solid var(--line);box-shadow:-8px 0 20px rgba(0,0,0,.18);overflow:auto;padding:10px;z-index:3}
+#pl-hlp.show{display:block}
+.pl-hi{padding:8px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer;font-size:12.5px}
+.pl-hi:hover{background:var(--blue2)}
+.pl-hi .s{border-left:5px solid;padding-left:8px;display:block;overflow-wrap:anywhere}
+.pl-hi .m{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:11px;margin-top:3px}
+.pl-pop{position:fixed;z-index:95;display:none;gap:6px;background:#101d34;padding:6px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.pl-pop button{width:30px;height:30px;border-radius:50%;border:2px solid #fff;padding:0}
+/* Panel acoplado a la sesión */
+#pl-dock{position:fixed;z-index:60;top:0;right:0;bottom:0;width:var(--pl-w,min(46vw,720px));display:none;flex-direction:column;background:var(--panel);border-left:1px solid var(--line);box-shadow:-10px 0 30px rgba(0,0,0,.18)}
+body.pl-open #pl-dock{display:flex}
+#pl-grip{position:absolute;left:-5px;top:0;bottom:0;width:10px;cursor:col-resize;z-index:4}
+#pl-grip:hover{background:var(--blue2)}
+.pl-dh{display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid var(--line)}
+.pl-dh select{flex:1;min-width:0;max-width:100%}
+#pl-dhost{flex:1;min-height:0;display:flex}
+@media(min-width:901px){body.pl-open .main{margin-right:var(--pl-w,min(46vw,720px))}}
+@media(max-width:900px){
+ .pl-grid{grid-template-columns:minmax(0,1fr)}
+ #pl-vhost{height:75vh}
+ #pl-dock{top:auto;left:0;width:auto;height:60vh;border-left:0;border-top:1px solid var(--line);box-shadow:0 -10px 30px rgba(0,0,0,.25)}
+ #pl-grip{display:none}
+ body.pl-open .main{padding-bottom:64vh}
+}
+</style>
 </head>
 <body>
 <div class="app">
@@ -440,7 +493,8 @@ html.dark .preview-toolbar{background:#141f32!important;border-color:#354661!imp
     <button class="active" data-view="home"><span class="navicon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg></span><span class="navtext">Resumen</span></button>
     <button data-view="library"><span class="navicon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 21 7.5 12 12 3 7.5 12 3Z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></svg></span><span class="navtext">Mi banco</span></button>
     <button data-view="practice"><span class="navicon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span class="navtext">Practicar</span></button>
-    <button data-view="progress"><span class="navicon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><path d="M6.5 20v-6"/><path d="M12 20V8"/><path d="M17.5 20V4"/></svg></span><span class="navtext">Mi progreso</span></button>
+        <button data-view="pdflib"><span class="navicon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5v-15Z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg></span><span class="navtext">Biblioteca</span></button>
+<button data-view="progress"><span class="navicon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><path d="M6.5 20v-6"/><path d="M12 20V8"/><path d="M17.5 20V4"/></svg></span><span class="navtext">Mi progreso</span></button>
     <button data-view="import"><span class="navicon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11"/><path d="m8 10 4 4 4-4"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></span><span class="navtext">Importar archivos</span></button>
   </nav></div>
   <div class="sidebottom"><strong>🔒 Tus datos son solo tuyos</strong>Se guardan en este navegador y, si inicias sesión con Google, en un archivo oculto de tu propio Drive. No se suben a ningún servidor de ClinQ. <a href="https://parphelyos.github.io/ClinQ/privacy.html" style="color:#9cb4ff">Política de privacidad</a> · <a href="https://parphelyos.github.io/ClinQ/terms.html" style="color:#9cb4ff">Condiciones del servicio</a></div>
@@ -507,6 +561,17 @@ html.dark .preview-toolbar{background:#141f32!important;border-color:#354661!imp
     <div class="stats"><div class="stat"><div class="stathead">Intentos totales <span class="staticon">↗</span></div><div class="statnum" id="p-attempts">0</div><div class="statsub">Respuestas registradas</div></div><div class="stat"><div class="stathead">Aciertos <span class="staticon">✓</span></div><div class="statnum" id="p-correct">0</div><div class="statsub">Respuestas correctas</div></div><div class="stat"><div class="stathead">Precisión global <span class="staticon">◎</span></div><div class="statnum" id="p-accuracy">—</div><div class="statsub">Aciertos / intentos</div></div><div class="stat"><div class="stathead">Preguntas marcadas <span class="staticon">★</span></div><div class="statnum" id="p-flagged">0</div><div class="statsub">Tu lista de prioridad</div></div></div>
     <div id="prog-charts"></div>
     <div class="progressdetail"><div class="progressbox"><h4>Rendimiento por documento</h4><div id="source-bars" class="muted smalltext">Aún no hay suficientes datos para mostrar rendimiento.</div></div><div class="progressbox"><h4>Cómo usar el seguimiento</h4><div class="step"><div class="stepnum">1</div><div><strong>Repasa los errores</strong><p>Filtra el banco por “Por repasar” para volver a intentar preguntas falladas.</p></div></div><div class="step" style="margin-top:14px"><div class="stepnum">2</div><div><strong>Marca preguntas complejas</strong><p>Usa la estrella para guardarlas en una lista prioritaria.</p></div></div><div class="step" style="margin-top:14px"><div class="stepnum">3</div><div><strong>Haz respaldos</strong><p>Exporta tu banco en JSON si vas a cambiar de navegador o computadora.</p></div></div></div></div>
+  </section>
+  <section class="view" id="view-pdflib">
+    <div class="pl-grid">
+      <div class="panel">
+        <div class="sectionhead"><div><h3>Biblioteca</h3><p>Tus PDFs, para leerlos y subrayarlos. Durante una sesión, ábrelos con el botón 📖 sin salir de tus preguntas.</p></div></div>
+        <label class="pl-drop" id="pl-drop"><input id="pl-file" type="file" accept="application/pdf,.pdf" multiple>Sube o arrastra un PDF aquí</label>
+        <div id="pl-list"></div>
+        <div class="notice" style="margin-top:12px">Los PDFs y sus subrayados se guardan solo en este navegador; no se sincronizan con Drive.</div>
+      </div>
+      <div class="panel" id="pl-vhost"></div>
+    </div>
   </section>
 </main></div>
 <div class="modalback" id="edit-modal"><div class="modal"><div class="modalhead"><h3 id="edit-modal-title">Editar pregunta</h3><button class="iconbtn" onclick="closeEdit()">×</button></div><input id="edit-id" type="hidden"><div id="edit-paste-box" class="pastebox" style="display:none"><label for="edit-paste">Pega la pregunta completa</label><textarea id="edit-paste" class="field" rows="6" placeholder="Pega aquí el texto con el enunciado y las opciones (A, B, C…). Detecto solo cada parte; también reconozco «Respuesta: C» y «Explicación: …»."></textarea><div class="toolbar" style="margin-top:8px"><button type="button" class="btn primary small" onclick="detectPasted()">✨ Detectar enunciado y opciones</button><span id="edit-paste-info" class="smalltext muted">Se detecta automáticamente al pegar.</span></div></div><label for="edit-stem">Enunciado</label><textarea id="edit-stem" class="field"></textarea><div id="edit-options"></div><div class="generator-grid" style="margin-top:10px"><div><label for="edit-subject">Especialidad / categoría</label><input id="edit-subject" class="field" placeholder="Ej. Orthopedics and Traumatology"></div><div><label for="edit-source">Banco donde se guardará</label><select id="edit-source" class="field" onchange="onSourceSelect()" style="width:100%"></select><input id="edit-source-new" class="field" placeholder="Nombre del nuevo banco" style="width:100%;margin-top:6px;display:none"></div></div><label for="edit-answer">Respuesta correcta</label><select id="edit-answer" class="field"><option value="">No indicada</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select><label for="edit-explanation">Explicación (opcional)</label><textarea id="edit-explanation" class="field" placeholder="Por qué es correcta y por qué no las otras opciones…"></textarea><label>Imágenes del caso (opcional)</label><div id="edit-imgs" style="display:flex;gap:10px;flex-wrap:wrap;margin:6px 0"></div><div class="toolbar"><button type="button" class="btn outline small" onclick="document.getElementById('edit-img-file').click()">🖼 Añadir imágenes</button><input id="edit-img-file" type="file" accept="image/*" multiple="" hidden=""><span class="smalltext muted">También puedes pegar una captura con Ctrl+V.</span></div><div id="edit-expimgs-block"><label>Imágenes de la explicación (opcional)</label><div id="edit-expimgs" style="display:flex;gap:10px;flex-wrap:wrap;margin:6px 0"></div><div class="toolbar"><button type="button" class="btn outline small" onclick="document.getElementById('edit-expimgs-file').click()">🖼 Añadir imágenes</button><input id="edit-expimgs-file" type="file" accept="image/*" multiple="" hidden=""><span class="smalltext muted">Se muestran junto a la explicación al responder. Puedes elegir varias a la vez o pegar con Ctrl+V tras pulsar el botón.</span></div></div><div class="modalactions"><button class="btn outline" onclick="closeEdit()">Cancelar</button><button class="btn primary" onclick="saveEdit()">Guardar cambios</button></div></div></div>
@@ -845,7 +910,7 @@ function fillSourceSelect(value){const sel=document.getElementById('edit-source'
 function onSourceSelect(){const isNew=document.getElementById('edit-source').value==='__new__',inp=document.getElementById('edit-source-new');inp.style.display=isNew?'block':'none';if(isNew)inp.focus()}
 function getSourceField(){const sel=document.getElementById('edit-source');return sel.value==='__new__'?document.getElementById('edit-source-new').value.trim():sel.value.trim()}
 
-const titles={home:['TU ESPACIO DE ESTUDIO','Tu banco médico'],library:['TU MATERIAL','Mi banco de preguntas'],import:['CARGA DE MATERIAL','Importar documentos y crear preguntas'],practice:['PRACTICA ACTIVA','Sesión de estudio'],progress:['SEGUIMIENTO','Mi progreso']};
+const titles={home:['TU ESPACIO DE ESTUDIO','Tu banco médico'],library:['TU MATERIAL','Mi banco de preguntas'],import:['CARGA DE MATERIAL','Importar documentos y crear preguntas'],pdflib:['TU MATERIAL','Biblioteca'],practice:['PRACTICA ACTIVA','Sesión de estudio'],progress:['SEGUIMIENTO','Mi progreso']};
 function showView(name){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+name));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===name));document.getElementById('eyebrow').textContent=titles[name][0];document.getElementById('pagetitle').textContent=titles[name][1];if(name==='library')renderLibrary();if(name==='home')renderHome();if(name==='progress')renderProgress();if(name==='practice'&&!currentQuiz)renderQuizStart();window.scrollTo({top:0,behavior:'smooth'})}
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
 function stats(){let attempts=bank.reduce((n,q)=>n+(q.attempts||0),0),gradedAttempts=bank.reduce((n,q)=>n+(q.answer?(q.attempts||0):0),0),correct=bank.reduce((n,q)=>n+(q.correctCount||0),0),flagged=bank.filter(q=>q.flagged).length,review=bank.filter(q=>q.flagged||(q.answer&&q.attempts>0&&q.correctCount<q.attempts)).length;return{total:bank.length,attempts,correct,accuracy:gradedAttempts?Math.round(correct/gradedAttempts*100):null,flagged,review}}
@@ -2823,6 +2888,161 @@ html,body{overflow-x:hidden}
     return r;
   };
   try{setupCaseNav()}catch(e){}
+})();
+</script>
+<script>
+/* ===================== BIBLIOTECA DE PDFs: visor, subrayado y panel de sesión ===================== */
+(function(){
+const LIBURL='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',WKURL='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const $=id=>document.getElementById(id),COLORS=['#fde047','#86efac','#93c5fd','#f9a8d4'];
+const pe=t=>{const d=document.createElement('div');d.textContent=t;return d.innerHTML};
+let db=null,cur=null,pdf=null,scale=1.2,pages=[],io=null,pending=null,lib=null,tok=0,fitW=0,posT=null;
+const POS='clinq_pl_pos',LAST='clinq_pl_last',WKEY='clinq_pl_w';
+const rj=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+/* ---- almacenamiento (IndexedDB; misma base que biblioteca.html) ---- */
+function openDB(){return new Promise((ok,no)=>{try{const r=indexedDB.open('clinq-biblioteca',1);r.onupgradeneeded=()=>r.result.createObjectStore('docs',{keyPath:'id'});r.onsuccess=()=>{db=r.result;ok()};r.onerror=()=>no(r.error)}catch(e){no(e)}})}
+const tx=(m,f)=>new Promise((ok,no)=>{const t=db.transaction('docs',m),q=f(t.objectStore('docs'));t.oncomplete=()=>ok(q&&q.result);t.onerror=()=>no(t.error)});
+const all=()=>db?tx('readonly',s=>s.getAll()):Promise.resolve([]),put=d=>tx('readwrite',s=>s.put(d)),del=id=>tx('readwrite',s=>s.delete(id));
+/* ---- estructura ---- */
+const viewer=document.createElement('div');viewer.id='plv';
+viewer.innerHTML='<div class="pl-bar"><span class="t" id="pl-title">Ningún documento abierto</span><button class="btn outline small" id="pl-prev" aria-label="Página anterior">‹</button><input id="pl-pg" type="number" min="1" value="1" aria-label="Página"><span id="pl-tot" class="muted">/ –</span><button class="btn outline small" id="pl-next" aria-label="Página siguiente">›</button><button class="btn outline small" id="pl-zo" aria-label="Alejar">−</button><button class="btn outline small" id="pl-zi" aria-label="Acercar">+</button><button class="btn outline small" id="pl-fit" title="Ajustar al ancho" aria-label="Ajustar al ancho">⤢</button><button class="btn outline small" id="pl-hb">✎ Subrayados</button></div><div class="pl-body"><div id="pl-scroll"><div class="pl-ph">Selecciona o sube un PDF. Para subrayar, selecciona texto y elige un color.</div></div><div id="pl-hlp"></div></div>';
+$('pl-vhost').appendChild(viewer);
+const dock=document.createElement('aside');dock.id='pl-dock';dock.setAttribute('aria-label','Biblioteca');
+dock.innerHTML='<div id="pl-grip"></div><div class="pl-dh"><strong>📖</strong><select class="field" id="pl-sel" aria-label="Documento"></select><label class="btn outline small pl-up">＋ PDF<input id="pl-file2" type="file" accept="application/pdf,.pdf" multiple></label><button class="btn outline small" id="pl-x" aria-label="Cerrar panel">×</button></div><div id="pl-dhost"></div>';
+document.body.appendChild(dock);
+const pop=document.createElement('div');pop.className='pl-pop';document.body.appendChild(pop);
+const sc=$('pl-scroll');
+/* ---- lista ---- */
+async function renderList(){
+  const docs=(await all()).sort((a,b)=>b.added-a.added);
+  $('pl-list').innerHTML=docs.map(d=>`<div class="pl-item${cur&&cur.id===d.id?' on':''}" data-id="${d.id}"><div class="n">${pe(d.name)}<small>${(d.size/1048576).toFixed(1)} MB · ${d.hl.length} subrayados</small></div><button class="pl-x" data-del="${d.id}" aria-label="Eliminar">×</button></div>`).join('')||'<div class="pl-empty">Tu biblioteca está vacía.</div>';
+  $('pl-sel').innerHTML=docs.map(d=>`<option value="${d.id}">${pe(d.name)}</option>`).join('')||'<option value="">Sin documentos</option>';
+  if(cur)$('pl-sel').value=cur.id;
+  return docs;
+}
+$('pl-list').onclick=async e=>{
+  const x=e.target.closest('[data-del]');
+  if(x){if(confirm('¿Eliminar este documento y sus subrayados?')){await del(x.dataset.del);if(cur&&cur.id===x.dataset.del)closeDoc();renderList()}return}
+  const it=e.target.closest('.pl-item');if(it)load(it.dataset.id);
+};
+async function add(files){
+  let last=null;
+  for(const f of files){
+    if(f.type!=='application/pdf'&&!/\.pdf$/i.test(f.name))continue;
+    const d={id:'d'+Date.now()+Math.random().toString(36).slice(2,6),name:f.name.replace(/\.pdf$/i,''),size:f.size,added:Date.now(),blob:f,hl:[]};
+    try{await put(d);last=d}catch(e){notify('No se pudo guardar el PDF en este navegador.')}
+  }
+  await renderList();if(last)load(last.id);
+}
+['pl-file','pl-file2'].forEach(i=>$(i).onchange=function(){add(this.files);this.value=''});
+const dz=$('pl-drop');
+['dragover','dragenter'].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.add('over')}));
+['dragleave','drop'].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.remove('over')}));
+dz.addEventListener('drop',e=>add(e.dataTransfer.files));
+$('pl-sel').onchange=function(){if(this.value)load(this.value)};
+/* ---- visor ---- */
+function closeDoc(){cur=null;pdf=null;pages=[];$('pl-title').textContent='Ningún documento abierto';sc.innerHTML='<div class="pl-ph">Selecciona o sube un PDF.</div>';$('pl-tot').textContent='/ –';renderHL()}
+function fitScale(p1){const w=Math.max(260,(sc.clientWidth||600)-26);fitW=sc.clientWidth;return Math.max(.6,Math.min(2.4,w/p1.getViewport({scale:1}).width))}
+async function load(id,page){
+  const my=++tok,d=(await all()).find(x=>x.id===id);if(!d)return;
+  cur=d;pdf=null;$('pl-title').textContent=d.name;try{localStorage.setItem(LAST,id)}catch(e){}
+  renderList();sc.innerHTML='<div class="pl-ph">Cargando…</div>';
+  try{
+    lib=lib||await loadScript(LIBURL,'pdfjsLib');lib.GlobalWorkerOptions.workerSrc=WKURL;
+    const p=await lib.getDocument({data:await d.blob.arrayBuffer()}).promise;if(my!==tok)return;pdf=p;
+  }catch(e){if(my===tok)sc.innerHTML='<div class="pl-ph">No se pudo abrir este PDF (¿sin conexión para cargar el visor?).</div>';return}
+  $('pl-tot').textContent='/ '+pdf.numPages;$('pl-pg').max=pdf.numPages;
+  scale=fitScale(await pdf.getPage(1));await layout();renderHL();
+  go(page||rj(POS,{})[id]||1);
+}
+async function layout(){
+  if(!pdf)return;const my=tok,v=(await pdf.getPage(1)).getViewport({scale});if(my!==tok)return;
+  sc.innerHTML='';pages=[];if(io)io.disconnect();
+  io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)draw(e.target)}),{root:sc,rootMargin:'700px 0px'});
+  for(let i=1;i<=pdf.numPages;i++){const el=document.createElement('div');el.className='pl-page';el.dataset.n=i;el.style.width=v.width+'px';el.style.height=v.height+'px';sc.appendChild(el);pages.push(el);io.observe(el)}
+}
+async function draw(el){
+  if(el.dataset.done)return;el.dataset.done=1;const my=tok,n=+el.dataset.n;
+  const p=await pdf.getPage(n),v=p.getViewport({scale}),r=window.devicePixelRatio||1;if(my!==tok)return;
+  el.style.width=v.width+'px';el.style.height=v.height+'px';
+  const c=document.createElement('canvas');c.width=v.width*r;c.height=v.height*r;
+  const hl=document.createElement('div');hl.className='pl-hls';
+  const tl=document.createElement('div');tl.className='textLayer';tl.style.setProperty('--scale-factor',scale);
+  el.append(c,hl,tl);
+  await p.render({canvasContext:c.getContext('2d'),viewport:v,transform:r!==1?[r,0,0,r,0,0]:null}).promise;
+  lib.renderTextLayer({textContentSource:await p.getTextContent(),container:tl,viewport:v,textDivs:[]});
+  paint(el);
+}
+function paint(el){
+  const l=el.querySelector('.pl-hls');if(!l||!cur)return;l.innerHTML='';
+  cur.hl.forEach(h=>{if(h.p!==+el.dataset.n)return;h.r.forEach(q=>{const d=document.createElement('div');d.className='pl-hl';d.style.cssText=`left:${q[0]*100}%;top:${q[1]*100}%;width:${q[2]*100}%;height:${q[3]*100}%;background:${h.c}`;l.appendChild(d)})});
+}
+const paintAll=()=>pages.forEach(paint);
+/* ---- navegación ---- */
+function go(n){const el=pages[Math.max(1,Math.min(pdf?pdf.numPages:1,n))-1];if(el)sc.scrollTop=el.offsetTop-sc.offsetTop-8}
+function curPage(){const t=sc.scrollTop+sc.offsetTop+30;let n=1;pages.forEach(e=>{if(e.offsetTop<=t)n=+e.dataset.n});return n}
+$('pl-prev').onclick=()=>go(curPage()-1);$('pl-next').onclick=()=>go(curPage()+1);$('pl-pg').onchange=function(){go(+this.value)};
+sc.addEventListener('scroll',()=>{if(!pages.length)return;const n=curPage();$('pl-pg').value=n;clearTimeout(posT);posT=setTimeout(()=>{if(!cur)return;const m=rj(POS,{});m[cur.id]=n;try{localStorage.setItem(POS,JSON.stringify(m))}catch(e){}},400)});
+async function rescale(s){if(!pdf)return;const p=curPage();scale=s;await layout();go(p);paintAll()}
+$('pl-zi').onclick=()=>rescale(Math.min(3,scale*1.2));$('pl-zo').onclick=()=>rescale(Math.max(.5,scale/1.2));
+$('pl-fit').onclick=async()=>{if(pdf)rescale(fitScale(await pdf.getPage(1)))};
+/* ---- subrayar ---- */
+COLORS.forEach(c=>{const b=document.createElement('button');b.style.background=c;b.setAttribute('aria-label','Subrayar');b.onmousedown=e=>e.preventDefault();b.onclick=()=>commit(c);pop.appendChild(b)});
+function sel(){
+  const s=getSelection();if(!s||s.isCollapsed||!s.rangeCount||!cur||!sc.contains(s.anchorNode)){pop.style.display='none';pending=null;return}
+  const rects=[...s.getRangeAt(0).getClientRects()].filter(r=>r.width>1&&r.height>1),out={};
+  pages.forEach(el=>{const b=el.getBoundingClientRect(),rs=[];
+    rects.forEach(r=>{if(r.right<b.left||r.left>b.right||r.bottom<b.top||r.top>b.bottom)return;rs.push([(r.left-b.left)/b.width,(r.top-b.top+r.height*.05)/b.height,r.width/b.width,r.height*.9/b.height])});
+    if(rs.length)out[el.dataset.n]=rs});
+  if(!Object.keys(out).length){pop.style.display='none';pending=null;return}
+  pending={text:s.toString().replace(/\s+/g,' ').trim(),pages:out};
+  const last=rects[rects.length-1];pop.style.display='flex';
+  pop.style.left=Math.max(8,Math.min(innerWidth-170,last.left))+'px';pop.style.top=Math.min(innerHeight-52,last.bottom+8)+'px';
+}
+sc.addEventListener('mouseup',()=>setTimeout(sel,10));sc.addEventListener('touchend',()=>setTimeout(sel,250));
+document.addEventListener('selectionchange',()=>{const s=getSelection();if(!s||s.isCollapsed)pop.style.display='none'});
+async function commit(c){
+  if(!pending||!cur)return;
+  Object.keys(pending.pages).forEach(p=>cur.hl.push({id:'h'+Date.now()+p,p:+p,c,t:pending.text.slice(0,200),r:pending.pages[p]}));
+  pending=null;pop.style.display='none';getSelection().removeAllRanges();
+  await put(cur);paintAll();renderHL();renderList();
+}
+function renderHL(){
+  const n=cur?cur.hl.length:0;$('pl-hb').textContent='✎ Subrayados'+(n?' ('+n+')':'');
+  $('pl-hlp').innerHTML=n?cur.hl.slice().sort((a,b)=>a.p-b.p).map(h=>`<div class="pl-hi" data-go="${h.p}"><span class="s" style="border-color:${h.c}">${pe(h.t)}</span><div class="m"><span>Pág. ${h.p}</span><button class="pl-x" data-rm="${h.id}" aria-label="Quitar subrayado">×</button></div></div>`).join(''):'<div class="pl-empty">Aún no hay subrayados en este documento.</div>';
+}
+$('pl-hb').onclick=()=>$('pl-hlp').classList.toggle('show');
+$('pl-hlp').onclick=async e=>{
+  const rm=e.target.closest('[data-rm]');
+  if(rm){cur.hl=cur.hl.filter(h=>h.id!==rm.dataset.rm);await put(cur);paintAll();renderHL();renderList();return}
+  const g=e.target.closest('[data-go]');if(g){go(+g.dataset.go);if(innerWidth<=900)$('pl-hlp').classList.remove('show')}
+};
+/* ---- panel acoplado a la sesión ---- */
+function syncBtns(){const o=document.body.classList.contains('pl-open');document.querySelectorAll('.pl-open-btn').forEach(b=>b.textContent=o?'📖 Cerrar Biblioteca':'📖 Biblioteca')}
+async function openDock(){
+  $('pl-dhost').appendChild(viewer);document.body.classList.add('pl-open');syncBtns();
+  const docs=await renderList();
+  if(!cur){const id=localStorage.getItem(LAST),d=docs.find(x=>x.id===id)||docs[0];if(d)load(d.id)}
+  else if(pdf&&Math.abs(sc.clientWidth-fitW)>40)rescale(fitScale(await pdf.getPage(1)));
+}
+function closeDock(){if(!document.body.classList.contains('pl-open'))return;document.body.classList.remove('pl-open');$('pl-vhost').appendChild(viewer);syncBtns()}
+const toggleDock=()=>document.body.classList.contains('pl-open')?closeDock():openDock();
+$('pl-x').onclick=closeDock;
+(function(){const w=parseInt(localStorage.getItem(WKEY));if(w)document.documentElement.style.setProperty('--pl-w',w+'px');
+  const g=$('pl-grip');g.onpointerdown=e=>{e.preventDefault();g.setPointerCapture(e.pointerId);
+    g.onpointermove=ev=>{const v=Math.max(320,Math.min(innerWidth*.7,innerWidth-ev.clientX));document.documentElement.style.setProperty('--pl-w',v+'px')};
+    g.onpointerup=()=>{g.onpointermove=g.onpointerup=null;try{localStorage.setItem(WKEY,parseInt(getComputedStyle(dock).width))}catch(e){}}}})();
+/* ---- enganche con la app ---- */
+function addBtn(){
+  const t=document.querySelector('#quiz-area .quiztop');if(!t||t.querySelector('.pl-open-btn'))return;
+  const b=document.createElement('button');b.className='btn outline small pl-open-btn';b.title='Leer un PDF junto a tu sesión';b.onclick=toggleDock;
+  t.insertBefore(b,t.querySelector('.btn.danger')||null);syncBtns();
+}
+const _rq=renderQuizQuestion;renderQuizQuestion=function(){const r=_rq.apply(this,arguments);try{addBtn()}catch(e){}return r};
+const _sv=showView;showView=function(n){const r=_sv.apply(this,arguments);
+  if(n==='pdflib'){closeDock();renderList().then(docs=>{if(!cur){const id=localStorage.getItem(LAST),d=docs.find(x=>x.id===id)||docs[0];if(d)load(d.id)}})}return r};
+try{addBtn()}catch(e){}
+openDB().then(renderList).catch(()=>{$('pl-list').innerHTML='<div class="pl-empty">Tu navegador no permite guardar documentos (¿modo privado?).</div>'});
 })();
 </script>
 </body></html>
