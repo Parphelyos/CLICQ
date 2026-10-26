@@ -1879,7 +1879,7 @@ async function aiDefine(term, sig) {
   const ck = "clinq_ai_def:" + normalizeWikiTerm(term);
   try { const c = JSON.parse(localStorage.getItem(ck) || "null"); if (c && c.t && Date.now() - c.ts < AI_DEF_TTL) return c.t; } catch (e) {}
   let cx = ""; try { const q = bank.find((x) => x.id === currentQuiz.questions[currentQuiz.index]); if (q) cx = String(q.stem || "").slice(0, 400); } catch (e) {}
-  const ac = new AbortController(), to = setTimeout(() => ac.abort(), 30000); if (sig) sig.addEventListener("abort", () => ac.abort());
+  const ac = new AbortController(), to = setTimeout(() => ac.abort(), 50000); if (sig) sig.addEventListener("abort", () => ac.abort());
   try {
     const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "define", term: term.slice(0, 200), context: cx }), signal: ac.signal });
     const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Error " + r.status);

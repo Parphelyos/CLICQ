@@ -1,0 +1,81 @@
+// Función serverless para Vercel: recibe texto de un PDF y devuelve casos/preguntas en JSON.
+// Variables de entorno en Vercel: GEMINI_API_KEY (obligatoria), ALLOWED_ORIGIN (opcional, separadas por coma), GEMINI_MODEL (opcional; por defecto gemini-3.8-flash).
+const MAX_CHARS = 30000, LIMIT = 20, WINDOW_MS = 60000, hits = new Map();
+
+const SYS = 'Eres un asistente que prepara preguntas de opción múltiple para estudiantes de medicina. Respondes SOLO con JSON válido.';
+const FORMAT = 'Formato: {"questions":[{"stem":"enunciado","options":["texto A","texto B","texto C","texto D","texto E"],"answer":"B","explanation":"explicación breve","page":14}]}. "options" lleva solo el texto, sin letras. "page" es el número del marcador [[PÁGINA n]] donde está la información.';
+
+function prompt(b) {
+  if (b.mode === 'define') {
+    const term = String(b.term || '').slice(0, 200), ctx = String(b.context || '').slice(0, 500);
+    return `Explica en 2 o 3 oraciones cortas (máximo 60 palabras), en español sencillo, qué es «${term}» en el contexto médico. ${ctx ? 'Contexto de la pregunta de estudio (solo para desambiguar el término): ' + ctx : ''} Sé directo y no inventes datos; si no estás seguro o no es un término médico, dilo en una frase. Responde SOLO con JSON: {"summary":"..."}.`;
+  }
+  const text = String(b.text || '').slice(0, MAX_CHARS);
+  if (b.mode === 'fidelity') {
+    return `Extrae TODAS las preguntas o casos clínicos con opciones que aparezcan en el texto, tal cual están escritos: no inventes, no reformules el enunciado ni las opciones y no omitas ninguno. Si el texto trae la respuesta correcta o la explicación, inclúyelas; si no, deja "answer" y "explanation" vacíos. ${FORMAT}\n\nTEXTO:\n${text}`;
+  }
+  const n = Math.min(Math.max(parseInt(b.count) || 5, 1), 20);
+  const style = b.style === 'direct' ? 'preguntas directas y concisas sobre los conceptos del texto' : 'viñetas clínicas estilo USMLE Step 2 CK (edad, sexo, motivo de consulta, hallazgos, laboratorio) con una pregunta final';
+  const avoid = b.avoid ? `\nNo repitas ni parafrasees estas preguntas ya creadas: ${String(b.avoid).slice(0, 1500)}` : '';
+  return `Crea exactamente ${n} preguntas de opción múltiple con 5 opciones (A–E) y una sola correcta, como ${style}. Usa ÚNICAMENTE información contenida en el texto; no inventes datos. Los distractores deben ser plausibles. La explicación indica por qué la correcta lo es y por qué falla alguna incorrecta.${avoid} ${FORMAT}\n\nTEXTO:\n${text}`;
+}
+
+module.exports = async (req, res) => {
+  const origins = (process.env.ALLOWED_ORIGIN || 'https://parphelyos.github.io').split(',').map((s) => s.trim());
+  const o = req.headers.origin;
+  let ok = !o;
+  if (o) { try { ok = origins.includes(o) || new URL(o).host === req.headers.host; } catch (e) {} }
+  if (ok && o) { res.setHeader('Access-Control-Allow-Origin', o); res.setHeader('Vary', 'Origin'); }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
+  if (!ok) return res.status(403).json({ error: 'Origen no permitido' });
+
+  const ip = String(req.headers['x-forwarded-for'] || 'x').split(',')[0].trim(), now = Date.now();
+  const h = (hits.get(ip) || []).filter((t) => now - t < WINDOW_MS);
+  if (h.length >= LIMIT) return res.status(429).json({ error: 'Demasiadas solicitudes. Espera un minuto e inténtalo de nuevo.' });
+  h.push(now); hits.set(ip, h);
+
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) return res.status(500).json({ error: 'El servidor no tiene configurada la clave de IA.' });
+  const b = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
+  if (b.mode === 'define' ? !String(b.term || '').trim() : (!b.text || String(b.text).length < 200)) return res.status(400).json({ error: 'Texto insuficiente.' });
+
+  try {
+    const def = b.mode === 'define';
+    // Para definiciones cortas se prefiere el modelo ligero (más rápido y menos saturado).
+    const models = (def ? [process.env.GEMINI_MODEL, 'gemini-3.1-flash-lite', 'gemini-3.8-flash'] : [process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-3.1-flash-lite']).filter(Boolean);
+    let r = null;
+    for (let round = 0; round < (def ? 2 : 1); round++) {
+      if (round) await new Promise((ok) => setTimeout(ok, 1200)); // reintento si el servicio de IA está saturado (503)
+      for (let i = 0; i < models.length; i++) {
+        try {
+          r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[i]}:generateContent`, {
+            method: 'POST',
+            signal: AbortSignal.timeout(def ? 8000 : i === 0 ? 35000 : 20000),
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: SYS }] },
+              contents: [{ role: 'user', parts: [{ text: prompt(b) }] }],
+              generationConfig: { responseMimeType: 'application/json', temperature: b.mode === 'fidelity' ? 0.1 : def ? 0.2 : 0.5, maxOutputTokens: def ? 512 : 8192 },
+            }),
+          });
+          if (r.status !== 404 && r.status < 500) break; // modelo inexistente, saturado o lento: prueba el siguiente
+        } catch (e) { r = null; }
+      }
+      if (r && r.ok) break;
+    }
+    if (!r) return res.status(504).json({ error: 'La IA tardó demasiado. Prueba con menos casos o una sección más corta.' });
+    if (r.status === 429) return res.status(429).json({ error: 'Se alcanzó el límite del servicio de IA. Inténtalo en un minuto.' });
+    if (!r.ok) return res.status(502).json({ error: r.status >= 500 ? 'El servicio de IA está saturado en este momento. Inténtalo de nuevo en unos segundos.' : 'El servicio de IA no respondió (' + r.status + ').' });
+    const j = await r.json();
+    const t = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map((p) => p.text || '').join('').replace(/^```json|```$/g, '').trim();
+    const parsed = JSON.parse(t);
+    if (b.mode === 'define') return res.status(200).json({ summary: String(parsed.summary || '').slice(0, 700) });
+    const questions = Array.isArray(parsed) ? parsed : parsed.questions;
+    return res.status(200).json({ questions: Array.isArray(questions) ? questions : [] });
+  } catch (e) {
+    return res.status(502).json({ error: 'No se pudo procesar la respuesta de la IA. Inténtalo de nuevo.' });
+  }
+};
