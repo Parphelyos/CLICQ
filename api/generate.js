@@ -6,6 +6,10 @@ const SYS = 'Eres un asistente que prepara preguntas de opción múltiple para e
 const FORMAT = 'Formato: {"questions":[{"stem":"enunciado","options":["texto A","texto B","texto C","texto D","texto E"],"answer":"B","explanation":"explicación breve","page":14}]}. "options" lleva solo el texto, sin letras. "page" es el número del marcador [[PÁGINA n]] donde está la información.';
 
 function prompt(b) {
+  if (b.mode === 'define') {
+    const term = String(b.term || '').slice(0, 200), ctx = String(b.context || '').slice(0, 500);
+    return `Explica en 2 o 3 oraciones cortas (máximo 60 palabras), en español sencillo, qué es «${term}» en el contexto médico. ${ctx ? 'Contexto de la pregunta de estudio (solo para desambiguar el término): ' + ctx : ''} Sé directo y no inventes datos; si no estás seguro o no es un término médico, dilo en una frase. Responde SOLO con JSON: {"summary":"..."}.`;
+  }
   const text = String(b.text || '').slice(0, MAX_CHARS);
   if (b.mode === 'fidelity') {
     return `Extrae TODAS las preguntas o casos clínicos con opciones que aparezcan en el texto, tal cual están escritos: no inventes, no reformules el enunciado ni las opciones y no omitas ninguno. Si el texto trae la respuesta correcta o la explicación, inclúyelas; si no, deja "answer" y "explanation" vacíos. ${FORMAT}\n\nTEXTO:\n${text}`;
@@ -36,7 +40,7 @@ module.exports = async (req, res) => {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return res.status(500).json({ error: 'El servidor no tiene configurada la clave de IA.' });
   const b = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-  if (!b.text || String(b.text).length < 200) return res.status(400).json({ error: 'Texto insuficiente.' });
+  if (b.mode === 'define' ? !String(b.term || '').trim() : (!b.text || String(b.text).length < 200)) return res.status(400).json({ error: 'Texto insuficiente.' });
 
   try {
     const models = [process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-3.1-flash-lite'].filter(Boolean);
@@ -50,7 +54,7 @@ module.exports = async (req, res) => {
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: SYS }] },
             contents: [{ role: 'user', parts: [{ text: prompt(b) }] }],
-            generationConfig: { responseMimeType: 'application/json', temperature: b.mode === 'fidelity' ? 0.1 : 0.5, maxOutputTokens: 8192 },
+            generationConfig: { responseMimeType: 'application/json', temperature: b.mode === 'fidelity' ? 0.1 : b.mode === 'define' ? 0.2 : 0.5, maxOutputTokens: b.mode === 'define' ? 512 : 8192 },
           }),
         });
         if (r.status !== 404 && r.status < 500) break; // si el modelo no existe, falla o tarda, prueba el siguiente
@@ -62,6 +66,7 @@ module.exports = async (req, res) => {
     const j = await r.json();
     const t = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map((p) => p.text || '').join('').replace(/^```json|```$/g, '').trim();
     const parsed = JSON.parse(t);
+    if (b.mode === 'define') return res.status(200).json({ summary: String(parsed.summary || '').slice(0, 700) });
     const questions = Array.isArray(parsed) ? parsed : parsed.questions;
     return res.status(200).json({ questions: Array.isArray(questions) ? questions : [] });
   } catch (e) {
