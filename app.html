@@ -536,7 +536,7 @@ body.pl-open #pl-dock{display:flex}
       <label style="display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #dbe3ee;border-radius:10px"><input type="checkbox" id="json-bank-mode" checked="" onchange="updateJSONMode()"><span><strong>Modo banco de preguntas</strong><br><span class="smalltext muted">Activado: extracción fiel del documento, sin variantes. Desactivado: generación de 40 preguntas nuevas estilo USMLE Step 2 CK con 2 variantes cada una.</span></span></label>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px"><strong id="json-mode-title">Prompt para extraer un banco existente</strong><button class="btn primary small" onclick="copyJSONModePrompt()">⧉ Copiar prompt</button></div>
       <textarea id="json-mode-prompt" class="field textimport" readonly="" spellcheck="false" style="margin-top:8px;min-height:230px" aria-label="Prompt JSON según modo"></textarea>
-      <div class="notice" style="margin-top:8px">El interruptor cambia el prompt que se copia; no convierte automáticamente un formato en el otro. Al importar un JSON, Clicq detecta tanto el esquema de bloques con <code>correctAnswer</code> como los respaldos propios de Clicq.</div>
+      <div class="notice" style="margin-top:8px">El interruptor cambia el prompt que se copia; no convierte automáticamente un formato en el otro. Al importar un JSON, Clicq detecta tanto el esquema de bloques con <code>correctAnswer</code> como los respaldos propios de Clicq.<br><strong>Con imágenes:</strong> la IA no puede entregar la imagen, solo su nombre (<code>q041-1.png</code>, según el número de pregunta). Recorta o guarda esas imágenes del PDF con esos nombres y súbelas aquí junto al JSON, o dentro de un .zip. La vista previa mostrará las miniaturas para que compruebes que cada una quedó en su caso.</div>
     </div>
     <div class="panel generator-panel" id="nblm-panel">
       <div class="sectionhead"><div><h3>Conectar con NotebookLM</h3><p>Usa tu cuaderno de NotebookLM como fuente de preguntas, sin claves de API.</p></div><span class="pill gold">Próximamente</span></div>
@@ -1129,26 +1129,79 @@ async function extractFile(file){let ext=file.name.split('.').pop().toLowerCase(
 const dz=document.getElementById('dropzone'),fi=document.getElementById('fileinput');fi.addEventListener('change',e=>handleFiles([...e.target.files]));['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('dragover')}));['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('dragover')}));dz.addEventListener('drop',e=>handleFiles([...e.dataTransfer.files]));
 async function handleFiles(files){if(!files.length)return;importPreview=[];document.getElementById('preview-area').innerHTML='';const status=document.getElementById('import-status');status.textContent=`Procesando ${files.length} archivo(s)…`;let errors=[],loaded=0;for(const file of files){try{status.textContent=`Leyendo ${file.name}…`;const text=await extractFile(file);loaded++;const qs=parseText(text,file.name);if(qs.length){importPreview.push(...qs);notify(`${file.name}: ${qs.length} preguntas detectadas`)}else{errors.push(`${file.name}: no se detectaron preguntas de opción múltiple; el texto quedó disponible para crear preguntas desde apuntes.`)}const notes=document.getElementById('notes-text');const prefix=notes.value.trim()?`\n\n\n===== MATERIAL: ${file.name} =====\n\n`:'';notes.value=(notes.value+prefix+text).slice(0,500000);const source=document.getElementById('notes-source');if(!source.value.trim()||source.value==='Apuntes importados')source.value=files.length===1?file.name:'Apuntes de varios documentos'}catch(e){errors.push(`${file.name}: ${e.message||'no se pudo leer.'}`)}}const diag=parseText.lastDiagnostics||{};status.textContent=`${importPreview.length} pregunta(s) detectadas en ${loaded} archivo(s).`+(diag.candidates&&diag.candidates>diag.parsed?` Se separaron aproximadamente ${diag.candidates} bloques; ${diag.parsed} tenían opciones reconocibles. Revisa el formato de las preguntas omitidas.`:'')+(errors.length?' '+errors.join(' '):'');if(loaded)document.getElementById('generator-status').textContent=`El contenido de ${loaded} archivo(s) también está disponible en “Crear preguntas desde apuntes”.`;renderPreview();fi.value=''}
 const STEP2_CK_PROMPT = "Generate 40 USMLE Step 2 CK-style clinical practice questions as ONLY valid JSON. Do not include Markdown, code fences, explanations outside the JSON, or any introductory/concluding text.\n\nEXAM SETTINGS\n- Exam title: USMLE Step 2 CK — Mixed Block.\n- One block named \"Mixed Block\" with a 60-minute time limit.\n- Generate exactly 40 primary questions, plus exactly 2 distinct variants for EACH primary question (120 total question objects when variants are counted).\n- Difficulty distribution for the 40 primary questions: exactly 8 Easy, 24 Medium, and 8 Hard. Give each primary question a numeric difficultyRating from 1 to 5 and a matching difficultyLabel of \"Easy\", \"Medium\", or \"Hard\".\n- Restrict all questions to these seven disciplines only: Emergency Medicine, Orthopedics and Traumatology, Neurosurgery, Vascular Surgery, Urology, Ophthalmology, and Otolaryngology. Distribute the questions reasonably across these disciplines; do not add other specialties.\n- This is Step 2 CK: emphasize clinical reasoning, diagnosis, next best step, interpretation, treatment, disposition, complications, and patient safety. Do NOT write Step 1-style isolated basic-science recall questions.\n\nQUESTION QUALITY\n- Write realistic, self-contained clinical vignettes with age, relevant history, examination findings, vital signs, and investigations when clinically appropriate.\n- Each question must test one clear clinical decision and have exactly one best answer.\n- Use five answer options labeled A, B, C, D, and E. Keep options plausible, parallel in structure, and similar in length. Avoid giveaway wording, absurd distractors, repeated patterns, and options that overlap.\n- Make questions challenging at an appropriate Step 2 CK level. Hard questions should require integration of multiple findings or prioritization, not obscure trivia.\n- Do not place a specialty/topic title before each question. The discipline belongs only in the JSON field.\n- Include a concise, clinically accurate explanation of why the correct answer is best, plus a brief explanation of why the most tempting alternative is wrong when useful.\n- Include an attending-level clinical pearl and a key learning point for each question.\n- Do not invent citations or claim that a source was consulted. If you provide references, use only real, verifiable guidelines or authoritative sources and include a DOI/URL when known; otherwise use an empty array.\n\nVARIANTS\n- Every primary question must contain exactly 2 variants in its \"variants\" array.\n- Each variant must be a genuinely new, independently answerable clinical case testing the same underlying learning objective, not a superficial rewording. Change clinically meaningful details (such as age, comorbidities, timing, vital signs, examination, test results, or care setting) while preserving a defensible single best answer.\n- Each variant must include its own vignette/stem, five options, correct answer, explanation, attending tip, key learning point, and difficulty metadata. Do not omit or abbreviate fields in variants.\n- The variants must not count toward the 40 primary-question difficulty distribution.\n\nSTRICT JSON SCHEMA\nReturn one JSON object with this structure and these field names:\n{\n  \"examTitle\": \"USMLE Step 2 CK — Mixed Block\",\n  \"blocks\": [\n    {\n      \"blockName\": \"Mixed Block\",\n      \"timeLimitMinutes\": 60,\n      \"questions\": [\n        {\n          \"id\": \"Q001\",\n          \"subject\": \"Emergency Medicine\",\n          \"difficultyRating\": 3,\n          \"difficultyLabel\": \"Medium\",\n          \"vignette\": \"Full clinical vignette...\",\n          \"stem\": \"What is the most appropriate next step in management?\",\n          \"keyInfoPhrases\": [\"clinically important finding 1\", \"clinically important finding 2\"],\n          \"options\": [\n            {\"key\": \"A\", \"text\": \"Option A\"},\n            {\"key\": \"B\", \"text\": \"Option B\"},\n            {\"key\": \"C\", \"text\": \"Option C\"},\n            {\"key\": \"D\", \"text\": \"Option D\"},\n            {\"key\": \"E\", \"text\": \"Option E\"}\n          ],\n          \"correctAnswer\": \"C\",\n          \"explanation\": \"Clinically accurate rationale for the correct answer...\",\n          \"attendingTip\": \"Practical attending-level pearl...\",\n          \"keyLearningPoint\": \"The single most important takeaway...\",\n          \"references\": [],\n          \"variants\": [\n            {\n              \"id\": \"Q001-V1\",\n              \"subject\": \"Emergency Medicine\",\n              \"difficultyRating\": 3,\n              \"difficultyLabel\": \"Medium\",\n              \"vignette\": \"A distinct alternative clinical vignette...\",\n              \"stem\": \"What is the most appropriate next step?\",\n              \"keyInfoPhrases\": [\"important finding 1\", \"important finding 2\"],\n              \"options\": [\n                {\"key\": \"A\", \"text\": \"Option A\"},\n                {\"key\": \"B\", \"text\": \"Option B\"},\n                {\"key\": \"C\", \"text\": \"Option C\"},\n                {\"key\": \"D\", \"text\": \"Option D\"},\n                {\"key\": \"E\", \"text\": \"Option E\"}\n              ],\n              \"correctAnswer\": \"B\",\n              \"explanation\": \"Rationale for this variant...\",\n              \"attendingTip\": \"Clinical pearl for this variant...\",\n              \"keyLearningPoint\": \"Key takeaway for this variant...\",\n              \"references\": []\n            },\n            {\n              \"id\": \"Q001-V2\",\n              \"subject\": \"Emergency Medicine\",\n              \"difficultyRating\": 3,\n              \"difficultyLabel\": \"Medium\",\n              \"vignette\": \"A second distinct alternative clinical vignette...\",\n              \"stem\": \"What is the most appropriate next step?\",\n              \"keyInfoPhrases\": [\"important finding 1\", \"important finding 2\"],\n              \"options\": [\n                {\"key\": \"A\", \"text\": \"Option A\"},\n                {\"key\": \"B\", \"text\": \"Option B\"},\n                {\"key\": \"C\", \"text\": \"Option C\"},\n                {\"key\": \"D\", \"text\": \"Option D\"},\n                {\"key\": \"E\", \"text\": \"Option E\"}\n              ],\n              \"correctAnswer\": \"D\",\n              \"explanation\": \"Rationale for this variant...\",\n              \"attendingTip\": \"Clinical pearl for this variant...\",\n              \"keyLearningPoint\": \"Key takeaway for this variant...\",\n              \"references\": []\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}\n\nFINAL VALIDATION BEFORE RESPONDING\n- Return exactly 40 primary question objects in blocks[0].questions.\n- Every primary question has exactly 2 variants, no more and no fewer.\n- Every primary and variant has exactly five options with unique keys A–E, and correctAnswer matches one of those keys.\n- Use unique IDs for all primary questions and variants (for example Q001, Q001-V1, Q001-V2).\n- All required fields must be present and populated; use arrays for keyInfoPhrases, options, references, and variants.\n- Ensure the primary difficulty counts are exactly 8 Easy, 24 Medium, and 8 Hard.\n- Ensure all questions fit the seven permitted disciplines and Step 2 CK clinical scope.\n- Ensure the output parses with JSON.parse: double quotes for all keys and strings, no trailing commas, no comments, no NaN/undefined, and no Markdown fences.\n- Return ONLY the complete, valid JSON object. Do not truncate the output; include all 40 primary questions and all 80 variants.";
-const BANK_EXTRACTION_PROMPT = `Extrae las preguntas del documento especificado y genera UNICAMENTE un objeto JSON válido, sin marcado markdown ni comentarios, siguiendo este esquema y reglas estrictas:
+const BANK_EXTRACTION_PROMPT = `Extrae las preguntas del documento PDF especificado y genera ÚNICAMENTE un objeto JSON válido, sin marcado markdown adicional ni comentarios fuera del JSON, siguiendo este esquema y reglas estrictas:
 {
   "examTitle": "string",
-  "blocks": [{
-    "blockName": "string",
-    "timeLimitMinutes": 60,
-    "questions": [{
-      "id": "string", "subject": "string", "difficultyRating": 3,
-      "difficultyLabel": "Easy|Medium|Hard", "vignette": "string",
-      "keyInfoPhrases": ["string"], "stem": "string",
-      "options": [{"key": "A", "text": "string"}], "correctAnswer": "string", "images": ["URL, data:image/... o nombre de archivo (opcional)"],
-      "attendingTip": "string", "explanation": "string", "keyLearningPoint": "string",
-      "distractorAnalysis": {"OPCION_INCORRECTA_KEY": "string"}, "hint": "string",
-      "educationalObjective": "string",
-      "sourceReferences": [{"sourceTitle":"string","chapterSection":"string","relevance":"string"}],
-      "variants": []
-    }]
-  }]
+  "blocks": [
+    {
+      "blockName": "string",
+      "timeLimitMinutes": number,
+      "questions": [
+        {
+          "id": "string",
+          "subject": "string",
+          "difficultyRating": number,
+          "difficultyLabel": "Easy|Medium|Hard",
+          "images": ["q041-1.png"],
+          "imagePage": number_o_null,
+          "imageDescription": "string_o_null",
+          "vignette": "Pregunta N: [Texto exacto del enunciado]\\n\\nSeleccione la respuesta correcta:",
+          "keyInfoPhrases": ["string"],
+          "stem": "Seleccione la respuesta correcta:",
+          "options": [ { "key": "A", "text": "string" } ],
+          "correctAnswer": "string",
+          "attendingTip": "string",
+          "explanation": "string",
+          "explanationImages": [],
+          "keyLearningPoint": "string",
+          "distractorAnalysis": { "OPCION_INCORRECTA_KEY": "string" },
+          "hint": "string",
+          "educationalObjective": "string",
+          "sourceReferences": [ { "sourceTitle": "string", "chapterSection": "string", "relevance": "string" } ],
+          "variants": []
+        }
+      ]
+    }
+  ]
 }
-REGLAS: 1. Copia los enunciados y opciones EXACTAMENTE como aparecen. 2. En vignette inicia con el número original: "Pregunta 1: ...". 3. En options.text deja solo la opción limpia; elimina flechas, símbolos y notas explicativas pegadas. 4. Pasa las explicaciones individuales de cada opción incorrecta a distractorAnalysis por letra; la explicación de la correcta va en explanation. 5. Detecta la especialidad en subject (por ejemplo Orthopedics and Traumatology, Ophthalmology, Emergency Medicine, Otolaryngology, Neurosurgery, Urology o Vascular Surgery). 6. variants siempre debe ser []. 7. stem debe ser "Seleccione la opción correcta:" o el enunciado directo. Usa comillas dobles y escapa caracteres especiales. 8. correctAnswer debe ser solo la letra de la respuesta correcta; si no se puede identificar con seguridad, usa cadena vacía. 9. No inventes datos, opciones, respuestas, explicaciones ni referencias. Retorna únicamente el objeto JSON válido.`;
+
+REGLAS DE EXTRACCIÓN Y FORMATO:
+
+1. FIDELIDAD TEXTUAL ABSOLUTA:
+- Copia los enunciados de las preguntas y las opciones EXACTAMENTE TAL CUAL aparecen en el documento original. No cambies, resumas ni parafrasees ninguna palabra.
+
+2. NUMERACIÓN Y ESPACIADO EN "VIGNETTE":
+- En el campo "vignette", inicia siempre con el número de la pregunta tal como aparece en el documento (ejemplo: "Pregunta 41: [Texto exacto...]") seguido de un doble salto de línea (\\n\\n) y la frase "Seleccione la respuesta correcta:".
+
+3. OPCIONES LIMPIAS:
+- En el arreglo "options", la propiedad "text" de cada opción debe contener únicamente la alternativa limpia. Elimina flechas (→), símbolos o notas explicativas pegadas a la opción en el PDF.
+
+4. EXPLICACIONES INDEPENDIENTES POR OPCIÓN:
+- Las notas explicativas que acompañan a cada opción en el documento original (por ejemplo, después de la flecha →) se integran de forma individual en "distractorAnalysis", mapeando cada letra incorrecta con su explicación textual completa. La explicación de la opción correcta se coloca en "explanation".
+
+5. IMÁGENES DEL PDF (CAMPO "images"):
+- Una pregunta tiene imagen cuando el PDF muestra, junto a su enunciado u opciones, una figura, fotografía, ECG, radiografía, TAC, ecografía, esquema, gráfico o tabla en formato imagen. Ignora logotipos, encabezados, pies de página, marcas de agua y adornos.
+- NO puedes entregar la imagen en sí. No escribas base64, "data:image" ni URLs: solo el NOMBRE DE ARCHIVO con el que la persona guardará esa imagen después.
+- Convención de nombres, obligatoria: "q" + el número de la pregunta con 3 dígitos + "-" + el orden de la imagen dentro de esa pregunta, empezando en 1, + ".png". Ejemplos: pregunta 41 con una imagen → "q041-1.png"; pregunta 7 con dos imágenes → "q007-1.png" y "q007-2.png". El número debe coincidir con el de "Pregunta N" del vignette.
+- "images" es siempre un arreglo: lista los nombres en orden de aparición, o [] si la pregunta no tiene imágenes. Nunca uses null ni cadenas vacías en este campo.
+- "imagePage": número de página del PDF (no el impreso en la hoja) donde aparece la imagen de la pregunta; null si no hay imagen. Sirve para que la persona la localice y la recorte.
+- "imageDescription": una descripción breve y neutral de lo que se ve (por ejemplo "ECG de 12 derivaciones" o "radiografía de tórax PA"), sin diagnóstico, sin pistas y sin revelar la respuesta; null si no hay imagen.
+- Si las alternativas son imágenes, deja en "options.text" solo la etiqueta ("Imagen A", "Imagen B", …) y lista esas imágenes en "images" en el orden A, B, C… de modo que coincidan con las opciones.
+- Si la imagen pertenece a la explicación o al solucionario y no al enunciado, ponla en "explanationImages" con la misma convención pero agregando "exp": "q041-exp-1.png". Usa [] si no hay.
+- Si no puedes ver las imágenes del PDF (solo recibes su texto) pero el texto indica que existe una figura ("ver figura", "observe la imagen", "ECG adjunto"), registra igualmente el nombre de archivo en "images" y la página en "imagePage", y escribe en "imageDescription" lo que el texto diga de ella. Si no hay ninguna señal de imagen, usa [].
+- No inventes imágenes que no existan en el documento ni cambies la numeración de las preguntas para acomodar nombres.
+
+6. DETECCIÓN AUTOMÁTICA DE ESPECIALIDAD:
+- El campo "subject" debe asignar la especialidad médica según el contenido (ej. "Orthopedics and Traumatology", "Ophthalmology", "Emergency Medicine", etc.).
+
+7. CERO VARIANTES:
+- El arreglo "variants" debe permanecer SIEMPRE VACÍO ([]). No generes ni inventes variantes.
+
+8. EXTRACCIÓN ESTRICTA Y SECUENCIAL SIN INVENTAR:
+- Extrae únicamente las preguntas existentes en el documento fuente indicado, siguiendo el orden correlativo estricto del archivo sin omitir, alterar ni crear nuevos casos.
+
+9. SALIDA:
+- Usa comillas dobles, escapa los caracteres especiales y devuelve únicamente el objeto JSON válido.`;
 function updateJSONMode(){const bankMode=document.getElementById('json-bank-mode')?.checked!==false;const title=document.getElementById('json-mode-title'),box=document.getElementById('json-mode-prompt');if(!box)return;title.textContent=bankMode?'Prompt para extraer un banco existente':'Prompt para generar preguntas nuevas (USMLE Step 2 CK)';box.value=bankMode?BANK_EXTRACTION_PROMPT:STEP2_CK_PROMPT;}
 function copyJSONModePrompt(){updateJSONMode();const box=document.getElementById('json-mode-prompt');box.focus();box.select();try{if(document.execCommand('copy')){notify('Prompt JSON copiado.');return}}catch(e){}navigator.clipboard?.writeText(box.value).then(()=>notify('Prompt JSON copiado.')).catch(()=>notify('Selecciona el texto y cópialo manualmente.'))}
 function copyStep2Prompt(){const box=document.getElementById('step2-prompt');if(!box)return;box.value=STEP2_CK_PROMPT;box.focus();box.select();try{const ok=document.execCommand('copy');if(ok){notify('Prompt copiado. Ya puedes pegarlo en tu IA.');return}}catch(e){}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(STEP2_CK_PROMPT).then(()=>notify('Prompt copiado. Ya puedes pegarlo en tu IA.')).catch(()=>notify('Selecciona el texto del prompt y cópialo manualmente.'));}else{notify('Selecciona el texto del prompt y cópialo manualmente.')}}
