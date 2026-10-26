@@ -1856,9 +1856,9 @@ function renderTutor(rect, M) {
   let fallbackSummary = "", fallbackSource = "";
   if (W.st !== "ok" && Md.st === "ok" && Md.items.length && Md.items.some(x => x.summary)) { const item=Md.items.find(x=>x.summary);fallbackSummary=clipExtract(item.summary,520);fallbackSource=`${item.title} · MedlinePlus (NIH)`; }
   if (W.st !== "ok" && !fallbackSummary && M.ep.st === "ok" && M.ep.items.length && M.ep.items.some(x=>x.abstract)) { const item=M.ep.items.find(x=>x.abstract);fallbackSummary=clipExtract(item.abstract,520);fallbackSource=`${item.title} · resumen del abstract indexado en Europe PMC`; }
-  const quickSummary = W.st === "ok" ? "" : (fallbackSummary ? `<div class="wk-t">Resumen rápido · ${esc(fallbackSource)}</div><div class="wk-x">${esc(fallbackSummary)}</div><div class="wk-f"><span class="wk-lic">Texto extraído de la fuente; no generado por IA.</span>${noteBtn(`${fallbackSource}: ${fallbackSummary}`)}</div>` : `<div class="smalltext muted">${Md.st === "loading" || M.ep.st === "loading" ? "Preparando un resumen alternativo a partir de fuentes disponibles…" : "No hay un resumen extraíble para este término en las fuentes consultadas."}</div>`);
+  const quickSummary = M.ai.st === "ok" ? `<div class="wk-x">${esc(M.ai.text)}</div><div class="wk-f"><span class="wk-lic">Resumen generado por IA (Gemini). Verifícalo con las fuentes de abajo.</span>${noteBtn(`Resumen rápido de «${M.term}»: ${M.ai.text} (generado por IA)`)}</div>` : M.ai.st === "error" ? `<div class="smalltext muted">No se pudo generar el resumen (${esc(M.ai.msg || "error")}).</div>` : '<div class="smalltext muted">Generando resumen rápido…</div>';
   const q = encodeURIComponent(term);
-  p.innerHTML = `<div class="wk-h"><span>🎓 Modo tutor · ${esc(term)}</span><span class="wk-langs">${langs}</span><button type="button" class="wk-x-btn" aria-label="Cerrar">×</button></div><div class="wk-gsearch" aria-label="Búsqueda dentro del tutor"><label for="wk-google-query">Buscar otro término sin salir del tutor</label><div class="wk-gsearch-row"><input id="wk-google-query" class="field" type="search" value="${esc(term)}" autocomplete="off" aria-label="Término para buscar"><button class="btn primary small" id="wk-inline-search" type="button">Buscar</button><button class="btn small" id="wk-google-open" type="button" title="Abre Google con esta búsqueda en otra pestaña">Abrir en Google ↗</button></div><small>«Buscar» muestra imágenes y resúmenes dentro del tutor; «Abrir en Google ↗» abre tu frase en Google en otra pestaña.</small></div><div class="wk-body">${W.st !== "ok" ? sec("🧾 Resumen rápido", quickSummary, "wk-quick-summary") : ""}${sec("📚 Wikipedia", w)}<div class="wk-sec" id="wk-imgs"><div class="wk-st">🖼️ Imágenes relacionadas</div><div class="smalltext muted">Buscando imágenes…</div></div></div>`;
+  p.innerHTML = `<div class="wk-h"><span>🎓 Modo tutor · ${esc(term)}</span><span class="wk-langs">${langs}</span><button type="button" class="wk-x-btn" aria-label="Cerrar">×</button></div><div class="wk-gsearch" aria-label="Búsqueda dentro del tutor"><label for="wk-google-query">Buscar otro término sin salir del tutor</label><div class="wk-gsearch-row"><input id="wk-google-query" class="field" type="search" value="${esc(term)}" autocomplete="off" aria-label="Término para buscar"><button class="btn primary small" id="wk-inline-search" type="button">Buscar</button><button class="btn small" id="wk-google-open" type="button" title="Abre Google con esta búsqueda en otra pestaña">Abrir en Google ↗</button></div><small>«Buscar» muestra imágenes y resúmenes dentro del tutor; «Abrir en Google ↗» abre tu frase en Google en otra pestaña.</small></div><div class="wk-body">${sec("🧾 Resumen rápido", quickSummary, "wk-quick-summary")}${sec("📚 Wikipedia", w)}<div class="wk-sec" id="wk-imgs"><div class="wk-st">🖼️ Imágenes relacionadas</div><div class="smalltext muted">Buscando imágenes…</div></div></div>`;
   const gInput=p.querySelector('#wk-google-query'),searchBtn=p.querySelector('#wk-inline-search');
   const searchInline=()=>{const value=(gInput&&gInput.value||'').trim();if(value)runWiki(rect,value,lang);};
   if(searchBtn)searchBtn.addEventListener('click',searchInline);
@@ -1872,11 +1872,27 @@ function renderTutor(rect, M) {
   p.querySelectorAll(".wk-rel").forEach((b) => (b.onclick = () => runWiki(rect, b.dataset.t, lang)));
 }
 
+const AI_DEF_TTL = 14 * 864e5;
+async function aiDefine(term, sig) {
+  const url = window.CLINQ_API_URL || (function () { try { return localStorage.getItem("clinq_api_url") || ""; } catch (e) { return ""; } })() || (/vercel\.app$/.test(location.hostname) ? "/api/generate" : "");
+  if (!url) throw new Error("nosrv");
+  const ck = "clinq_ai_def:" + normalizeWikiTerm(term);
+  try { const c = JSON.parse(localStorage.getItem(ck) || "null"); if (c && c.t && Date.now() - c.ts < AI_DEF_TTL) return c.t; } catch (e) {}
+  let cx = ""; try { const q = bank.find((x) => x.id === currentQuiz.questions[currentQuiz.index]); if (q) cx = String(q.stem || "").slice(0, 400); } catch (e) {}
+  const ac = new AbortController(), to = setTimeout(() => ac.abort(), 30000); if (sig) sig.addEventListener("abort", () => ac.abort());
+  try {
+    const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "define", term: term.slice(0, 200), context: cx }), signal: ac.signal });
+    const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Error " + r.status);
+    const t = String(j.summary || "").trim(); if (!t) throw new Error("respuesta vacía");
+    try { localStorage.setItem(ck, JSON.stringify({ t, ts: Date.now() })); } catch (e) {} return t;
+  } catch (e) { if (e.name === "AbortError" && !(sig && sig.aborted)) throw new Error("La IA tardó demasiado."); throw e; }
+  finally { clearTimeout(to); }
+}
 async function runWiki(rect, term, lang) {
   wikiCur = { term, lang }; const tok = ++wikiTok; if (wikiAbort) { try { wikiAbort.abort(); } catch (e) {} }
   wikiAbort = typeof AbortController !== "undefined" ? new AbortController() : null;
   const sig = wikiAbort && wikiAbort.signal, mk = lang + "|" + normalizeWikiTerm(term), mem = tutorMem.get(mk) || {};
-  const M = { term, lang, wiki: { st: "loading" }, med: mem.med || { st: "loading" }, ep: mem.ep || { st: "loading" } };
+  const M = { term, lang, wiki: { st: "loading" }, med: mem.med || { st: "loading" }, ep: mem.ep || { st: "loading" }, ai: mem.ai || { st: "loading" } };
   const cached = wikiCacheGet(lang, term); if (cached) M.wiki = { st: "ok", d: cached };
   const paint = () => { if (tok === wikiTok) renderTutor(rect, M); };
   const limit = (pr) => Promise.race([pr, new Promise((_, rj) => setTimeout(() => rj(new Error("timeout")), 10000))]);
@@ -1886,8 +1902,9 @@ async function runWiki(rect, term, lang) {
   if (!cached) jobs.push((async () => { try { const d = await limit(wikiLookup(lang, term, sig)); if (tok !== wikiTok) return; if (d && !d.disambig) { wikiCachePut(lang, term, d); M.wiki = { st: "ok", d }; } else { let rel = []; try { rel = await limit(wikiRelated(lang, term, sig)); } catch (e) {} M.wiki = d && d.disambig ? { st: "disambig", d, rel } : { st: rel.length ? "related" : "none", rel }; } } catch (e) { if (live(e)) M.wiki = { st: "error" }; } paint(); })());
   if (M.med.st === "loading") jobs.push((async () => { try { const items = await limit(medlineLookup(lang, term, sig)); M.med = { st: "ok", items }; } catch (e) { if (live(e)) M.med = { st: "error" }; } paint(); })());
   if (M.ep.st === "loading") jobs.push((async () => { try { const items = await limit(epmcLookup(term, sig)); M.ep = { st: "ok", items }; } catch (e) { if (live(e)) M.ep = { st: "error" }; } paint(); })());
+  if (M.ai.st === "loading") jobs.push((async () => { try { M.ai = { st: "ok", text: await aiDefine(term, sig) }; } catch (e) { if (live(e)) M.ai = { st: "error", msg: e.message === "nosrv" ? "falta configurar el servidor de IA" : e.message }; } paint(); })());
   await Promise.all(jobs);
-  tutorMem.set(mk, { med: M.med.st === "ok" ? M.med : undefined, ep: M.ep.st === "ok" ? M.ep : undefined });
+  tutorMem.set(mk, { ai: M.ai.st === "ok" ? M.ai : undefined, med: M.med.st === "ok" ? M.med : undefined, ep: M.ep.st === "ok" ? M.ep : undefined });
 }
 function onWikiSelect() {
   if (!tutorOn() || !currentQuiz || currentQuiz.finished) return;
