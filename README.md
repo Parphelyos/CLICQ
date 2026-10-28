@@ -56,14 +56,14 @@ El inicio de sesión con Google no funciona desde `file://`; usa un servidor loc
 
 | Qué | Dónde |
 |---|---|
-| ID de cliente OAuth de Google (sincronización con Drive) | `window.CLINQ_GOOGLE_CLIENT_ID` en `index.html` |
-| URL de la función de IA (crear casos desde PDF) | `window.CLINQ_API_URL` en `index.html`; la función está en `api/` y se despliega en Vercel |
+| ID de cliente OAuth de Google (sincronización con Drive) | `window.CLINQ_GOOGLE_CLIENT_ID` en `app.html` |
+| URL de la función de IA (crear casos desde PDF) | `window.CLINQ_API_URL` en `app.html`; la función está en `api/` y se despliega en Vercel |
 
 ### Estructura
 
 | Archivo | Descripción |
 |---|---|
-| `index.html` | La aplicación completa (HTML, CSS y JS en un solo archivo) |
+| `app.html` | La aplicación completa (HTML, CSS y JS en un solo archivo) |
 | `api/`, `generate.js`, `vercel.json` | Función serverless para generar casos con IA |
 | `terms.html`, `privacy.html` | Condiciones del servicio (incluye derechos de autor) y política de privacidad |
 | `clinq-logo.png` | Logotipo |
