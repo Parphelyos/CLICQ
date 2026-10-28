@@ -3333,6 +3333,7 @@ function renameSource(old,neu){
   const c=rj(QCFG,null);if(c&&Array.isArray(c.sources)){c.sources=[...new Set(c.sources.map(x=>x===old?t:x))];wj(QCFG,c)}
   saveBank();try{refreshAll()}catch(e){}renderQuizStart();notify('Banco renombrado a «'+t+'».');
 }
+window.renameSource=renameSource;
 function renameFolder(old,neu){
   if(old===FOLDER_DEFAULT)return;
   const ex=folderNames().find(f=>f!==old&&f.toLowerCase()===neu.toLowerCase());
@@ -3876,6 +3877,13 @@ try{renderFolderGroups()}catch(e){}
 .fmv-t{flex:1;min-width:0;overflow-wrap:anywhere}
 .fmv-meta{flex:none;font-size:10px;opacity:.65;max-width:38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fmv-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:12px}
+html.dark .fmv-list{background:#111b2b;border-color:#3b4c66}
+html.dark .fmv-q{color:#e7edf7}
+html.dark .fmv-q:hover{background:#22314a}
+html.dark .fmv-q .fmv-t{color:#e7edf7}
+html.dark .fmv-meta{color:#a4b1c5;opacity:.9}
+html.dark .fmv-grid label{color:#e7edf7}
+html.dark .fmv-session-row{border-color:#3b4c66}
 .fmv-open-folder{width:100%;justify-content:center;margin-top:7px}
 .fmv-session-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
 /* Banco en curso */
@@ -4060,26 +4068,56 @@ window.openFolderModal=function(id){
 };
 
 /* ---------- Buscar una imagen en Google ---------- */
-function googleImageSearch(src){
+/* Google bloquea las subidas hechas desde el origen de la app (403).
+   El formulario se envía desde un iframe aislado (origen opaco), que Google sí acepta. */
+function lensUploadBase64(b64,mime){
  try{
-  if(/^https?:\/\//i.test(src)){window.open('https://lens.google.com/uploadbyurl?url='+encodeURIComponent(src),'_blank','noopener');return}
-  let mime='image/jpeg',bytes=null;
-  if(/^data:image\//i.test(src)){
-   const m=src.match(/^data:([^;,]+)(;base64)?,([\s\S]*)$/);
-   if(m){
-    mime=m[1]||mime;const raw=m[3]||'';
-    bytes=m[2]?Uint8Array.from(atob(raw),c=>c.charCodeAt(0)):new TextEncoder().encode(decodeURIComponent(raw));
-   }
-  }
-  if(!bytes){window.open(src,'_blank','noopener');return}
+  const old=document.getElementById('lens-upload-frame');if(old)old.remove();
+  mime=String(mime||'image/jpeg').replace(/[^a-z0-9.+\/-]/gi,'')||'image/jpeg';
   const ext=(mime.split('/')[1]||'jpg').replace('jpeg','jpg').replace('svg+xml','svg').replace('+xml','');
-  const file=new File([bytes],'imagen.'+ext,{type:mime});
-  const form=document.createElement('form');
-  form.action='https://lens.google.com/v3/upload?hl=es';form.method='POST';form.enctype='multipart/form-data';form.target='_blank';form.style.display='none';
-  const input=document.createElement('input');input.type='file';input.name='encoded_image';
-  const dt=new DataTransfer();dt.items.add(file);input.files=dt.files;
-  form.appendChild(input);document.body.appendChild(form);form.submit();
-  setTimeout(()=>form.remove(),2500);
+  const html='<!doctype html><meta charset="utf-8"><form id="f" action="https://lens.google.com/v3/upload?hl=es" method="POST" enctype="multipart/form-data" target="_blank"><input type="file" name="encoded_image" id="i"><input type="hidden" name="image_content" value=""></form>'
+   +'<script>(function(){var s=atob("'+b64+'");var u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);var f=new File([u],"imagen.'+ext+'",{type:'+JSON.stringify(mime)+'});var d=new DataTransfer();d.items.add(f);var el=document.getElementById("i");el.files=d.files;setTimeout(function(){document.getElementById("f").submit()},20)})();<\/script>';
+  const ifr=document.createElement('iframe');
+  ifr.id='lens-upload-frame';ifr.style.display='none';
+  ifr.setAttribute('sandbox','allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox');
+  ifr.srcdoc=html;
+  document.body.appendChild(ifr);
+  setTimeout(()=>{try{ifr.remove()}catch(e){}},20000);
+ }catch(e){notify(T('No se pudo abrir la búsqueda de Google.','Could not open Google search.'))}
+}
+function dataUrlToBase64(src){
+ const m=String(src||'').match(/^data:([^;,]+)(;base64)?,([\s\S]*)$/);
+ if(!m)return null;
+ const mime=m[1]||'image/jpeg';
+ if(m[2])return {b64:(m[3]||'').replace(/\s+/g,''),mime};
+ try{
+  const raw=decodeURIComponent(m[3]||'');let bin='';
+  for(let i=0;i<raw.length;i++)bin+=String.fromCharCode(raw.charCodeAt(i)&255);
+  return {b64:btoa(bin),mime};
+ }catch(e){return null}
+}
+function blobToBase64(blob){
+ return new Promise((resolve,reject)=>{
+  const fr=new FileReader();
+  fr.onload=()=>{const s=String(fr.result||'');const i=s.indexOf(',');if(i<0){reject(new Error('read'));return}resolve({b64:s.slice(i+1),mime:blob.type||'image/jpeg'})};
+  fr.onerror=()=>reject(new Error('read'));
+  fr.readAsDataURL(blob);
+ });
+}
+async function googleImageSearch(src){
+ try{
+  src=String(src||'');
+  if(/^https?:\/\//i.test(src)){
+   window.open('https://lens.google.com/upload?hl=es&url='+encodeURIComponent(src),'_blank','noopener');
+   return;
+  }
+  const data=dataUrlToBase64(src);
+  if(data){lensUploadBase64(data.b64,data.mime);return}
+  let blob=null;
+  try{const r=await fetch(src);if(r.ok)blob=await r.blob()}catch(e){}
+  if(!blob){window.open(src,'_blank','noopener');notify(T('No se pudo preparar la imagen para Google Lens.','Could not prepare the image for Google Lens.'));return}
+  const out=await blobToBase64(blob);
+  lensUploadBase64(out.b64,out.mime);
  }catch(e){notify(T('No se pudo abrir la búsqueda de Google.','Could not open Google search.'))}
 }
 window.googleImageSearch=googleImageSearch;
@@ -4180,6 +4218,246 @@ showView=function(name){
 let rzT=null;
 window.addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(()=>{try{window.__clinqDynCounts&&window.__clinqDynCounts()}catch(e){}},160)});
 try{window.__clinqDynCounts&&window.__clinqDynCounts()}catch(e){}
+})();
+</script>
+
+<style id="clinq-v5-style">
+/* Renombrar bancos */
+.quizbank-bar .qb-rename{flex:none;border:1px solid #b9c9f0;background:#fff;color:#27407a;border-radius:8px;padding:4px 9px;font-size:11px;font-weight:800;display:inline-flex;gap:4px;align-items:center;cursor:pointer;white-space:nowrap}
+.quizbank-bar .qb-rename:hover{background:#e7eeff}
+html.dark .quizbank-bar .qb-rename{background:#24375a;border-color:#49659a;color:#eaf0ff}
+html.dark .quizbank-bar .qb-rename:hover{background:#2f4871}
+.brm-modal{max-width:560px}
+.brm-list{display:grid;gap:8px;max-height:52vh;overflow:auto}
+.brm-row{display:flex;gap:9px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fbfcff;min-width:0;flex-wrap:wrap}
+html.dark .brm-row{background:#111b2b}
+.brm-row .brm-main{flex:1 1 180px;min-width:0}
+.brm-row strong{display:block;overflow-wrap:anywhere;font-size:13px}
+.brm-row small{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.brm-row .field{flex:1 1 180px;min-width:0}
+.brm-row .btn{flex:none}
+.brm-actions{display:flex;gap:6px;flex:none;flex-wrap:wrap}
+.brm-empty{padding:10px;font-size:12px;color:var(--muted)}
+.ip-banks{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px;padding:10px 12px;border:1px dashed #bcccf0;border-radius:10px;background:#f7faff}
+html.dark .ip-banks{background:#142238;border-color:#40557a}
+.ip-banks .ipb-lbl{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+.ip-bank-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border:1px solid #c9d6f4;border-radius:999px;background:#fff;font-size:12px;max-width:100%;min-width:0}
+html.dark .ip-bank-chip{background:#1b2940;border-color:#3f5374;color:#e7edf7}
+.ip-bank-chip b{font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px}
+.ip-bank-chip .ipb-n{color:var(--muted);font-size:10px}
+.ip-bank-chip button{border:0;background:none;color:inherit;padding:0 1px;cursor:pointer;font-size:13px;line-height:1;opacity:.75}
+.ip-bank-chip button:hover{opacity:1}
+.ip-item-bank{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);min-width:0;margin-left:8px}
+.ip-item-bank b{color:var(--text);font-weight:700;overflow-wrap:anywhere}
+@media(max-width:600px){
+ .ip-banks{padding:9px 10px}
+ .ip-bank-chip b{max-width:140px}
+}
+</style>
+<script id="clinq-v5">
+(function(){
+const $=id=>document.getElementById(id);
+const T=(es,en)=>{let enMode=false;try{enMode=localStorage.getItem('clinq_lang')==='en'}catch(e){}return enMode?en:es};
+const norm=s=>String(s||'').trim().replace(/\s+/g,' ').slice(0,90);
+
+function allSources(){
+ try{return sourceNames()}catch(e){return [...new Set(bank.map(q=>q.source||'Texto pegado'))].sort((a,b)=>a.localeCompare(b,'es'))}
+}
+function bankCount(name){return bank.filter(q=>(q.source||'Texto pegado')===name).length}
+function sessionBankNames(){
+ if(!currentQuiz)return [];
+ const byId=new Map(bank.map(q=>[q.id,q]));
+ return [...new Set(currentQuiz.questions.map(id=>{const q=byId.get(id);return q?(q.source||'Texto pegado'):null}).filter(Boolean))];
+}
+function rerenderBanks(){
+ try{refreshAll()}catch(e){}
+ try{renderLibrary()}catch(e){}
+ try{renderSettings()}catch(e){}
+ if(currentQuiz){
+  try{currentQuiz.finished?renderQuizResults():renderQuizQuestion()}catch(e){}
+ }else{
+  try{renderQuizStart()}catch(e){}
+ }
+ try{window.__clinqDynCounts&&window.__clinqDynCounts()}catch(e){}
+}
+
+/* ---------- Cambiar el nombre de un banco guardado ---------- */
+function applyBankRename(old,neu){
+ old=String(old||'').trim();neu=norm(neu);
+ if(!neu){notify(T('Escribe un nombre para el banco.','Enter a name for the bank.'));return false}
+ if(old===neu)return false;
+ if(typeof window.renameSource!=='function'){notify(T('No se pudo abrir el renombrado.','Could not open the rename action.'));return false}
+ const before=allSources();
+ try{window.renameSource(old,neu)}catch(e){notify(T('No se pudo renombrar el banco.','Could not rename the bank.'));return false}
+ const after=allSources();
+ if(after.includes(old)&&!after.includes(neu)&&before.includes(old))return false;
+ rerenderBanks();
+ return true;
+}
+
+let brm=null,brmNames=[];
+function ensureRenamer(){
+ if(brm&&document.body.contains(brm))return brm;
+ brm=document.createElement('div');brm.className='modalback';brm.id='bank-rename-modal';
+ brm.innerHTML='<div class="modal brm-modal"><div class="modalhead"><h3>✏️ '+T('Cambiar nombre del banco','Rename bank')+'</h3><button class="iconbtn" type="button" id="brm-x" aria-label="'+T('Cerrar','Close')+'">×</button></div><div class="smalltext muted" style="margin-bottom:10px">'+T('El nuevo nombre se aplica a todas las preguntas y sesiones de ese banco. Si el nombre ya existe, se te preguntará si quieres unirlos.','The new name applies to every question and session in that bank. If the name already exists, you will be asked whether to merge them.')+'</div><div class="brm-list" id="brm-list"></div><div class="modalactions"><button class="btn outline" type="button" id="brm-close">'+T('Cerrar','Close')+'</button></div></div>';
+ document.body.appendChild(brm);
+ brm.addEventListener('mousedown',e=>{if(e.target===brm)closeRenamer()});
+ brm.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')closeRenamer()});
+ $('brm-x').onclick=closeRenamer;$('brm-close').onclick=closeRenamer;
+ return brm;
+}
+function closeRenamer(){if(brm)brm.classList.remove('open')}
+function openBankRenamer(names){
+ ensureRenamer();
+ brmNames=(names&&names.length?names:allSources()).slice();
+ renderRenamerList(brmNames);
+ brm.classList.add('open');
+ setTimeout(()=>{const i=$('brm-list')&&$('brm-list').querySelector('input');if(i){i.focus();i.select()}},40);
+}
+function brmRow(name){
+ const row=document.createElement('div');row.className='brm-row';
+ const main=document.createElement('div');main.className='brm-main';
+ const strong=document.createElement('strong');strong.textContent=name;
+ const small=document.createElement('small');const n=bankCount(name);small.textContent=n+(n===1?' pregunta':' preguntas');
+ main.append(strong,small);
+ const edit=document.createElement('button');edit.type='button';edit.className='btn outline small';edit.innerHTML='✏️ '+T('Cambiar','Change');edit.title=T('Cambiar nombre de este banco','Rename this bank');
+ edit.onclick=e=>{e.preventDefault();e.stopPropagation();editBankRow(row,name)};
+ row.append(main,edit);return row;
+}
+function editBankRow(row,name){
+ row.innerHTML='';
+ const input=document.createElement('input');input.className='field';input.value=name;input.maxLength=90;input.setAttribute('aria-label',T('Nuevo nombre del banco','New bank name'));input.autocomplete='off';
+ const save=document.createElement('button');save.type='button';save.className='btn primary small';save.textContent=T('Guardar','Save');
+ const cancel=document.createElement('button');cancel.type='button';cancel.className='btn outline small';cancel.textContent=T('Cancelar','Cancel');
+ const acts=document.createElement('div');acts.className='brm-actions';acts.append(save,cancel);
+ const finish=()=>{const v=norm(input.value);if(!v){notify(T('El nombre no puede quedar vacío.','The name cannot be empty.'));input.focus();return}if(v===name){renderRenamerList(brmNames);return}const ok=applyBankRename(name,v);brmNames=allSources();renderRenamerList(brmNames);if(!ok&&$('brm-list')){const r=$('brm-list').querySelector('.brm-row');if(r)r.focus()}};
+ save.onclick=finish;
+ cancel.onclick=()=>renderRenamerList(brmNames);
+ input.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();finish()}else if(e.key==='Escape'){e.preventDefault();renderRenamerList(brmNames)}});
+ row.append(input,acts);
+ setTimeout(()=>{input.focus();input.select()},20);
+}
+function renderRenamerList(names){
+ const list=$('brm-list');if(!list)return;
+ list.innerHTML='';
+ if(!names.length){list.innerHTML='<div class="brm-empty">'+T('Todavía no hay bancos guardados.','There are no saved banks yet.')+'</div>';return}
+ names.forEach(n=>list.appendChild(brmRow(n)));
+}
+
+/* ---------- Lápiz en el título del banco de la sesión ---------- */
+function decorateSessionBankBar(){
+ const bar=document.querySelector('#quiz-area .quizbank-bar');if(!bar)return;
+ let btn=bar.querySelector('.qb-rename');
+ if(!btn){
+  btn=document.createElement('button');btn.type='button';btn.className='qb-rename';btn.innerHTML='✏️ '+T('Renombrar','Rename');btn.title=T('Cambiar el nombre del banco que estás estudiando','Rename the bank you are studying');
+  bar.appendChild(btn);
+ }
+ btn.onclick=e=>{e.preventDefault();e.stopPropagation();openBankRenamer(sessionBankNames())};
+}
+const _rq5=renderQuizQuestion;
+renderQuizQuestion=function(){const r=_rq5.apply(this,arguments);try{decorateSessionBankBar()}catch(e){}return r};
+const _rr5=renderQuizResults;
+renderQuizResults=function(){const r=_rr5.apply(this,arguments);try{decorateSessionBankBar()}catch(e){}return r};
+
+/* ---------- Lápiz en las tarjetas de bancos de la biblioteca ---------- */
+function decorateBankGroups(){
+ const host=$('bank-groups');if(!host)return;
+ [...host.children].forEach(card=>{
+  if(card.dataset.brmPen)return;
+  const strong=card.querySelector('strong');const del=card.querySelector('button');
+  if(!strong||!del)return;
+  const name=strong.textContent.trim();
+  card.dataset.brmPen='1';
+  const acts=document.createElement('div');acts.style.cssText='display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;flex:none';
+  del.before(acts);
+  const pen=document.createElement('button');pen.type='button';pen.className='btn outline small';pen.innerHTML='✏️ '+T('Banco','Bank');pen.title=T('Cambiar nombre de este banco','Rename this bank');
+  pen.onclick=e=>{e.preventDefault();e.stopPropagation();openBankRenamer([name])};
+  acts.append(pen,del);
+ });
+}
+const _rbg5=renderBankGroups;
+renderBankGroups=function(){const r=_rbg5.apply(this,arguments);try{decorateBankGroups()}catch(e){}return r};
+try{decorateBankGroups()}catch(e){}
+
+/* ---------- Cambiar el nombre del banco al importar ---------- */
+function previewSources(){
+ const map=new Map();
+ importPreview.forEach(q=>{const n=q.source||'Texto pegado';map.set(n,(map.get(n)||0)+1)});
+ return [...map.entries()].sort((a,b)=>a[0].localeCompare(b[0],'es'));
+}
+function refreshImportStatus(){
+ const st=$('import-status');if(st)st.textContent=importPreview.length?('Vista previa: '+importPreview.length+' pregunta(s) pendientes · '+previewSources().length+' banco(s).'):'Vista previa vacía.';
+}
+function applyPreviewRename(old,neu,onlyId){
+ neu=norm(neu);
+ if(!neu){notify(T('Escribe un nombre para el banco.','Enter a name for the bank.'));return false}
+ let n=0;
+ importPreview.forEach(q=>{
+  if(onlyId){if(q.id===onlyId&&(q.source||'Texto pegado')!==neu){q.source=neu;n++}}
+  else if((q.source||'Texto pegado')===old&&q.source!==neu){q.source=neu;n++}
+ });
+ if(!n)return false;
+ try{renderPreview()}catch(e){}
+ refreshImportStatus();
+ notify(n+(n===1?' pregunta cambiará de banco.':' preguntas cambiarán de banco.'));
+ return true;
+}
+function promptPreviewBank(old,onlyId){
+ const current=onlyId?(importPreview.find(q=>q.id===onlyId)||{}).source:old;
+ const v=prompt(T('Nuevo nombre del banco:','New bank name:'),current||'');
+ if(v===null)return;
+ applyPreviewRename(old,v,onlyId);
+}
+function renderImportBanks(bar){
+ bar.innerHTML='';
+ const lbl=document.createElement('span');lbl.className='ipb-lbl';lbl.textContent=T('Bancos detectados','Detected banks');
+ bar.appendChild(lbl);
+ previewSources().forEach(([name,count])=>{
+  const chip=document.createElement('span');chip.className='ip-bank-chip';
+  const b=document.createElement('b');b.textContent=name;b.title=name;
+  const n=document.createElement('span');n.className='ipb-n';n.textContent=count+(count===1?' pregunta':' preguntas');
+  const pen=document.createElement('button');pen.type='button';pen.innerHTML='✏️';pen.title=T('Cambiar nombre de este banco en la importación','Rename this bank during import');pen.setAttribute('aria-label',pen.title);
+  pen.onclick=e=>{e.preventDefault();e.stopPropagation();promptPreviewBank(name)};
+  chip.append(b,n,pen);bar.appendChild(chip);
+ });
+ const all=document.createElement('button');all.type='button';all.className='btn outline small';all.textContent='🏷 '+T('Cambiar nombre a todos…','Rename all…');
+ all.onclick=e=>{e.preventDefault();e.stopPropagation();const v=prompt(T('Nuevo nombre para todas las preguntas de esta importación:','New name for every question in this import:'),previewSources()[0]?previewSources()[0][0]:'');if(v===null)return;const vv=norm(v);if(!vv){notify(T('Escribe un nombre para el banco.','Enter a name for the bank.'));return}importPreview.forEach(q=>{q.source=vv});try{renderPreview()}catch(e){}refreshImportStatus();notify(T('Nombre aplicado a todas las preguntas de la importación.','Name applied to every question in this import.'))};
+ bar.appendChild(all);
+}
+function decorateImportPreview(){
+ const host=$('preview-area');if(!host||!importPreview.length)return;
+ const head=host.querySelector('.sectionhead');
+ if(head){
+  let bar=host.querySelector('.ip-banks');
+  if(!bar){bar=document.createElement('div');bar.className='ip-banks';head.insertAdjacentElement('afterend',bar)}
+  try{renderImportBanks(bar)}catch(e){}
+ }
+ [...host.querySelectorAll('.previewitem')].forEach((el,i)=>{
+  const q=importPreview[i];if(!q)return;
+  const pill=el.querySelector('.pill');
+  const badges=pill&&pill.parentElement;
+  if(badges&&!badges.querySelector('.ip-item-bank')){
+   const chip=document.createElement('span');chip.className='ip-item-bank';
+   const ic=document.createElement('span');ic.textContent='🏷';
+   const b=document.createElement('b');b.textContent=q.source||'Texto pegado';
+   chip.append(ic,b);badges.appendChild(chip);
+  }
+  const foot=el.querySelector('.previewfooter');
+  const actions=foot&&foot.lastElementChild;
+  if(actions&&!actions.querySelector('.ip-rename-q')){
+   const b=document.createElement('button');b.type='button';b.className='btn outline small ip-rename-q';b.textContent='🏷 '+T('Banco','Bank');b.title=T('Cambiar el banco de esta pregunta','Change this question\'s bank');
+   b.onclick=e=>{e.preventDefault();e.stopPropagation();promptPreviewBank(q.source||'Texto pegado',q.id)};
+   actions.appendChild(b);
+  }
+ });
+}
+const _rp5=renderPreview;
+renderPreview=function(){const r=_rp5.apply(this,arguments);try{decorateImportPreview()}catch(e){}return r};
+
+/* ---------- Exponer acciones por si se necesitan desde otros bloques ---------- */
+window.openBankRenamer=openBankRenamer;
+window.renameBankEverywhere=function(old,neu){return applyBankRename(old,neu)};
+window.renameImportPreviewBank=function(old,neu,onlyId){return applyPreviewRename(old,neu,onlyId)};
 })();
 </script>
 </body></html>
