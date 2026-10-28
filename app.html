@@ -3447,4 +3447,191 @@ document.addEventListener('keydown',e=>{
 })();
 
 </script>
+
+<style id="clinq-v2-style">
+.mobnav{display:none}
+.wk-gsearch-row{flex-wrap:wrap}
+.wk-cl{border:1px solid #e3e9f2;border-radius:10px;padding:8px 10px;margin-top:6px}
+.wk-cl>summary{cursor:pointer;font-weight:800;font-size:13px}
+html.dark .wk-cl{border-color:#40516c}
+#hub-btn{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:999px;height:36px;padding:0 12px;font-weight:750;font-size:13px;white-space:nowrap}
+html.dark #hub-btn{background:#1b2a42;color:#edf3ff;border-color:#354661}
+.hubsec{margin:0 0 16px}.hubh{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:7px}
+.hubgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hubgrid .btn,.hubgrid a.btn{text-decoration:none;width:100%}
+.hubrow{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:650}
+.crtext p{font-size:13px;line-height:1.6;margin:0 0 10px}
+@media(max-width:700px){
+ .app{grid-template-columns:minmax(0,1fr)!important;padding-bottom:calc(66px + env(safe-area-inset-bottom))}
+ .sidebar{position:fixed!important;left:0;right:0;bottom:0;top:auto!important;width:100%!important;height:auto!important;flex-direction:row!important;align-items:stretch!important;padding:6px 6px calc(6px + env(safe-area-inset-bottom))!important;gap:0!important;z-index:70;overflow:visible!important;box-shadow:0 -6px 24px rgba(8,18,40,.3)}
+ .sidebar .brand,.sidebar .navlabel,.sidebar .sidebottom,#sb-toggle{display:none!important}
+ .sidebar>div{width:100%}
+ .nav{display:flex!important;flex-direction:row!important;gap:2px!important}
+ .nav button{flex:1 1 0;flex-direction:column!important;gap:2px!important;padding:6px 2px!important;justify-content:center!important;align-items:center}
+ .nav button .navtext{display:block!important;font-size:10px;text-align:center;flex:none;max-width:100%}
+ .nav button.active{box-shadow:inset 0 3px #718dff!important}
+ .toast{bottom:calc(82px + env(safe-area-inset-bottom))!important}
+ .main{overflow-x:hidden}
+ #view-library{overflow:visible!important}
+ #view-library .qrow .pill{display:inline-flex!important}
+ #view-library .qactions .btn{flex:1 1 auto}
+ .quizcard{display:flex;flex-direction:column}
+ .quizcard #stem-tools{order:-2;display:flex;flex-wrap:wrap;gap:8px}
+ .quizcard #stem-tools .refbtn,.quizcard #stem-tools .hlquick,.quizcard #stem-tools .casepaste{float:none!important;margin:0!important}
+ .mobnav{display:flex;order:-1;gap:8px;margin:10px 0 14px}
+ .mobnav .btn{flex:1}
+ .hubgrid{grid-template-columns:1fr}
+ #hub-btn span{display:none}
+}
+/* app.html: ajustes móviles para Biblioteca de PDFs y flechas laterales */
+@media(max-width:700px){
+ .qarrow{display:none!important}
+ #pl-dock{bottom:calc(66px + env(safe-area-inset-bottom));height:56vh}
+ #pl-vhost{height:calc(100vh - 230px);min-height:420px}
+ .pl-grid{gap:12px}
+ body.pl-open .main{padding-bottom:calc(56vh + 70px)}
+}
+</style>
+<script id="clinq-v2">
+(function(){
+const L=(function(){try{return localStorage.getItem('clinq_lang')==='en'?'en':'es'}catch(e){return 'es'}})();
+const T=(es,en)=>L==='en'?en:es;
+const $=id=>document.getElementById(id);
+
+/* ===== Botones anterior/siguiente en móvil ===== */
+function injectMobNav(){
+ if(!currentQuiz||currentQuiz.finished)return;
+ const c=document.querySelector('.quizcard');if(!c||c.querySelector('.mobnav'))return;
+ const i=currentQuiz.index,n=currentQuiz.questions.length,d=document.createElement('div');d.className='mobnav';
+ d.innerHTML='<button type="button" class="btn outline" '+(i===0?'disabled':'')+'>'+T('← Anterior','← Previous')+'</button><button type="button" class="btn primary" '+(i>=n-1?'disabled':'')+'>'+T('Siguiente →','Next →')+'</button>';
+ const b=d.querySelectorAll('button');b[0].onclick=()=>navQuestion(-1);b[1].onclick=()=>navQuestion(1);
+ const tools=c.querySelector('#stem-tools');if(tools)tools.after(d);else c.prepend(d);
+}
+const _rqm=renderQuizQuestion;
+renderQuizQuestion=function(){const r=_rqm.apply(this,arguments);try{injectMobNav()}catch(e){}return r};
+
+/* ===== Modo tutor ampliado ===== */
+const _ce=clipExtract;clipExtract=function(t,m){return _ce(t,m||1400)};
+const SEC=[
+[/signos y s[ií]ntomas|^s[ií]ntomas|cuadro cl[ií]nico|manifestaciones|signs and symptoms|^symptoms|presentation|clinical features/i,'Cuadro clínico','Clinical presentation'],
+[/causas|etiolog[ií]a|factores de riesgo|^causes|etiology|risk factors/i,'Causas y factores de riesgo','Causes and risk factors'],
+[/fisiopatolog|patog[eé]nesis|mecanismo|pathophysiology|pathogenesis|mechanism/i,'Fisiopatología','Pathophysiology'],
+[/diagn[oó]stic|diagnosis/i,'Diagnóstico','Diagnosis'],
+[/tratamiento|manejo|terapia|treatment|management|therapy/i,'Tratamiento','Treatment'],
+[/complicaciones|complications/i,'Complicaciones','Complications'],
+[/pron[oó]stico|prognosis|outcome/i,'Pronóstico','Prognosis'],
+[/prevenci[oó]n|prevention/i,'Prevención','Prevention'],
+[/epidemiolog/i,'Epidemiología','Epidemiology']];
+const clin=new Map();
+async function clinFetch(lang,title){
+ const r=await fetch('https://'+wikiLang(lang)+'.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&titles='+encodeURIComponent(title)+'&format=json&origin=*');
+ if(!r.ok)throw new Error('wiki '+r.status);
+ const j=await r.json(),p=Object.values((j.query&&j.query.pages)||{})[0],txt=(p&&p.extract)||'';
+ const parts=txt.split(/^\s*={2,}\s*(.+?)\s*={2,}\s*$/m),acc={};
+ for(let i=1;i<parts.length;i+=2){const h=parts[i],b=(parts[i+1]||'').trim();if(b.length<60)continue;
+  const s=SEC.find(x=>x[0].test(h));if(!s)continue;const key=s[L==='en'?2:1];acc[key]=((acc[key]||'')+' '+b).trim()}
+ return SEC.map(s=>s[L==='en'?2:1]).filter(k=>acc[k]).map(k=>({label:k,text:clipExtract(acc[k].replace(/\s*\n\s*/g,' '),1100)}));
+}
+function paintClin(M){
+ const sec=$('wk-clin');if(!sec)return;
+ const s=clin.get(M.lang+'|'+M.term.toLowerCase())||{st:'loading',items:[]},notes=[];
+ const nb=t=>{notes.push(t);return '<button type="button" class="wk-n" data-i="'+(notes.length-1)+'">➕ '+T('A mis notas','Add to notes')+'</button>'};
+ let h='<div class="wk-st">🩺 '+T('Enfoque clínico ampliado','Extended clinical overview')+'</div>';
+ if(s.st==='loading')h+='<div class="smalltext muted">'+T('Cargando secciones clínicas…','Loading clinical sections…')+'</div>';
+ else if(!s.items.length)h+='<div class="smalltext muted">'+T('Wikipedia no tiene secciones clínicas para este término (puede que no sea una enfermedad).','Wikipedia has no clinical sections for this term (it may not be a disease).')+'</div>';
+ else h+=s.items.map((x,i)=>'<details class="wk-cl" '+(i<2?'open':'')+'><summary>'+esc(x.label)+'</summary><div class="wk-x">'+esc(x.text)+'</div><div class="wk-f"><span class="wk-lic">Wikipedia · CC BY-SA 4.0</span>'+nb(x.label+': '+x.text+' (Wikipedia, CC BY-SA 4.0)')+'</div></details>').join('');
+ if(M.med&&M.med.st==='ok'&&M.med.items.length)h+='<div class="wk-st" style="margin-top:12px">🏥 MedlinePlus (NIH)</div>'+M.med.items.map(i=>'<div class="wk-item"><div class="wk-t">'+esc(i.title)+'</div><div class="wk-x">'+esc(clipExtract(i.summary,1200))+'</div><div class="wk-f"><a class="wk-a" target="_blank" rel="noopener noreferrer" href="'+esc(i.url)+'">MedlinePlus ↗</a>'+nb(i.title+': '+clipExtract(i.summary,1200)+' (MedlinePlus, NIH)')+'</div></div>').join('');
+ if(M.ep&&M.ep.st==='ok'&&M.ep.items.length)h+='<div class="wk-st" style="margin-top:12px">📄 '+T('Literatura (Europe PMC)','Literature (Europe PMC)')+'</div>'+M.ep.items.map(a=>'<div class="wk-item"><div class="wk-t" style="font-size:13px">'+esc(a.title)+'</div><div class="smalltext muted">'+esc([a.journal,a.year].filter(Boolean).join(' · '))+'</div>'+(a.abstract?'<div class="wk-x">'+esc(clipExtract(a.abstract,500))+'</div>':'')+'<div class="wk-f"><a class="wk-a" target="_blank" rel="noopener noreferrer" href="'+esc(a.url)+'">Europe PMC ↗</a>'+(a.abstract?nb(a.title+' ('+a.journal+', '+a.year+'): '+clipExtract(a.abstract,500)):'')+'</div></div>').join('');
+ sec.innerHTML=h;sec.querySelectorAll('.wk-n').forEach(b=>b.onclick=()=>tutorAddNote(notes[+b.dataset.i]));
+}
+function caseButton(){
+ const row=document.querySelector('#wiki-pop .wk-gsearch-row');if(!row||row.querySelector('#wk-case-google'))return;
+ const b=document.createElement('button');b.type='button';b.id='wk-case-google';b.className='btn small';
+ b.textContent=T('🔍 Buscar el caso completo en Google','🔍 Search the whole case on Google');
+ b.title=T('Abre Google con el enunciado y las opciones (máx. ~700 caracteres)','Opens Google with the stem and options (max ~700 characters)');
+ b.onclick=()=>{const q=currentQuiz&&bank.find(x=>x.id===currentQuiz.questions[currentQuiz.index]);if(!q)return;
+  const txt=[q.stem].concat((q.options||[]).map(o=>o.key+') '+o.text)).join(' ').replace(/Selecci[oó]n[ae] la respuesta correcta:?/gi,' ').replace(/\s+/g,' ').trim().slice(0,700);
+  window.open('https://www.google.com/search?q='+encodeURIComponent(txt),'_blank','noopener,noreferrer')};
+ row.appendChild(b);
+}
+const _rt2=renderTutor;
+renderTutor=function(rect,M){_rt2.apply(this,arguments);try{
+ const body=document.querySelector('#wiki-pop .wk-body');if(!body)return;
+ let sec=$('wk-clin');if(!sec){sec=document.createElement('div');sec.className='wk-sec';sec.id='wk-clin';const im=$('wk-imgs');im?body.insertBefore(sec,im):body.appendChild(sec)}
+ const k=M.lang+'|'+M.term.toLowerCase();let s=clin.get(k);
+ if(!s&&M.wiki.st!=='loading'){s={st:'loading',items:[]};clin.set(k,s);
+  clinFetch(M.lang,M.wiki.st==='ok'?M.wiki.d.title:M.term).then(it=>{s.st='ok';s.items=it}).catch(()=>{s.st='ok';s.items=[]}).then(()=>{if(wikiCur&&wikiCur.term===M.term&&wikiCur.lang===M.lang)paintClin(M)})}
+ paintClin(M);caseButton();
+}catch(e){}};
+
+/* ===== Modales: hub y copyright ===== */
+function mkModal(id,html,w){const m=document.createElement('div');m.className='modalback';m.id=id;m.innerHTML='<div class="modal" style="max-width:'+w+'px">'+html+'</div>';document.body.appendChild(m);
+ m.addEventListener('mousedown',e=>{if(e.target===m)m.classList.remove('open')});m.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')m.classList.remove('open')});return m}
+const cr=mkModal('cr-modal','<div class="modalhead"><h3>© '+T('Derechos de autor','Copyright')+'</h3><button class="iconbtn" type="button" data-close>×</button></div><div class="crtext">'+(L==='en'?
+'<p><strong>ClinQ.</strong> The ClinQ name, code, design and logo are © 2026 Parphelyos. All rights reserved unless a different license is stated in the project repository.</p><p><strong>Your content.</strong> Questions, images and notes you import or create remain yours. Only import material you have the right to use; do not upload copyrighted question banks, books or exams without permission from the rights holder.</p><p><strong>Third-party content.</strong> Wikipedia extracts are under CC BY-SA 4.0; images from Wikimedia Commons and Openverse keep their own authors and licenses (shown when enlarged); MedlinePlus (NIH) and Europe PMC summaries belong to their publishers and authors. Always cite the original source.</p><p><strong>Trademarks.</strong> USMLE, NBME, Google and Gemini are trademarks of their owners. ClinQ is independent and not affiliated with or endorsed by them.</p><p><strong>Takedown requests.</strong> If you believe content infringes your rights, contact us using the details on the Terms page and we will review it.</p>':
+'<p><strong>ClinQ.</strong> El nombre, el código, el diseño y el logotipo de ClinQ son © 2026 Parphelyos. Todos los derechos reservados, salvo que el repositorio del proyecto indique otra licencia.</p><p><strong>Tu contenido.</strong> Las preguntas, imágenes y notas que importes o crees siguen siendo tuyas. Importa solo material que tengas derecho a usar; no subas bancos de preguntas, libros o exámenes protegidos sin permiso del titular de los derechos.</p><p><strong>Contenido de terceros.</strong> Los extractos de Wikipedia están bajo CC BY-SA 4.0; las imágenes de Wikimedia Commons y Openverse conservan su autor y licencia (se muestran al ampliarlas); los resúmenes de MedlinePlus (NIH) y Europe PMC pertenecen a sus editores y autores. Cita siempre la fuente original.</p><p><strong>Marcas.</strong> USMLE, NBME, Google y Gemini son marcas de sus respectivos dueños. ClinQ es independiente y no está afiliado ni respaldado por ellos.</p><p><strong>Reclamaciones.</strong> Si crees que algún contenido infringe tus derechos, escríbenos con los datos de la página de Condiciones y lo revisaremos.</p>')+
+'</div><div class="modalactions"><a class="btn outline" href="terms.html" target="_blank" rel="noopener">'+T('Condiciones del servicio','Terms of service')+'</a><button class="btn primary" type="button" data-close>'+T('Cerrar','Close')+'</button></div>',620);
+cr.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>cr.classList.remove('open'));
+const openCR=()=>cr.classList.add('open');
+
+const hub=mkModal('hub-modal','<div class="modalhead"><h3>⚙ '+T('Opciones','Options')+'</h3><button class="iconbtn" type="button" data-close>×</button></div>'+
+'<div class="hubsec"><div class="hubh">'+T('Idioma','Language')+'</div><div class="segsw"><button type="button" data-lang="es" class="'+(L==='es'?'on':'')+'">Español</button><button type="button" data-lang="en" class="'+(L==='en'?'on':'')+'">English</button></div></div>'+
+'<div class="hubsec"><div class="hubh">'+T('Estudio','Study')+'</div><div class="hubgrid"><button type="button" class="btn outline" data-act="theme">🌙 '+T('Modo día/noche','Day/night mode')+'</button><label class="btn outline hubrow" style="justify-content:flex-start"><input type="checkbox" id="hub-tutor"> 🎓 '+T('Modo tutor','Tutor mode')+'</label><button type="button" class="btn outline" data-act="ref">🧪 '+T('Valores normales','Normal values')+'</button><button type="button" class="btn outline" data-act="import">⇧ '+T('Importar archivos','Import files')+'</button></div></div>'+
+'<div class="hubsec"><div class="hubh">'+T('Datos','Data')+'</div><div class="hubgrid"><button type="button" class="btn outline" data-act="export">↧ '+T('Exportar respaldo','Export backup')+'</button><button type="button" class="btn outline" data-act="restore">↥ '+T('Importar respaldo','Import backup')+'</button><button type="button" class="btn outline" data-act="sync">☁ '+T('Sincronizar con Google','Sync with Google')+'</button></div></div>'+
+'<div class="hubsec"><div class="hubh">'+T('Legal y proyecto','Legal & project')+'</div><div class="hubgrid"><a class="btn outline" href="terms.html" target="_blank" rel="noopener">'+T('Condiciones','Terms')+'</a><a class="btn outline" href="privacy.html" target="_blank" rel="noopener">'+T('Privacidad','Privacy')+'</a><button type="button" class="btn outline" data-act="copyright">© '+T('Derechos de autor','Copyright')+'</button><a class="btn outline" href="https://github.com/Parphelyos/ClinQ" target="_blank" rel="noopener">GitHub ↗</a></div></div>',520);
+hub.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>hub.classList.remove('open'));
+hub.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{const v=b.dataset.lang;if(v===L)return;try{localStorage.setItem('clinq_lang',v)}catch(e){}location.reload()});
+const tc=hub.querySelector('#hub-tutor');tc.onchange=()=>{try{localStorage.setItem('clinq_tutor',tc.checked?'1':'0')}catch(e){}if(!tc.checked&&typeof hideWikiPop==='function')hideWikiPop();notify(tc.checked?T('Modo tutor activado','Tutor mode on'):T('Modo tutor desactivado','Tutor mode off'))};
+hub.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
+ if(a==='theme'){const c=$('clinq-theme-toggle');if(c)c.click();return}
+ hub.classList.remove('open');
+ if(a==='ref')openRefModal();else if(a==='import')showView('import');else if(a==='export')exportBank();else if(a==='restore')backupInput.click();else if(a==='sync')$('sync-pill').click();else if(a==='copyright')openCR()});
+const hb=document.createElement('button');hb.id='hub-btn';hb.type='button';hb.title=T('Opciones e idioma','Options & language');hb.innerHTML='⚙ <span>'+T('Opciones','Options')+'</span> · '+L.toUpperCase();
+hb.onclick=()=>{tc.checked=tutorOn();hub.classList.add('open')};
+const top=document.querySelector('.topright');if(top)top.insertBefore(hb,$('sync-pill'));
+const fn=document.querySelector('#view-home .footnote');if(fn){const a=document.createElement('a');a.href='#';a.style.cssText='color:inherit;text-decoration:underline';a.textContent='© Copyright';a.onclick=e=>{e.preventDefault();openCR()};fn.append(' · ',a)}
+
+/* ===== Traducción de la interfaz al inglés ===== */
+if(L==='en'){
+document.documentElement.lang='en';document.title='ClinQ — Question bank';
+const D={"Resumen":"Overview","Mi banco":"My bank","Practicar":"Practice","Mi progreso":"My progress","Importar archivos":"Import files","MENÚ PRINCIPAL":"MAIN MENU",
+"TU ESPACIO DE ESTUDIO":"YOUR STUDY SPACE","Tu banco médico":"Your medical bank","TU MATERIAL":"YOUR MATERIAL","Mi banco de preguntas":"My question bank","CARGA DE MATERIAL":"UPLOAD MATERIAL","Importar documentos y crear preguntas":"Import documents and create questions","PRACTICA ACTIVA":"ACTIVE PRACTICE","Sesión de estudio":"Study session","SEGUIMIENTO":"TRACKING",
+"Estudia con tus propios bancos de preguntas.":"Study with your own question banks.","Importa tus materiales, convierte preguntas en sesiones de práctica y registra qué necesitas repasar. Inspirado en el flujo de bancos tipo USMLE.":"Import your materials, turn questions into practice sessions and track what you need to review. Inspired by USMLE-style question banks.",
+"⇧ Importar documentos":"⇧ Import documents","▶ Empezar a practicar":"▶ Start practicing",
+"Preguntas en tu banco":"Questions in your bank","Importadas o añadidas por ti":"Imported or added by you","Respondidas":"Answered","Intentos registrados":"Recorded attempts","Precisión":"Accuracy","Aciertos sobre respuestas":"Correct out of answered","Por repasar":"To review","Marcadas o respondidas mal":"Flagged or answered wrong",
+"Accesos rápidos":"Quick access","Continúa donde lo dejaste o carga material nuevo.":"Pick up where you left off or load new material.","Importar un documento":"Import a document","PDF, DOCX, XLSX, TXT, CSV, Markdown y JSON. Detecta preguntas y variantes.":"PDF, DOCX, XLSX, TXT, CSV, Markdown and JSON. Detects questions and variants.","Explorar mi banco":"Browse my bank","Busca preguntas, revisa claves, corrige opciones o marca preguntas importantes.":"Search questions, check answer keys, fix options or flag important questions.","Modo práctica":"Practice mode","Responde a tu ritmo y revisa la explicación después de cada respuesta.":"Answer at your own pace and read the explanation after each answer.","Modo examen":"Exam mode","Contesta un bloque sin mostrar la clave hasta que finalices.":"Answer a block without seeing the key until you finish.",
+"Sesiones recientes":"Recent sessions","Continúa una sesión abierta o revisa una que ya terminaste.":"Resume an open session or review one you finished.","Ver todas las sesiones →":"See all sessions →","Aún no tienes sesiones de práctica.":"You have no practice sessions yet.","Crear una sesión":"Create a session",
+"ClinQ es una herramienta de estudio personal; no está afiliada a USMLE, Rx ni NBME. ·":"ClinQ is a personal study tool; it is not affiliated with USMLE, Rx or NBME. ·","Política de privacidad":"Privacy policy","Condiciones del servicio":"Terms of service",
+"🔒 Tus datos son solo tuyos":"🔒 Your data is yours only","Se guardan en este navegador y, si inicias sesión con Google, en un archivo oculto de tu propio Drive. No se suben a ningún servidor de ClinQ.":"Stored in this browser and, if you sign in with Google, in a hidden file in your own Drive. Nothing is uploaded to any ClinQ server.",
+"☁ Iniciar sesión con Google":"☁ Sign in with Google","Iniciar sesión con Google":"Sign in with Google","Sincronizado con Drive":"Synced with Drive","Sincronizando…":"Syncing…","Cambios pendientes…":"Pending changes…","Reconectar con Google":"Reconnect to Google","Error de sincronización":"Sync error",
+"Tus preguntas guardadas localmente.":"Your locally saved questions.","↧ Exportar respaldo":"↧ Export backup","↥ Importar respaldo":"↥ Import backup","＋ Crear pregunta manual":"＋ Create question manually","＋ Importar":"＋ Import","🗑 Borrar banco completo":"🗑 Delete entire bank","📚 Bancos importados":"📚 Imported banks","Buscar en enunciados y opciones…":"Search stems and options…","Todos los documentos":"All documents","Todos los estados":"All statuses","Respondidas mal":"Answered wrong","Respondidas bien":"Answered correctly","Omitidas":"Skipped","Nunca respondidas":"Never answered","Marcadas":"Flagged",
+"Editar":"Edit","Eliminar":"Delete","★ Marcada":"★ Flagged","Sin clave":"No key","Todavía no hay preguntas.":"There are no questions yet.","No hay coincidencias.":"No matches.","Importa un PDF, Word, Excel o pega texto para crear tu banco.":"Import a PDF, Word or Excel file, or paste text, to build your bank.","Prueba otra búsqueda o cambia los filtros.":"Try another search or change the filters.","🗑 Borrar banco":"🗑 Delete bank",
+"Listo para practicar":"Ready to practice","Elige el modo y trabaja con preguntas de tu banco personal. Puedes mezclar las preguntas o concentrarte en las que necesitas repasar.":"Choose a mode and work through questions from your personal bank. You can shuffle them or focus on the ones you need to review.",
+"Cualquier estado":"Any status","Solo respondidas mal":"Only answered wrong","Solo omitidas":"Only skipped","Solo respondidas bien":"Only answered correctly","Solo marcadas para repasar ★":"Only flagged for review ★","Todas las preguntas":"All questions","Orden aleatorio":"Random order","Orden del banco":"Bank order","Solo repaso":"Review only",
+"Bancos / documentos":"Banks / documents","Marca uno o varios (por ejemplo A + B). Si no marcas ninguno, se usan todos.":"Select one or more (e.g. A + B). If none are selected, all are used.","Excluir los marcados (usar todos menos estos)":"Exclude the selected ones (use all except these)","⭐ Marcadas":"⭐ Flagged","Especialidades del banco":"Bank specialties","Marca una o varias. Si no marcas ninguna, se usarán todas las especialidades.":"Select one or more. If none are selected, all specialties are used.","VISTA PREVIA DE LA SESIÓN":"SESSION PREVIEW","Nombre de la sesión (opcional)":"Session name (optional)","▶ Modo práctica":"▶ Practice mode","⏱️ Modo examen":"⏱️ Exam mode","Sesiones abiertas":"Open sessions","Continuar":"Continue","Descartar":"Discard","✎ Nombre":"✎ Name","Ver resultados":"View results","Cerrar":"Close","Finalizada":"Finished","En curso":"In progress",
+"← Sesiones":"← Sessions","＋ Crear pregunta":"＋ Create question","☆ Marcar para repasar":"☆ Flag for review","Finalizar sesión":"Finish session","Opciones de respuesta":"Answer options","Abrir para responder":"Open to answer","Haz clic para ocultarlas":"Click to hide them","Corregir esta pregunta":"Fix this question","Mostrar":"Show","Ocultar":"Hide","⚑ Marcar como incorrecta":"⚑ Mark as incorrect","✎ Editar pregunta y respuesta correcta":"✎ Edit question and correct answer","🗑 Borrar del banco original":"🗑 Delete from original bank","← Anterior":"← Previous","Omitir pregunta":"Skip question","Saltar por ahora":"Skip for now","Siguiente pregunta →":"Next question →","Siguiente →":"Next →","Selecciona una opción o finaliza la sesión.":"Select an option or finish the session.","✓ Correcto":"✓ Correct","✕ Incorrecto":"✕ Incorrect","🧪 Valores normales":"🧪 Normal values","🖍 Subrayar texto":"🖍 Highlight text","📋 Pegar imagen":"📋 Paste image","📝 Mis notas":"📝 My notes","🎓 Modo tutor":"🎓 Tutor mode","Última pregunta: finaliza desde el botón superior.":"Last question: finish with the button above.",
+"SESIÓN COMPLETADA":"SESSION COMPLETE","Sesión finalizada":"Session finished","Examen finalizado":"Exam finished","Nueva sesión":"New session","Revisar mi banco":"Review my bank","Ver progreso":"View progress","Resultados por especialidad":"Results by specialty","Resultados por disciplina":"Results by discipline","Revisar respuestas":"Review answers","Editar clave":"Edit key",
+"Tu progreso":"Your progress","Una vista de cómo te está yendo al estudiar.":"A view of how your studying is going.","Restablecer estadísticas":"Reset statistics","Intentos totales":"Total attempts","Respuestas registradas":"Recorded answers","Aciertos":"Correct","Respuestas correctas":"Correct answers","Precisión global":"Overall accuracy","Aciertos / intentos":"Correct / attempts","Preguntas marcadas":"Flagged questions","Tu lista de prioridad":"Your priority list","Rendimiento por documento":"Performance by document","Cómo usar el seguimiento":"How to use tracking","Repasa los errores":"Review your mistakes","Marca preguntas complejas":"Flag difficult questions","Haz respaldos":"Make backups","Aciertos vs. errores":"Correct vs. errors","Cobertura del banco":"Bank coverage","Preguntas por disciplina":"Questions per discipline","Rendimiento por disciplina":"Performance by discipline",
+"Sube tus documentos":"Upload your documents","Selecciona uno o varios archivos de tu computadora.":"Select one or more files from your device.","Arrastra y suelta tus archivos aquí":"Drag and drop your files here","o selecciónalos desde tu dispositivo":"or select them from your device","Elegir archivos":"Choose files","📁 Subir archivo":"📁 Upload file","✨ Crear casos con IA":"✨ Create cases with AI","📋 Prompt para tu IA":"📋 Prompt for your AI","📓 NotebookLM":"📓 NotebookLM","¿Tu banco no está en un archivo compatible?":"Is your bank not in a supported file?","Pega el texto directamente.":"Paste the text directly.","Analizar texto":"Analyze text","Guardar enlace":"Save link","↗ Abrir cuaderno":"↗ Open notebook","⧉ Copiar prompt":"⧉ Copy prompt","Vista previa":"Preview","Descartar vista previa":"Discard preview","Pendiente de revisar":"Pending review","Revisar":"Review","Quitar":"Remove",
+"Editar pregunta":"Edit question","Crear pregunta":"Create question","Enunciado":"Stem","Respuesta correcta":"Correct answer","Explicación (opcional)":"Explanation (optional)","Cancelar":"Cancel","Guardar cambios":"Save changes","No indicada":"Not set","Banco donde se guardará":"Bank to save in","Especialidad / categoría":"Specialty / category","Guardar en carpeta":"Save to folder","Nueva carpeta":"New folder","Crear y guardar":"Create and save"};
+Object.assign(D,{"Biblioteca":"Library","Tus PDFs, para leerlos y subrayarlos. Durante una sesión, ábrelos con el botón 📖 sin salir de tus preguntas.":"Your PDFs, to read and highlight. During a session, open them with the 📖 button without leaving your questions.","Sube o arrastra un PDF aquí":"Upload or drag a PDF here","Buscar documento…":"Search document…","Buscar documento":"Search document","Los PDFs y sus subrayados se guardan solo en este navegador; no se sincronizan con Drive.":"PDFs and their highlights are stored only in this browser; they are not synced with Drive.","Ningún documento abierto":"No document open","Selecciona o sube un PDF.":"Select or upload a PDF.","Sin documentos":"No documents","Cargando…":"Loading…"});
+const P=[[/^Modo (práctica|examen) · Pregunta (\d+) de (\d+)$/,m=>(m[1]==='práctica'?'Practice':'Exam')+' mode · Question '+m[2]+' of '+m[3]],
+[/^(\d+) de (\d+) preguntas$/,m=>m[1]+' of '+m[2]+' questions'],[/^(\d+) preguntas?$/,m=>m[1]+(m[1]==='1'?' question':' questions')],
+[/^Clave: ([A-E])$/,m=>'Key: '+m[1]],[/^(\d+) pregunta\(s\)$/,m=>m[1]+' question(s)'],[/^Pregunta (\d+) de (\d+)$/,m=>'Question '+m[1]+' of '+m[2]],
+[/^(\d+) preguntas que coinciden$/,m=>m[1]+' matching questions']];
+const tr=s=>{const t=s.trim();if(!t)return s;let r=D[t];if(r===undefined)for(const p of P){const m=t.match(p[0]);if(m){r=p[1](m);break}}return r===undefined?s:s.replace(t,()=>r)};
+const SKIP='script,style,textarea,.hlf,.quizstem,.previewitem,.qsummary strong,.option,#wiki-pop,#hl-pop,#hl-menu';
+const ATTR=['placeholder','title','aria-label'];
+function walk(n){
+ if(n.nodeType===3){const p=n.parentElement;if(p&&p.closest(SKIP))return;const v=tr(n.nodeValue);if(v!==n.nodeValue)n.nodeValue=v;return}
+ if(n.nodeType!==1||n.matches('script,style,textarea'))return;
+ ATTR.forEach(a=>{if(n.hasAttribute&&n.hasAttribute(a)&&!n.closest('.hlf,.quizstem')){const v=tr(n.getAttribute(a));if(v!==n.getAttribute(a))n.setAttribute(a,v)}});
+ n.childNodes.forEach(walk);
+}
+const obs=new MutationObserver(ms=>{obs.disconnect();try{ms.forEach(m=>{if(m.type==='childList')m.addedNodes.forEach(walk);else if(m.type==='characterData')walk(m.target);else if(m.type==='attributes')walk(m.target)})}finally{go()}});
+function go(){obs.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:ATTR})}
+walk(document.body);go();
+}
+})();
+</script>
 </body></html>
