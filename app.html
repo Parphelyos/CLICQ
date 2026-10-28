@@ -524,6 +524,7 @@ mark.pl-sm.cur{background:rgba(255,120,0,.7);outline:2px solid #ff7a00}
         <button data-view="pdflib"><span class="navicon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5v-15Z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg></span><span class="navtext">Biblioteca</span></button>
 <button data-view="progress"><span class="navicon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><path d="M6.5 20v-6"/><path d="M12 20V8"/><path d="M17.5 20V4"/></svg></span><span class="navtext">Mi progreso</span></button>
     <button data-view="import"><span class="navicon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11"/><path d="m8 10 4 4 4-4"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></span><span class="navtext">Importar archivos</span></button>
+    <button data-view="settings" id="nav-settings"><span class="navicon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.2.6.76 1 1.55 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1Z"/></svg></span><span class="navtext">Ajustes</span></button>
   </nav></div>
   <div class="sidebottom"><strong>🔒 Tus datos son solo tuyos</strong>Se guardan en este navegador y, si inicias sesión con Google, en un archivo oculto de tu propio Drive. No se suben a ningún servidor de ClinQ. <a href="https://parphelyos.github.io/ClinQ/privacy.html" style="color:#9cb4ff">Política de privacidad</a> · <a href="https://parphelyos.github.io/ClinQ/terms.html" style="color:#9cb4ff">Condiciones del servicio</a></div>
 </aside>
@@ -601,6 +602,36 @@ mark.pl-sm.cur{background:rgba(255,120,0,.7);outline:2px solid #ff7a00}
       <div class="panel" id="pl-vhost"></div>
     </div>
   </section>
+  <section class="view" id="view-settings">
+    <div class="sectionhead"><div><h3>Ajustes</h3><p>Personaliza la apariencia y administra tus datos de estudio.</p></div></div>
+    <div class="settings-grid">
+      <div class="panel set-card">
+        <div class="set-head"><span class="set-ic">🎨</span><div><h4>Apariencia</h4><p>Así se ve ClinQ en este navegador.</p></div></div>
+        <label class="set-row" for="set-dark"><span><strong>Modo noche</strong><small>Cambia entre el tema claro y oscuro.</small></span><input type="checkbox" id="set-dark" class="set-switch"></label>
+        <div class="set-row"><span><strong>Idioma de la interfaz</strong><small>El cambio se aplica al recargar la página.</small></span><select id="set-lang" class="field"><option value="es">Español</option><option value="en">English</option></select></div>
+      </div>
+      <div class="panel set-card">
+        <div class="set-head"><span class="set-ic">📚</span><div><h4>Estudio</h4><p>Tus sesiones y estadísticas.</p></div></div>
+        <div class="set-row"><span><strong>Sesiones abiertas</strong><small id="set-sessions">0 sesiones</small></span><button class="btn outline small" type="button" onclick="showView('practice')">Ver sesiones</button></div>
+        <div class="set-row"><span><strong>Estadísticas</strong><small id="set-stats">0 intentos registrados</small></span><button class="btn outline small" type="button" onclick="resetStats()">Restablecer</button></div>
+        <div class="set-row"><span><strong>Carpetas de marcadas</strong><small id="set-folders">0 preguntas marcadas</small></span><button class="btn outline small" type="button" onclick="showView('library')">Gestionar</button></div>
+      </div>
+      <div class="panel set-card">
+        <div class="set-head"><span class="set-ic">☁</span><div><h4>Sincronización</h4><p>Guarda una copia en tu propio Google Drive.</p></div></div>
+        <div class="set-row"><span><strong>Google Drive</strong><small id="set-sync">Sin conectar</small></span><button class="btn outline small" type="button" id="set-sync-btn">Conectar</button></div>
+        <div class="set-row"><span><strong>Última sincronización</strong><small id="set-sync-last">Todavía no se ha sincronizado</small></span><button class="btn outline small" type="button" id="set-sync-now">Sincronizar</button></div>
+      </div>
+      <div class="panel set-card">
+        <div class="set-head"><span class="set-ic">💾</span><div><h4>Datos y respaldo</h4><p>Tus preguntas viven en este navegador.</p></div></div>
+        <div class="set-row"><span><strong>Respaldo completo</strong><small id="set-storage">—</small></span><div class="set-actions"><button class="btn outline small" type="button" onclick="exportBank()">Exportar</button><button class="btn outline small" type="button" onclick="backupInput.click()">Importar</button></div></div>
+        <div class="set-row"><span><strong>Borrar todo el banco</strong><small>Elimina preguntas, estadísticas y sesiones de este navegador.</small></span><button class="btn danger small" type="button" onclick="deleteEntireBank()">Borrar banco</button></div>
+      </div>
+    </div>
+    <div class="panel set-about">
+      <div><strong>ClinQ</strong> <span class="pill blue">V.1.14</span> · Herramienta de estudio personal, sin afiliación con USMLE, Rx ni NBME.</div>
+      <div class="set-links"><a href="https://parphelyos.github.io/ClinQ/privacy.html" target="_blank" rel="noopener noreferrer">Política de privacidad</a><a href="https://parphelyos.github.io/ClinQ/terms.html" target="_blank" rel="noopener noreferrer">Condiciones del servicio</a><button class="btn outline small" type="button" onclick="showView('import')">Importar archivos</button></div>
+    </div>
+  </section>
 </main></div>
 <div class="modalback" id="edit-modal"><div class="modal"><div class="modalhead"><h3 id="edit-modal-title">Editar pregunta</h3><button class="iconbtn" onclick="closeEdit()">×</button></div><input id="edit-id" type="hidden"><div id="edit-paste-box" class="pastebox" style="display:none"><label for="edit-paste">Pega la pregunta completa</label><textarea id="edit-paste" class="field" rows="6" placeholder="Pega aquí el texto con el enunciado y las opciones (A, B, C…). Detecto solo cada parte; también reconozco «Respuesta: C» y «Explicación: …»."></textarea><div class="toolbar" style="margin-top:8px"><button type="button" class="btn primary small" onclick="detectPasted()">✨ Detectar enunciado y opciones</button><span id="edit-paste-info" class="smalltext muted">Se detecta automáticamente al pegar.</span></div></div><label for="edit-stem">Enunciado</label><textarea id="edit-stem" class="field"></textarea><div id="edit-options"></div><div class="generator-grid" style="margin-top:10px"><div><label for="edit-subject">Especialidad / categoría</label><input id="edit-subject" class="field" placeholder="Ej. Orthopedics and Traumatology"></div><div><label for="edit-source">Banco donde se guardará</label><select id="edit-source" class="field" onchange="onSourceSelect()" style="width:100%"></select><input id="edit-source-new" class="field" placeholder="Nombre del nuevo banco" style="width:100%;margin-top:6px;display:none"></div></div><label for="edit-answer">Respuesta correcta</label><select id="edit-answer" class="field"><option value="">No indicada</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select><label for="edit-explanation">Explicación (opcional)</label><textarea id="edit-explanation" class="field" placeholder="Por qué es correcta y por qué no las otras opciones…"></textarea><label>Imágenes del caso (opcional)</label><div id="edit-imgs" style="display:flex;gap:10px;flex-wrap:wrap;margin:6px 0"></div><div class="toolbar"><button type="button" class="btn outline small" onclick="document.getElementById('edit-img-file').click()">🖼 Añadir imágenes</button><input id="edit-img-file" type="file" accept="image/*" multiple="" hidden=""><span class="smalltext muted">También puedes pegar una captura con Ctrl+V.</span></div><div id="edit-expimgs-block"><label>Imágenes de la explicación (opcional)</label><div id="edit-expimgs" style="display:flex;gap:10px;flex-wrap:wrap;margin:6px 0"></div><div class="toolbar"><button type="button" class="btn outline small" onclick="document.getElementById('edit-expimgs-file').click()">🖼 Añadir imágenes</button><input id="edit-expimgs-file" type="file" accept="image/*" multiple="" hidden=""><span class="smalltext muted">Se muestran junto a la explicación al responder. Puedes elegir varias a la vez o pegar con Ctrl+V tras pulsar el botón.</span></div></div><div class="modalactions"><button class="btn outline" onclick="closeEdit()">Cancelar</button><button class="btn primary" onclick="saveEdit()">Guardar cambios</button></div></div></div>
 <div class="toast" id="toast"></div>
@@ -615,11 +646,11 @@ function notify(msg){const t=document.getElementById('toast');t.textContent=msg;
 /* ==== Sesiones, subrayado, disciplinas, selector de banco ==== */
 const SESSKEY='clinq_sessions_v1';
 let sessions=[], manualDraft=null, lastStemSelection=null;
-function loadSessions(){try{const raw=JSON.parse(localStorage.getItem(SESSKEY)||'{}');const ids=new Set(bank.map(q=>q.id));sessions=(Array.isArray(raw.sessions)?raw.sessions:[]).filter(s=>s&&s.sid&&Array.isArray(s.questions)).map(s=>{s.questions=s.questions.filter(id=>ids.has(id));s.answers=s.answers||{};s.index=Math.max(0,Math.min(Number(s.index)||0,s.questions.length-1));return s}).filter(s=>s.questions.length);currentQuiz=sessions.find(s=>s.sid===raw.active)||null}catch(e){sessions=[];currentQuiz=null}}
+function loadSessions(){try{const raw=JSON.parse(localStorage.getItem(SESSKEY)||'{}');sessions=(Array.isArray(raw.sessions)?raw.sessions:[]).filter(s=>s&&s.sid&&Array.isArray(s.questions)).map(s=>{/* conserva las preguntas originales de la sesión: agregar o importar bancos no debe cambiar su tamaño */s.questions=s.questions.filter(id=>typeof id==='string'&&id);s.answers=s.answers||{};s.index=Math.max(0,Math.min(Number(s.index)||0,Math.max(0,s.questions.length-1)));return s}).filter(s=>s.questions.length);currentQuiz=sessions.find(s=>s.sid===raw.active)||null}catch(e){sessions=[];currentQuiz=null}}
 function saveSessions(){try{if(currentQuiz)currentQuiz.updated=Date.now();localStorage.setItem(SESSKEY,JSON.stringify({sessions,active:currentQuiz?currentQuiz.sid:null}))}catch(e){}}
 function pruneSessions(ids){sessions.forEach(s=>{s.questions=s.questions.filter(id=>!ids.has(id));ids.forEach(id=>{delete s.answers[id];if(s.omitted)delete s.omitted[id]});s.index=Math.max(0,Math.min(s.index,s.questions.length-1))});sessions=sessions.filter(s=>s.questions.length);if(currentQuiz&&!sessions.includes(currentQuiz))currentQuiz=null;saveSessions()}
 function sessionLabel(mode,chosen,onlyId){const srcs=[...new Set(chosen.map(q=>q.source||'Texto pegado'))];return (mode==='exam'?'Examen':'Práctica')+' · '+chosen.length+(chosen.length===1?' pregunta':' preguntas')+(srcs.length===1?' · '+srcs[0]:'')+(!onlyId&&currentQuizConfig().order==='bank'?' · orden del banco':'')}
-function sessionsPanelHTML(){if(!sessions.length)return '';return `<div class="panel" style="margin-bottom:16px"><div class="sectionhead"><div><h3>Sesiones abiertas</h3><p>Se guardan solas; puedes tener varias a la vez y continuarlas cuando quieras.</p></div></div><div class="sessionlist">`+sessions.slice().reverse().map(s=>{const answered=Object.keys(s.answers||{}).length,total=s.questions.length,when=new Date(s.started||Date.now()).toLocaleString('es-DO',{dateStyle:'medium',timeStyle:'short'});return `<div class="sessionrow"><div class="sessioninfo"><strong>${esc(s.label||(s.mode==='exam'?'Examen':'Práctica'))}</strong><span>${s.finished?'Finalizada':'En curso · pregunta '+(s.index+1)+' de '+total} · ${answered} respondidas · iniciada ${esc(when)}</span></div><span class="pill ${s.finished?'green':'blue'}">${s.finished?'Finalizada':(s.mode==='exam'?'Examen':'Práctica')}</span><button class="btn outline small" onclick="renameSession('${s.sid}')" title="Cambiar nombre">✎ Nombre</button><button class="btn primary small" onclick="resumeSession('${s.sid}')">${s.finished?'Ver resultados':'Continuar'}</button><button class="btn outline small" onclick="closeSession('${s.sid}')">${s.finished?'Cerrar':'Descartar'}</button></div>`}).join('')+`</div></div>`}
+function sessionsPanelHTML(){if(!sessions.length)return '';return `<div class="panel" style="margin-bottom:16px"><div class="sectionhead"><div><h3>Sesiones abiertas</h3><p>Se guardan solas; puedes tener varias a la vez y continuarlas cuando quieras.</p></div></div><div class="sessionlist">`+sessions.slice().reverse().map(s=>{const answered=Object.keys(s.answers||{}).length,total=s.questions.length,when=new Date(s.started||Date.now()).toLocaleString('es-DO',{dateStyle:'medium',timeStyle:'short'});return `<div class="sessionrow"><div class="sessioninfo"><strong>${esc(s.label||(s.mode==='exam'?'Examen':'Práctica'))}</strong><span>${s.finished?'Finalizada':'En curso · pregunta '+(s.index+1)+' de '+total} · ${answered} respondidas · iniciada ${esc(when)}</span></div><span class="pill ${s.finished?'green':'blue'}">${s.finished?'Finalizada':(s.mode==='exam'?'Examen':'Práctica')}</span><button class="btn outline small" onclick="renameSession('${s.sid}')" title="Cambiar nombre">✎ Nombre</button>${s.finished?`<button class="btn outline small" onclick="redoSession('${s.sid}')" title="Empezar de nuevo esta sesión con las mismas preguntas">↻ Rehacer</button>`:''}<button class="btn primary small" onclick="resumeSession('${s.sid}')">${s.finished?'Ver resultados':'Continuar'}</button><button class="btn outline small" onclick="closeSession('${s.sid}')">${s.finished?'Cerrar':'Descartar'}</button></div>`}).join('')+`</div></div>`}
 function renameSession(sid){const s=sessions.find(x=>x.sid===sid);if(!s)return;const value=prompt('Nombre para esta sesión:',s.label||'');if(value===null)return;const name=value.trim();if(!name){notify('Escribe un nombre para la sesión.');return}s.label=name;s.updated=Date.now();saveSessions();renderQuizStart();renderHome();notify('Nombre de sesión actualizado.')}
 function resumeSession(sid){const s=sessions.find(x=>x.sid===sid);if(!s)return;currentQuiz=s;saveSessions();renderQuizQuestion()}
 function closeSession(sid){const s=sessions.find(x=>x.sid===sid);if(!s)return;if(!s.finished&&!confirm('¿Descartar esta sesión en curso? Se perderá su avance (las respuestas del modo práctica ya quedaron en tus estadísticas).'))return;sessions=sessions.filter(x=>x!==s);if(currentQuiz===s)currentQuiz=null;saveSessions();renderQuizStart()}
@@ -938,7 +969,7 @@ function fillSourceSelect(value){const sel=document.getElementById('edit-source'
 function onSourceSelect(){const isNew=document.getElementById('edit-source').value==='__new__',inp=document.getElementById('edit-source-new');inp.style.display=isNew?'block':'none';if(isNew)inp.focus()}
 function getSourceField(){const sel=document.getElementById('edit-source');return sel.value==='__new__'?document.getElementById('edit-source-new').value.trim():sel.value.trim()}
 
-const titles={home:['TU ESPACIO DE ESTUDIO','Tu banco médico'],library:['TU MATERIAL','Mi banco de preguntas'],import:['CARGA DE MATERIAL','Importar documentos y crear preguntas'],pdflib:['TU MATERIAL','Biblioteca'],practice:['PRACTICA ACTIVA','Sesión de estudio'],progress:['SEGUIMIENTO','Mi progreso']};
+const titles={home:['TU ESPACIO DE ESTUDIO','Tu banco médico'],library:['TU MATERIAL','Mi banco de preguntas'],import:['CARGA DE MATERIAL','Importar documentos y crear preguntas'],pdflib:['TU MATERIAL','Biblioteca'],practice:['PRACTICA ACTIVA','Sesión de estudio'],progress:['SEGUIMIENTO','Mi progreso'],settings:['PREFERENCIAS','Ajustes']};
 function showView(name){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+name));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===name));document.getElementById('eyebrow').textContent=titles[name][0];document.getElementById('pagetitle').textContent=titles[name][1];if(name==='library')renderLibrary();if(name==='home')renderHome();if(name==='progress')renderProgress();if(name==='practice'&&!currentQuiz)renderQuizStart();window.scrollTo({top:0,behavior:'smooth'})}
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
 function stats(){let attempts=bank.reduce((n,q)=>n+(q.attempts||0),0),gradedAttempts=bank.reduce((n,q)=>n+(q.answer?(q.attempts||0):0),0),correct=bank.reduce((n,q)=>n+(q.correctCount||0),0),flagged=bank.filter(q=>q.flagged).length,review=bank.filter(q=>q.flagged||(q.answer&&q.attempts>0&&q.correctCount<q.attempts)).length;return{total:bank.length,attempts,correct,accuracy:gradedAttempts?Math.round(correct/gradedAttempts*100):null,flagged,review}}
@@ -1321,7 +1352,7 @@ function toggleFlag(id){const q=bank.find(q=>q.id===id);if(q){q.flagged=!q.flagg
 
 function renderQuizStart(){if(currentQuiz)return;document.getElementById('quiz-area').innerHTML=`<div class="emptybank panel"><div class="emptyicon">🧠</div><h2>Listo para practicar</h2><p>Elige el modo y trabaja con preguntas de tu banco personal. Puedes mezclar las preguntas o concentrarte en las que necesitas repasar.</p><div class="toolbar" style="justify-content:center"><select class="field" id="quiz-status"><option value="all">Cualquier estado</option><option value="wrong">Solo respondidas mal</option><option value="omitted">Solo omitidas</option><option value="correct">Solo respondidas bien</option><option value="unanswered">Nunca respondidas</option><option value="flagged">Solo marcadas para repasar ★</option></select><select class="field" id="quiz-count"><option value="10">10 preguntas</option><option value="20">20 preguntas</option><option value="40">40 preguntas</option><option value="60">60 preguntas</option><option value="100">100 preguntas</option><option value="all">Todas las preguntas</option></select><select class="field" id="quiz-order" aria-label="Orden de las preguntas"><option value="random">Orden aleatorio</option><option value="bank">Orden del banco</option></select><label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#66758a"><input id="quiz-review" type="checkbox"> Solo repaso</label></div><details id="quiz-sources-wrap" class="panel" style="margin:0 auto 16px;max-width:760px;text-align:left;padding:14px"><summary style="cursor:pointer;font-weight:800;font-size:13px">Bancos / documentos <span id="quiz-sources-sum" class="muted" style="font-weight:600"></span></summary><div class="smalltext muted" style="margin:8px 0 10px">Marca uno o varios (por ejemplo A + B). Si no marcas ninguno, se usan todos.</div><div id="quiz-sources" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">${sourceNames().map(sn=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;border:1px solid #e2e8f0;border-radius:9px"><input type="checkbox" class="quiz-source-check" value="${esc(sn)}"><span>${esc(sn)} <span class="muted">(${bank.filter(q=>(q.source||'Texto pegado')===sn).length})</span></span></label>`).join('')}</div><label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;margin-top:10px"><input id="quiz-source-exclude" type="checkbox"> Excluir los marcados (usar todos menos estos)</label></details><details id="quiz-folders-wrap" class="panel" style="margin:0 auto 16px;max-width:760px;text-align:left;padding:14px"><summary style="cursor:pointer;font-weight:800;font-size:13px">⭐ Marcadas <span id="quiz-folders-sum" class="muted" style="font-weight:600"></span></summary><div class="smalltext muted" style="margin:8px 0 10px">Marca una o varias carpetas para estudiar solo las preguntas que guardaste en ellas. Si no marcas ninguna, no se filtra por carpeta.</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">${folderNames().map(f=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;border:1px solid #e2e8f0;border-radius:9px"><input type="checkbox" class="quiz-folder-check" value="${esc(f)}"><span>📁 ${esc(f)} <span class="muted">(${bank.filter(q=>folderOf(q)===f).length})</span></span></label>`).join('')}</div></details><div class="panel" style="margin:0 auto 16px;max-width:760px;text-align:left;padding:14px"><div style="font-weight:800;font-size:13px;margin-bottom:4px">Especialidades del banco</div><div class="smalltext muted" style="margin-bottom:10px">Marca una o varias. Si no marcas ninguna, se usarán todas las especialidades.</div><div id="quiz-specialties" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">${availableSpecialties().map(sp=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;border:1px solid #e2e8f0;border-radius:9px"><input type="checkbox" class="quiz-specialty-check" value="${esc(sp)}"><span>${esc(sp)} <span class="muted">(${bank.filter(q=>inferSpecialty(q.stem,q.source,q.subject)===sp).length})</span></span></label>`).join('')}</div></div><div id="quiz-preview" class="panel" style="margin:0 auto 16px;max-width:760px;padding:14px;border-color:#b4c3ff;background:#f8faff"></div><div class="panel session-name-create" style="margin:0 auto 14px;max-width:760px;padding:14px;text-align:left"><label for="quiz-session-name" style="display:block;font-size:13px;font-weight:800;margin-bottom:7px">Nombre de la sesión (opcional)</label><input id="quiz-session-name" class="field" type="text" maxlength="90" placeholder="Ej. Uveítis, repaso renal, simulacro de cirugía" style="width:100%"><div class="smalltext muted" style="margin-top:5px">Puedes ponerle nombre antes de empezar y cambiarlo después desde Sesiones abiertas.</div></div><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap"><button class="btn primary" onclick="startQuiz('practice')">▶ Modo práctica</button><button class="btn outline" onclick="startQuiz('exam')">⏱️ Modo examen</button></div></div>`+sessionsPanelHTML();applyQuizConfig()}
 function startQuiz(mode,onlyId=null){if(!bank.length){notify('Primero importa preguntas a tu banco.');showView('import');return}let chosen;if(onlyId){chosen=bank.filter(q=>q.id===onlyId)}else{const cfg=currentQuizConfig();saveQuizConfig();let src=cfg.source,onlyReview=cfg.review,quizStatus=cfg.status,count=cfg.count,checkedSpecialties=cfg.specialties;chosen=quizPool(cfg);if(cfg.order==='random')shuffle(chosen);if(count!=='all')chosen=chosen.slice(0,Number(count))}if(!chosen.length){notify('No hay preguntas que coincidan con esos filtros.');return}[...new Set(chosen.map(q=>q.source||'Texto pegado'))].forEach(name=>touchBankActivity(name,'opened'));const requestedName=(document.getElementById('quiz-session-name')?.value||'').trim();currentQuiz={sid:'s_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),mode,label:requestedName||sessionLabel(mode,chosen,onlyId),questions:chosen.map(q=>q.id),index:0,answers:{},finished:false,started:Date.now(),updated:Date.now()};sessions.push(currentQuiz);saveSessions();showView('practice');renderQuizQuestion()}
-function renderQuizQuestion(){let host=document.getElementById('quiz-area');if(!currentQuiz)return renderQuizStart();saveSessions();if(currentQuiz.finished){renderQuizResults();return}let q=bank.find(x=>x.id===currentQuiz.questions[currentQuiz.index]);if(!q){currentQuiz.index++;return renderQuizQuestion()}let idx=currentQuiz.index+1,total=currentQuiz.questions.length,chosen=currentQuiz.answers[q.id],revealed=currentQuiz.mode==='practice'&&chosen!==undefined;let options=q.options||[];host.innerHTML=`<div class="quizwrap"><div class="quiztop"><button class="btn outline small" onclick="exitQuiz()" title="Tu sesión queda guardada">← Sesiones</button><div class="smalltext muted">${currentQuiz.mode==='exam'?'Modo examen':'Modo práctica'} · Pregunta ${idx} de ${total}</div><button class="btn outline small" onclick="addManualQuestion()">＋ Crear pregunta</button><button class="btn outline small" onclick="toggleFlag('${q.id}')">${q.flagged?'★ Marcada':'☆ Marcar para repasar'}</button><button class="btn danger small" onclick="finishQuiz()">Finalizar sesión</button></div><div class="progressline"><div style="width:${Math.round((idx-1)/total*100)}%"></div></div><div class="quizcard"><div class="casebar"><div id="stem-tools"></div></div><div class="quizstem hlf" id="quiz-stem-${q.id}" data-qid="${q.id}" data-field="stem">${renderQuestionStem(q)}</div>${q.flagged?`<div class="notice" style="margin:8px 0;user-select:none;-webkit-user-select:none">★ Marcada para repasar · Próxima revisión: ${q.nextReviewAt?new Date(q.nextReviewAt).toLocaleString('es-DO',{dateStyle:'medium',timeStyle:'short'}):'mañana'}</div>`:''}<details class="option-disclosure" ${currentQuiz.optionsOpen?.[q.id]?'open':''} ontoggle="setOptionsOpen('${q.id}',this.open)"><summary><span>Opciones de respuesta</span><span class="disclosure-hint">${currentQuiz.optionsOpen?.[q.id]?'Haz clic para ocultarlas':'Abrir para responder'}</span></summary><div class="options">${options.map(o=>{let cls='option';if(chosen===o.key)cls+=' selected';if(revealed&&q.answer===o.key)cls+=' correct';if(revealed&&chosen===o.key&&q.answer&&chosen!==q.answer)cls+=' incorrect';let disabled=(currentQuiz.mode==='practice'&&chosen!==undefined)||currentQuiz.finished;return `<div role="button" tabindex="${disabled?'-1':'0'}" aria-disabled="${disabled?'true':'false'}" class="${cls}" onclick="optClick(event,'${q.id}','${o.key}')"><span class="letter">${o.key}</span><span class="hlf" data-qid="${q.id}" data-field="opt:${o.key}">${renderHL(q,'opt:'+o.key)}</span></div>`}).join('')}</div></details>${revealed?`<div class="feedback ${!q.answer?'neutral':chosen===q.answer?'good':'bad'}"><strong>${!q.answer?'Respuesta no configurada':chosen===q.answer?'✓ Correcto':'✕ Incorrecto'+(q.answer?' · Respuesta: '+q.answer:'')}</strong>${q.explanation?'\n\n<span class="hlf" data-qid="'+q.id+'" data-field="exp">'+renderHL(q,'exp')+'</span>':!q.answer?'\nEdita esta pregunta para añadir la clave correcta y su explicación.':''}</div>`:''}</div><div class="quizdock"><details class="dockfold" ${currentQuiz.dockOpen?.[q.id]===true?'open':''} ontoggle="setDockFold('${q.id}',this.open,this)"><summary><span class="quizdock-title">Corregir esta pregunta</span><span class="dockfold-hint">${currentQuiz.dockOpen?.[q.id]===true?'Ocultar':'Mostrar'}</span></summary><div class="smalltext muted" style="margin-bottom:10px">Si la clave del documento está equivocada, puedes corregirla aquí. Los cambios se guardan en el banco original.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${q.needsCorrection?'primary':'outline'} small" onclick="toggleNeedsCorrection('${q.id}')">${q.needsCorrection?'✓ Marcada para corregir':'⚑ Marcar como incorrecta'}</button><button class="btn outline small" onclick="openEdit('${q.id}')">✎ Editar pregunta y respuesta correcta</button><button class="btn danger small" onclick="deleteQuestion('${q.id}')">🗑 Borrar del banco original</button></div></details><div class="quizbottom"><div class="casenav"><button class="btn outline small" onclick="previousQuestion()" ${currentQuiz.index===0?'disabled':''}>← Anterior</button><button class="btn outline small" onclick="skipQuestion()">${currentQuiz.mode==='exam'?'Saltar por ahora':'Omitir pregunta'}</button></div>${currentQuiz.mode==='practice'?(chosen!==undefined?(idx<total?`<button class="btn primary" onclick="nextQuestion()">Siguiente pregunta →</button>`:'<span class="smalltext muted" style="align-self:center">Última pregunta: finaliza desde el botón superior.</span>'):'<span class="smalltext muted" style="align-self:center">Selecciona una opción o finaliza la sesión.</span>'):(idx<total?`<button class="btn primary" onclick="nextQuestion()">Siguiente →</button>`:'<span class="smalltext muted" style="align-self:center">Última pregunta: finaliza desde el botón superior.</span>')}</div></div></div>`}
+function renderQuizQuestion(){let host=document.getElementById('quiz-area');if(!currentQuiz)return renderQuizStart();saveSessions();if(currentQuiz.finished){renderQuizResults();return}let q=bank.find(x=>x.id===currentQuiz.questions[currentQuiz.index]);if(!q){let ni=-1;for(let i=currentQuiz.index+1;i<currentQuiz.questions.length;i++){if(bank.some(x=>x.id===currentQuiz.questions[i])){ni=i;break}}if(ni<0){for(let i=0;i<currentQuiz.index;i++){if(bank.some(x=>x.id===currentQuiz.questions[i])){ni=i;break}}}if(ni<0){host.innerHTML='<div class="emptybank panel"><div class="emptyicon">📝</div><h2>Esta sesión no tiene preguntas disponibles</h2><p>Las preguntas de esta sesión ya no están en tu banco. Puedes cerrarla y crear una nueva.</p><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap"><button class="btn primary" onclick="exitQuiz()">Volver a sesiones</button><button class="btn outline" onclick="closeSession(\''+currentQuiz.sid+'\')">Cerrar esta sesión</button></div></div>';return}currentQuiz.index=ni;return renderQuizQuestion()}let idx=currentQuiz.index+1,total=currentQuiz.questions.length,chosen=currentQuiz.answers[q.id],revealed=currentQuiz.mode==='practice'&&chosen!==undefined;let options=q.options||[];host.innerHTML=`<div class="quizwrap"><div class="quiztop"><button class="btn outline small" onclick="exitQuiz()" title="Tu sesión queda guardada">← Sesiones</button><div class="smalltext muted">${currentQuiz.mode==='exam'?'Modo examen':'Modo práctica'} · Pregunta ${idx} de ${total}</div><button class="btn outline small" onclick="addManualQuestion()">＋ Crear pregunta</button><button class="btn outline small" onclick="toggleFlag('${q.id}')">${q.flagged?'★ Marcada':'☆ Marcar para repasar'}</button><button class="btn danger small" onclick="finishQuiz()">Finalizar sesión</button></div><div class="progressline"><div style="width:${Math.round((idx-1)/total*100)}%"></div></div><div class="quizcard"><div class="casebar"><div id="stem-tools"></div></div><div class="quizstem hlf" id="quiz-stem-${q.id}" data-qid="${q.id}" data-field="stem">${renderQuestionStem(q)}</div>${q.flagged?`<div class="notice" style="margin:8px 0;user-select:none;-webkit-user-select:none">★ Marcada para repasar · Próxima revisión: ${q.nextReviewAt?new Date(q.nextReviewAt).toLocaleString('es-DO',{dateStyle:'medium',timeStyle:'short'}):'mañana'}</div>`:''}<details class="option-disclosure" ${currentQuiz.optionsOpen?.[q.id]?'open':''} ontoggle="setOptionsOpen('${q.id}',this.open)"><summary><span>Opciones de respuesta</span><span class="disclosure-hint">${currentQuiz.optionsOpen?.[q.id]?'Haz clic para ocultarlas':'Abrir para responder'}</span></summary><div class="options">${options.map(o=>{let cls='option';if(chosen===o.key)cls+=' selected';if(revealed&&q.answer===o.key)cls+=' correct';if(revealed&&chosen===o.key&&q.answer&&chosen!==q.answer)cls+=' incorrect';let disabled=(currentQuiz.mode==='practice'&&chosen!==undefined)||currentQuiz.finished;return `<div role="button" tabindex="${disabled?'-1':'0'}" aria-disabled="${disabled?'true':'false'}" class="${cls}" onclick="optClick(event,'${q.id}','${o.key}')"><span class="letter">${o.key}</span><span class="hlf" data-qid="${q.id}" data-field="opt:${o.key}">${renderHL(q,'opt:'+o.key)}</span></div>`}).join('')}</div></details>${revealed?`<div class="feedback ${!q.answer?'neutral':chosen===q.answer?'good':'bad'}"><strong>${!q.answer?'Respuesta no configurada':chosen===q.answer?'✓ Correcto':'✕ Incorrecto'+(q.answer?' · Respuesta: '+q.answer:'')}</strong>${q.explanation?'\n\n<span class="hlf" data-qid="'+q.id+'" data-field="exp">'+renderHL(q,'exp')+'</span>':!q.answer?'\nEdita esta pregunta para añadir la clave correcta y su explicación.':''}</div>`:''}</div><div class="quizdock"><details class="dockfold" ${currentQuiz.dockOpen?.[q.id]===true?'open':''} ontoggle="setDockFold('${q.id}',this.open,this)"><summary><span class="quizdock-title">Corregir esta pregunta</span><span class="dockfold-hint">${currentQuiz.dockOpen?.[q.id]===true?'Ocultar':'Mostrar'}</span></summary><div class="smalltext muted" style="margin-bottom:10px">Si la clave del documento está equivocada, puedes corregirla aquí. Los cambios se guardan en el banco original.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${q.needsCorrection?'primary':'outline'} small" onclick="toggleNeedsCorrection('${q.id}')">${q.needsCorrection?'✓ Marcada para corregir':'⚑ Marcar como incorrecta'}</button><button class="btn outline small" onclick="openEdit('${q.id}')">✎ Editar pregunta y respuesta correcta</button><button class="btn danger small" onclick="deleteQuestion('${q.id}')">🗑 Borrar del banco original</button></div></details><div class="quizbottom"><div class="casenav"><button class="btn outline small" onclick="previousQuestion()" ${currentQuiz.index===0?'disabled':''}>← Anterior</button><button class="btn outline small" onclick="skipQuestion()">${currentQuiz.mode==='exam'?'Saltar por ahora':'Omitir pregunta'}</button></div>${currentQuiz.mode==='practice'?(chosen!==undefined?(idx<total?`<button class="btn primary" onclick="nextQuestion()">Siguiente pregunta →</button>`:'<span class="smalltext muted" style="align-self:center">Última pregunta: finaliza desde el botón superior.</span>'):'<span class="smalltext muted" style="align-self:center">Selecciona una opción o finaliza la sesión.</span>'):(idx<total?`<button class="btn primary" onclick="nextQuestion()">Siguiente →</button>`:'<span class="smalltext muted" style="align-self:center">Última pregunta: finaliza desde el botón superior.</span>')}</div></div></div>`}
 function setOptionsOpen(id,isOpen){if(!currentQuiz)return;currentQuiz.optionsOpen=currentQuiz.optionsOpen||{};currentQuiz.optionsOpen[id]=!!isOpen;saveSessions()}
 function setDockFold(qid,open,el){if(!currentQuiz)return;currentQuiz.dockOpen=currentQuiz.dockOpen||{};currentQuiz.dockOpen[qid]=!!open;saveSessions();if(el&&el.querySelector){const h=el.querySelector('.dockfold-hint');if(h)h.textContent=open?'Ocultar':'Mostrar'}}
 function chooseAnswer(id,key){if(!currentQuiz||currentQuiz.finished)return;const q=bank.find(q=>q.id===id);if(!q)return;if(currentQuiz.mode==='practice'&&currentQuiz.answers[id]!==undefined)return;currentQuiz.answers[id]=key;if(currentQuiz.mode==='practice'){q.attempts=(q.attempts||0)+1;if(q.answer&&key===q.answer)q.correctCount=(q.correctCount||0)+1;q.updated=Date.now();try{localStorage.setItem(DBKEY,JSON.stringify(bank))}catch(e){}}renderQuizQuestion();refreshAll()}
@@ -1331,7 +1362,7 @@ function finishQuiz(){if(!currentQuiz||currentQuiz.finished)return;currentQuiz.f
 function nextQuestion(){if(!currentQuiz||currentQuiz.finished)return;if(currentQuiz.index<currentQuiz.questions.length-1){currentQuiz.index++;renderQuizQuestion()}else finishQuiz()}
 function renderQuizResults(){if(!currentQuiz)return;const ids=currentQuiz.questions,answered=Object.keys(currentQuiz.answers).length,qs=ids.map(id=>bank.find(q=>q.id===id)).filter(Boolean),gradable=qs.filter(q=>q.answer&&currentQuiz.answers[q.id]!==undefined),correct=gradable.filter(q=>q.answer===currentQuiz.answers[q.id]).length,host=document.getElementById('quiz-area');
  const bySpecialty=resultBars(groupSessionResults(qs,q=>inferSpecialty(q.stem,q.source,q.subject))),byDiscipline=resultBars(groupSessionResults(qs,q=>inferDiscipline(q)));
- host.innerHTML=`<div class="quizwrap panel" style="text-align:center;padding:34px 22px"><div class="emptyicon">${gradable.length?'🎯':'📝'}</div><div class="eyebrow">SESIÓN COMPLETADA</div><h2 style="margin:6px 0 8px;font-size:25px">${currentQuiz.mode==='exam'?'Examen finalizado':'Sesión finalizada'}</h2><p class="muted" style="max-width:600px;margin:0 auto 22px;font-size:13px">${answered} de ${ids.length} preguntas respondidas. ${gradable.length?`Aciertos: ${correct}/${gradable.length} (${Math.round(correct/gradable.length*100)}%).`:'No se puede calcular la precisión global porque las respuestas contestadas no tienen una clave correcta configurada.'}</p><div class="stats" style="max-width:600px;margin:0 auto 22px"><div class="stat"><div class="stathead">Respondidas</div><div class="statnum">${answered}</div></div><div class="stat"><div class="stathead">Sin responder</div><div class="statnum">${ids.length-answered}</div></div><div class="stat"><div class="stathead">Aciertos</div><div class="statnum">${correct}</div></div><div class="stat"><div class="stathead">Preguntas sin clave</div><div class="statnum">${qs.filter(q=>!q.answer).length}</div></div></div><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap"><button class="btn primary" onclick="exitQuiz()">Nueva sesión</button><button class="btn outline" onclick="exitQuiz();showView('library')">Revisar mi banco</button><button class="btn outline" onclick="exitQuiz();showView('progress')">Ver progreso</button></div><div style="margin-top:25px;text-align:left"><h3 style="font-size:15px">Resultados por especialidad</h3><p class="smalltext muted">Solo se cuentan como correctas las preguntas que tienen una clave configurada y fueron respondidas.</p>${bySpecialty}<h3 style="font-size:15px;margin-top:25px">Resultados por disciplina</h3><p class="smalltext muted">La disciplina (diagnóstico, farmacología, microbiología, etc.) se deduce del texto de cada pregunta.</p>${byDiscipline}<h3 style="font-size:15px;margin-top:25px">Revisar respuestas</h3>${qs.map((q,i)=>{let given=currentQuiz.answers[q.id];return `<div class="qrow" style="margin-top:8px"><div class="qnum">${i+1}</div><div class="qsummary"><strong>${esc(q.stem||'Pregunta')}</strong><span>${esc(inferSpecialty(q.stem,q.source,q.subject))} · ${esc(inferDiscipline(q))} · Tu respuesta: ${given||'Sin responder'} · Clave: ${q.answer||'No indicada'}${given!==undefined&&q.answer?(given===q.answer?' · Correcta':' · Incorrecta'):''}</span></div><button class="btn outline small" onclick="openEdit('${q.id}')">Editar clave</button></div>`}).join('')}</div></div>`}
+ host.innerHTML=`<div class="quizwrap panel" style="text-align:center;padding:34px 22px"><div class="emptyicon">${gradable.length?'🎯':'📝'}</div><div class="eyebrow">SESIÓN COMPLETADA</div><h2 style="margin:6px 0 8px;font-size:25px">${currentQuiz.mode==='exam'?'Examen finalizado':'Sesión finalizada'}</h2><p class="muted" style="max-width:600px;margin:0 auto 22px;font-size:13px">${answered} de ${ids.length} preguntas respondidas. ${gradable.length?`Aciertos: ${correct}/${gradable.length} (${Math.round(correct/gradable.length*100)}%).`:'No se puede calcular la precisión global porque las respuestas contestadas no tienen una clave correcta configurada.'}</p><div class="stats" style="max-width:600px;margin:0 auto 22px"><div class="stat"><div class="stathead">Respondidas</div><div class="statnum">${answered}</div></div><div class="stat"><div class="stathead">Sin responder</div><div class="statnum">${ids.length-answered}</div></div><div class="stat"><div class="stathead">Aciertos</div><div class="statnum">${correct}</div></div><div class="stat"><div class="stathead">Preguntas sin clave</div><div class="statnum">${qs.filter(q=>!q.answer).length}</div></div></div><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap"><button class="btn primary" onclick="exitQuiz()">Nueva sesión</button><button class="btn outline" onclick="exitQuiz();showView('library')">Revisar mi banco</button><button class="btn outline" onclick="redoSession('${currentQuiz.sid}')">↻ Rehacer sesión</button><button class="btn outline" onclick="exitQuiz();showView('progress')">Ver progreso</button></div><div style="margin-top:25px;text-align:left"><h3 style="font-size:15px">Resultados por especialidad</h3><p class="smalltext muted">Solo se cuentan como correctas las preguntas que tienen una clave configurada y fueron respondidas.</p>${bySpecialty}<h3 style="font-size:15px;margin-top:25px">Resultados por disciplina</h3><p class="smalltext muted">La disciplina (diagnóstico, farmacología, microbiología, etc.) se deduce del texto de cada pregunta.</p>${byDiscipline}<h3 style="font-size:15px;margin-top:25px">Revisar respuestas</h3>${qs.map((q,i)=>{let given=currentQuiz.answers[q.id];return `<div class="qrow" style="margin-top:8px"><div class="qnum">${i+1}</div><div class="qsummary"><strong>${esc(q.stem||'Pregunta')}</strong><span>${esc(inferSpecialty(q.stem,q.source,q.subject))} · ${esc(inferDiscipline(q))} · Tu respuesta: ${given||'Sin responder'} · Clave: ${q.answer||'No indicada'}${given!==undefined&&q.answer?(given===q.answer?' · Correcta':' · Incorrecta'):''}</span></div><button class="btn outline small" onclick="openEdit('${q.id}')">Editar clave</button></div>`}).join('')}</div></div>`}
 function exitQuiz(){currentQuiz=null;saveSessions();renderQuizStart()}
 function exportBank(){
  if(!bank.length){notify('No hay preguntas para exportar.');return}
@@ -2735,11 +2766,8 @@ async function visionDetect(dataUrl,auto){
    if(typeof notify==='function')notify(fresh.length+' pregunta(s) nueva(s) añadida(s) a la sesión actual');
  }
  function installSessionHooks(){
-   ['saveImported','saveEdit'].forEach(name=>{
-     const fn=window[name];if(typeof fn!=='function'||fn.__sessionHook)return;
-     const wrapped=function(){const before=new Set(bank.map(q=>q.id));const result=fn.apply(this,arguments);appendSession(bank.filter(q=>!before.has(q.id)).map(q=>q.id));return result};
-     wrapped.__sessionHook=true;window[name]=wrapped;
-   });
+   /* Las sesiones abiertas conservan siempre su número original de preguntas.
+      Importar o crear un banco nuevo no debe añadir preguntas a una sesión en curso. */
  }
  function installImageCarousel(){
    const sec=$('wk-imgs');if(!sec)return;
@@ -3368,7 +3396,7 @@ function groupBanks(keep){
   const keys=Object.keys(days).sort().reverse(),saved=rj(OPEN,{});
   host.dataset.byDay='1';host.style.display='block';host.innerHTML='';
   const tools=document.createElement('div');tools.className='v-sbar';
-  tools.innerHTML='<input type="search" id="v-bank-q" class="field" placeholder="Buscar banco…" aria-label="Buscar banco" autocomplete="off"><span class="smalltext muted" id="v-bank-c"></span><span class="day-tools" style="margin:0"><button type="button" data-a="1">Expandir</button><button type="button" data-a="0">Contraer</button></span>';
+  tools.innerHTML='<input type="search" id="v-bank-q" class="field" placeholder="Buscar banco…" aria-label="Buscar banco" autocomplete="off"><span class="smalltext muted" id="v-bank-c"></span><span class="day-tools" style="margin:0"><button type="button" data-a="none" title="Quitar la selección de todos los bancos">Deseleccionar todo</button><button type="button" data-a="1">Expandir</button><button type="button" data-a="0">Contraer</button></span>';
   const scroll=document.createElement('div');scroll.className='day-scroll';
   const none=document.createElement('div');none.className='smalltext muted';none.style.cssText='display:none;padding:10px 4px';none.textContent='Ningún banco coincide con la búsqueda.';
   host.append(tools,scroll,none);
@@ -3399,7 +3427,17 @@ function groupBanks(keep){
   }
   inp.addEventListener('input',filter);
   inp.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape'&&inp.value){e.preventDefault();inp.value='';filter()}});
-  tools.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{const o=rj(OPEN,{});scroll.querySelectorAll('.day-f').forEach(f=>{f.open=b.dataset.a==='1';if(!q_())o[f.dataset.k]=f.open});wj(OPEN,o)}));
+  tools.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    if(b.dataset.a==='none'){
+      host.querySelectorAll('.quiz-source-check').forEach(c=>{c.checked=false});
+      const ex=document.getElementById('quiz-source-exclude');if(ex)ex.checked=false;
+      sync();
+      try{saveQuizConfig();updateQuizPreview()}catch(e){}
+      try{notify('Selección de bancos borrada: se usarán todos.')}catch(e){}
+      return;
+    }
+    const o=rj(OPEN,{});scroll.querySelectorAll('.day-f').forEach(f=>{f.open=b.dataset.a==='1';if(!q_())o[f.dataset.k]=f.open});wj(OPEN,o)
+  }));
   const q_=()=>!!inp.value.trim();
   inp.value=keep.bq||'';sync();filter();
 }
@@ -3712,19 +3750,85 @@ updateQuizPreview=function(){const r=_uq.apply(this,arguments);try{dynCounts()}c
 const _rq=renderQuizStart;
 renderQuizStart=function(){const r=_rq.apply(this,arguments);try{dynCounts()}catch(e){}return r};
 try{dynCounts()}catch(e){}
+window.__clinqDynCounts=dynCounts;
 
-/* ===== 3. Mover todas las marcadas de una carpeta a otra (Mi banco) ===== */
+/* ===== 3. Mover preguntas marcadas entre carpetas (Mi banco y sesión) ===== */
 const wrap=$('bank-groups-wrap');
-let panel=null,fmv=null,src=null;
+let panel=null,fmv=null;
+const mv={src:'',dest:'',q:'',ids:new Set()};
+const nz3=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const escA=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const allFlagged=()=>bank.filter(q=>folderOf(q));
+const srcList=()=>folderNames().map(f=>({name:f,n:bank.filter(q=>folderOf(q)===f).length})).filter(x=>x.n>0);
+const mvCandidates=()=>{const all=allFlagged();return mv.src?all.filter(q=>folderOf(q)===mv.src):all};
+const mvMatches=x=>{const q=nz3(mv.q);return !q||nz3((x.stem||'')+' '+(x.explanation||'')).includes(q)};
+function mvCount(){
+ const n=mvCandidates().length,sel=mvCandidates().filter(q=>mv.ids.has(q.id)).length;
+ const c=$('fmv-count');if(c)c.textContent=sel+' de '+n+(n===1?' seleccionada':' seleccionadas');
+}
+function mvRefreshSources(){
+ const s=$('fmv-src');if(!s)return;
+ const list=srcList(),all=allFlagged().length;
+ s.innerHTML='<option value="">Todas las carpetas · '+all+'</option>'+list.map(x=>'<option value="'+escA(x.name)+'">📁 '+escA(x.name)+' · '+x.n+'</option>').join('');
+ s.value=mv.src;
+}
+function mvRefreshDests(){
+ const d=$('fmv-dest');if(!d)return;
+ const list=srcList().filter(x=>x.name!==mv.src);
+ d.innerHTML=(mv.src?'':'<option value="">Elige una carpeta…</option>')+list.map(x=>'<option value="'+escA(x.name)+'">📁 '+escA(x.name)+'</option>').join('')+'<option value="__new__">➕ Nueva carpeta…</option>';
+ if(list.some(x=>x.name===mv.dest))d.value=mv.dest;else if(list.length)d.value=mv.src?list[0].name:'';else d.value='__new__';
+ mv.dest=d.value;
+ const nw=$('fmv-new');if(nw)nw.style.display=d.value==='__new__'?'block':'none';
+}
+function mvRender(){
+ const list=$('fmv-list');if(!list)return;
+ const items=mvCandidates().filter(mvMatches);
+ list.innerHTML=items.length?items.map(x=>'<label class="fmv-q"><input type="checkbox" data-id="'+escA(x.id)+'" '+(mv.ids.has(x.id)?'checked':'')+'><span class="fmv-t">'+escA(x.stem||'Pregunta sin enunciado')+'</span><span class="fmv-meta">📁 '+escA(folderOf(x)||FOLDER_DEFAULT)+'</span></label>').join(''):'<div class="smalltext muted" style="padding:10px">No hay preguntas marcadas que coincidan con la búsqueda.</div>';
+ list.querySelectorAll('input[data-id]').forEach(cb=>cb.addEventListener('change',()=>{if(cb.checked)mv.ids.add(cb.dataset.id);else mv.ids.delete(cb.dataset.id);mvCount()}));
+ mvCount();
+}
+function mvOpen(from){
+ if(!allFlagged().length){notify(T('Todavía no hay preguntas marcadas.','There are no flagged questions yet.'));return}
+ mv.src=(from&&srcList().some(x=>x.name===from))?from:'';
+ mv.q='';mv.dest='';
+ mv.ids=new Set(mvCandidates().map(q=>q.id));
+ mvRefreshSources();mvRefreshDests();
+ const inp=$('fmv-q');if(inp)inp.value='';
+ const info=$('fmv-info');if(info)info.textContent=T('Elige el origen, marca las preguntas que quieres mover y elige la carpeta de destino.','Choose the source, tick the questions you want to move and choose a destination folder.');
+ mvRender();
+ fmv.classList.add('open');
+ setTimeout(()=>{const s=$('fmv-src');if(s)s.focus()},40);
+}
+window.openFlagMove=mvOpen;
+function mvClose(){if(fmv)fmv.classList.remove('open')}
+function mvDoMove(){
+ const destEl=$('fmv-dest');let to=destEl?destEl.value:'';
+ if(to==='__new__'){
+  to=($('fmv-new')?.value||'').trim().replace(/\s+/g,' ');
+  if(!to){notify(T('Escribe el nombre de la nueva carpeta.','Enter the new folder name.'));$('fmv-new').focus();return}
+  const ex=srcList().find(x=>x.name.toLowerCase()===to.toLowerCase());if(ex)to=ex.name;
+ }
+ const chosen=mvCandidates().filter(x=>mv.ids.has(x.id));
+ if(!chosen.length){notify(T('Marca al menos una pregunta para mover.','Tick at least one question to move.'));return}
+ if(!to||to===mv.src){notify(T('Elige una carpeta de destino distinta.','Choose a different destination folder.'));return}
+ if(!confirm(T('¿Mover '+chosen.length+' pregunta(s) a «'+to+'»?','Move '+chosen.length+' question(s) to “'+to+'”?')))return;
+ const now=Date.now();
+ chosen.forEach(q=>{q.flagged=true;q.folder=to;q.updated=now;if(!q.nextReviewAt)q.nextReviewAt=now+86400000});
+ mvClose();
+ saveBank();
+ try{renderLibrary()}catch(e){}
+ if(currentQuiz)renderQuizQuestion();else renderQuizStart();
+ const fmod=$('folder-modal');if(fmod&&fmod.classList.contains('open'))fmod.classList.remove('open');
+ notify(T(chosen.length+(chosen.length===1?' pregunta movida':' preguntas movidas')+' a «'+to+'».',chosen.length+(chosen.length===1?' question moved':' questions moved')+' to “'+to+'”.'));
+}
 if(wrap){
  panel=document.createElement('details');panel.className='panel';panel.id='folder-groups-wrap';panel.style.cssText='margin:14px 0 18px;padding:12px 16px';
- panel.innerHTML='<summary style="cursor:pointer;font-weight:800">⭐ '+T('Carpetas de marcadas','Flagged folders')+' <span id="folder-groups-count" class="muted" style="font-weight:600"></span></summary><div class="smalltext muted" style="margin-top:8px">'+T('Mueve todas las preguntas marcadas de una carpeta a otra (incluida la carpeta «Marcadas»).','Move all flagged questions from one folder to another (including the “Marcadas” folder).')+'</div><div id="folder-groups" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:14px 0 4px"></div>';
+ panel.innerHTML='<summary style="cursor:pointer;font-weight:800">⭐ '+T('Carpetas de marcadas','Flagged folders')+' <span id="folder-groups-count" class="muted" style="font-weight:600"></span></summary><div class="smalltext muted" style="margin-top:8px">'+T('Mueve preguntas marcadas de una carpeta a otra. Puedes elegir exactamente cuáles transferir.','Move flagged questions from one folder to another. You can choose exactly which ones to transfer.')+'</div><div class="fmv-open-row"><button type="button" class="btn outline small" id="folder-move-all">↪ '+T('Mover marcadas…','Move flagged…')+'</button></div><div id="folder-groups" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:14px 0 4px"></div>';
  wrap.after(panel);
- fmv=document.createElement('div');fmv.className='modalback';fmv.id='fmove-modal';
- fmv.innerHTML='<div class="modal" style="max-width:440px"><div class="modalhead"><h3>↪ '+T('Mover marcadas','Move flagged')+'</h3><button class="iconbtn" type="button" id="fm2-x">×</button></div><div class="smalltext muted" id="fm2-info" style="margin-bottom:10px"></div><div id="fm2-list" class="fm2-list"></div><div style="margin-top:14px;font-weight:800;font-size:13px">'+T('Nueva carpeta','New folder')+'</div><div style="display:flex;gap:8px;margin-top:6px"><input id="fm2-new" class="field" style="flex:1;min-width:0" maxlength="40" placeholder="'+T('Nombre de la carpeta','Folder name')+'" autocomplete="off"><button class="btn primary" type="button" id="fm2-create">'+T('Crear y mover','Create and move')+'</button></div></div>';
+ fmv=document.createElement('div');fmv.className='modalback';fmv.id='flag-move-modal';
+ fmv.innerHTML=`<div class="modal fmv-modal"><div class="modalhead"><h3>↪ ${T('Mover preguntas marcadas','Move flagged questions')}</h3><button class="iconbtn" type="button" id="fmv-x" aria-label="${T('Cerrar','Close')}">×</button></div><div class="smalltext muted" id="fmv-info" style="margin-bottom:10px"></div><div class="fmv-grid"><div><label for="fmv-src">${T('Carpeta de origen','Source folder')}</label><select id="fmv-src" class="field"></select></div><div><label for="fmv-dest">${T('Mover a','Move to')}</label><select id="fmv-dest" class="field"></select><input id="fmv-new" class="field" maxlength="40" placeholder="${T('Nombre de la nueva carpeta','New folder name')}" autocomplete="off" style="display:none;margin-top:6px"></div></div><div class="fmv-tools"><input id="fmv-q" type="search" class="field" placeholder="${T('Buscar en las preguntas…','Search questions…')}" autocomplete="off"><button type="button" class="btn outline small" id="fmv-all">${T('Seleccionar todo','Select all')}</button><button type="button" class="btn outline small" id="fmv-none">${T('Quitar selección','Clear selection')}</button><span class="smalltext muted" id="fmv-count"></span></div><div id="fmv-list" class="fmv-list"></div><div class="fmv-actions"><button type="button" class="btn outline" id="fmv-cancel">${T('Cancelar','Cancel')}</button><button type="button" class="btn primary" id="fmv-move">↪ ${T('Mover seleccionadas','Move selected')}</button></div></div>`;
  document.body.appendChild(fmv);
 }
-const closeMv=()=>{if(fmv)fmv.classList.remove('open');src=null};
 function renderFolderGroups(){
  const host=$('folder-groups');if(!host)return;
  const names=folderNames(),tot=bank.filter(q=>folderOf(q)).length;
@@ -3732,46 +3836,23 @@ function renderFolderGroups(){
  host.innerHTML='';
  names.forEach(f=>{
   const n=bank.filter(q=>folderOf(q)===f).length,d=document.createElement('div');d.className='panel fg-card';
-  d.innerHTML='<div class="fg-top"><div style="min-width:0"><strong>📁 '+esc(f)+'</strong><span class="smalltext muted">'+n+(n===1?T(' pregunta',' question'):T(' preguntas',' questions'))+'</span></div><button type="button" class="btn outline small" '+(n?'':'disabled')+' title="'+T('Mover todas las preguntas de esta carpeta a otra','Move all questions in this folder to another')+'">↪ '+T('Mover todas a…','Move all to…')+'</button></div>';
-  d.querySelector('button').onclick=()=>openMove(f);
+  d.innerHTML='<div class="fg-top"><div style="min-width:0"><strong>📁 '+escA(f)+'</strong><span class="smalltext muted">'+n+(n===1?T(' pregunta',' question'):T(' preguntas',' questions'))+'</span></div><button type="button" class="btn outline small" '+(n?'':'disabled')+' title="'+T('Elegir qué preguntas de esta carpeta mover','Choose which questions in this folder to move')+'">↪ '+T('Mover…','Move…')+'</button></div>';
+  d.querySelector('button').onclick=()=>mvOpen(f);
   host.appendChild(d);
  });
 }
-function doMove(from,to){
- if(!to||to===from)return;
- const qs=bank.filter(q=>folderOf(q)===from);if(!qs.length){closeMv();return}
- if(!confirm(T('¿Mover '+qs.length+' pregunta(s) de «'+from+'» a «'+to+'»?','Move '+qs.length+' question(s) from “'+from+'” to “'+to+'”?')))return;
- const now=Date.now();
- qs.forEach(q=>{q.flagged=true;q.folder=to;q.updated=now;if(!q.nextReviewAt)q.nextReviewAt=now+86400000});
- closeMv();saveBank();
- try{renderLibrary()}catch(e){}
- if(currentQuiz)renderQuizQuestion();else renderQuizStart();
- notify(T(qs.length+(qs.length===1?' pregunta movida':' preguntas movidas')+' a «'+to+'».',qs.length+(qs.length===1?' question moved':' questions moved')+' to “'+to+'”.'));
-}
-function openMove(from){
- src=from;
- const n=bank.filter(q=>folderOf(q)===from).length;
- $('fm2-info').textContent=T('Origen: «'+from+'» · '+n+(n===1?' pregunta':' preguntas')+'. Elige la carpeta de destino:','From: “'+from+'” · '+n+(n===1?' question':' questions')+'. Choose the destination folder:');
- const list=$('fm2-list');list.innerHTML='';
- folderNames().filter(f=>f!==from).forEach(f=>{
-  const k=bank.filter(q=>folderOf(q)===f).length,b=document.createElement('button');b.type='button';b.className='btn outline';
-  b.innerHTML='<span>📁 '+esc(f)+'</span><span class="muted">'+k+'</span>';
-  b.onclick=()=>doMove(from,f);list.appendChild(b);
- });
- if(!list.children.length)list.innerHTML='<div class="smalltext muted">'+T('No hay otra carpeta todavía: crea una abajo.','There is no other folder yet: create one below.')+'</div>';
- $('fm2-new').value='';fmv.classList.add('open');
-}
 if(fmv){
- $('fm2-x').onclick=closeMv;
- fmv.addEventListener('mousedown',e=>{if(e.target===fmv)closeMv()});
- const create=()=>{
-  const nm=$('fm2-new').value.trim().replace(/\s+/g,' ');
-  if(!nm){notify(T('Escribe un nombre para la carpeta','Enter a folder name'));return}
-  const ex=folderNames().find(f=>f.toLowerCase()===nm.toLowerCase());
-  doMove(src,ex||nm);
- };
- $('fm2-create').onclick=create;
- fmv.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')closeMv();if(e.key==='Enter'&&e.target.id==='fm2-new'){e.preventDefault();create()}});
+ $('fmv-x').onclick=mvClose;
+ $('fmv-cancel').onclick=mvClose;
+ $('fmv-move').onclick=mvDoMove;
+ $('fmv-src').addEventListener('change',()=>{mv.src=$('fmv-src').value;mv.ids=new Set(mvCandidates().map(q=>q.id));mvRefreshDests();mvRender()});
+ $('fmv-dest').addEventListener('change',()=>{mv.dest=$('fmv-dest').value;$('fmv-new').style.display=mv.dest==='__new__'?'block':'none';if(mv.dest==='__new__')$('fmv-new').focus()});
+ $('fmv-q').addEventListener('input',()=>{mv.q=$('fmv-q').value;mvRender()});
+ $('fmv-all').onclick=()=>{mvCandidates().filter(mvMatches).forEach(x=>mv.ids.add(x.id));mvRender()};
+ $('fmv-none').onclick=()=>{mvCandidates().filter(mvMatches).forEach(x=>mv.ids.delete(x.id));mvRender()};
+ $('folder-move-all').onclick=()=>mvOpen('');
+ fmv.addEventListener('mousedown',e=>{if(e.target===fmv)mvClose()});
+ fmv.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')mvClose();if(e.key==='Enter'&&e.target.id==='fmv-new'){e.preventDefault();mvDoMove()}});
 }
 const _rl=renderLibrary;
 renderLibrary=function(){const r=_rl.apply(this,arguments);try{renderFolderGroups()}catch(e){}return r};
@@ -3779,4 +3860,326 @@ try{renderFolderGroups()}catch(e){}
 })();
 </script>
 
+<style id="clinq-v4-style">
+/* Mover marcadas */
+.fmv-open-row{display:flex;justify-content:flex-end;margin-top:8px}
+.fmv-modal{max-width:620px}
+.fmv-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.fmv-grid label{display:block;font-size:12px;font-weight:800;margin-bottom:5px}
+.fmv-grid .field{width:100%}
+.fmv-tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.fmv-tools input[type="search"]{flex:1 1 180px;min-width:0}
+.fmv-list{display:grid;gap:5px;max-height:40vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:7px;background:#fbfcff}
+.fmv-q{display:flex;gap:9px;align-items:flex-start;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:12px;line-height:1.35}
+.fmv-q:hover{background:#eff4ff}
+.fmv-q input{margin-top:3px;flex:none}
+.fmv-t{flex:1;min-width:0;overflow-wrap:anywhere}
+.fmv-meta{flex:none;font-size:10px;opacity:.65;max-width:38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fmv-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:12px}
+.fmv-open-folder{width:100%;justify-content:center;margin-top:7px}
+.fmv-session-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+/* Banco en curso */
+.quizbank-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;margin:0 0 10px;padding:10px 13px;border:1px solid #c7d4ff;border-radius:12px;background:#f2f6ff;font-size:13px;line-height:1.35}
+.quizbank-bar .qb-ic{flex:none;font-size:17px;line-height:1}
+.quizbank-bar .qb-lbl{flex:none;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted)}
+.quizbank-bar strong{min-width:0;flex:1 1 180px;font-size:14px;overflow-wrap:anywhere}
+html.dark .quizbank-bar{background:#17294a;border-color:#3b5580}
+@media(max-width:600px){
+ .quizbank-bar{padding:9px 11px;gap:6px}
+ .quizbank-bar strong{flex-basis:100%;font-size:13px}
+}
+/* Rehacer respuesta */
+.reset-ans-row{display:flex;justify-content:flex-end;margin:-2px 0 10px}
+.reset-ans{white-space:nowrap}
+/* Buscar imagen en Google */
+.iv-card{position:relative}
+.iv-gsearch{width:100%;justify-content:center;margin-top:8px}
+/* Ajustes */
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.set-card{display:flex;flex-direction:column;gap:12px}
+.set-head{display:flex;gap:11px;align-items:flex-start}
+.set-head h4{margin:0 0 2px;font-size:15px}
+.set-head p{margin:0;font-size:12px;color:var(--muted)}
+.set-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#eaf0ff;font-size:19px;flex:none}
+html.dark .set-ic{background:#263656}
+.set-row{display:flex;gap:12px;align-items:center;justify-content:space-between;padding-top:11px;border-top:1px solid var(--line);min-width:0}
+.set-row>span{display:block;min-width:0}
+.set-row strong{display:block;font-size:13px}
+.set-row small{display:block;font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+.set-row>.field{max-width:150px}
+.set-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.set-switch{width:42px;height:23px;flex:none;accent-color:#335eea;cursor:pointer}
+.set-about{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;margin-top:14px;font-size:12px;color:var(--muted)}
+.set-links{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.set-links a{color:var(--blue);font-weight:700;text-decoration:none}
+.set-links a:hover{text-decoration:underline}
+.fmv-open-row .btn{white-space:nowrap}
+@media(max-width:600px){
+ .fmv-grid{grid-template-columns:1fr}
+ .set-row{flex-wrap:wrap}
+ .set-row>.field{max-width:none;width:100%}
+ .set-actions{justify-content:flex-start}
+ .set-about{align-items:flex-start}
+}
+</style>
+<script id="clinq-v4">
+(function(){
+const $=id=>document.getElementById(id);
+const T=(es,en)=>{let enMode=false;try{enMode=localStorage.getItem('clinq_lang')==='en'}catch(e){}return enMode?en:es};
+
+/* ---------- Estadísticas ---------- */
+window.resetStats=function(){
+ const total=bank.reduce((n,q)=>n+(Number(q.attempts)||0),0);
+ if(!confirm(T('¿Restablecer las estadísticas de estudio? Se pondrán a cero los intentos, aciertos y omisiones de todas las preguntas. Las sesiones y las preguntas se conservan.','Reset study statistics? Attempts, correct answers and omissions will be set to zero for all questions. Sessions and questions are kept.')))return;
+ bank.forEach(q=>{q.attempts=0;q.correctCount=0;q.omittedCount=0;q.updated=Date.now()});
+ try{localStorage.setItem(DBKEY,JSON.stringify(bank))}catch(e){}
+ try{refreshAll()}catch(e){}
+ try{renderSettings()}catch(e){}
+ notify(T('Estadísticas restablecidas.','Statistics reset.'));
+};
+
+/* ---------- Rehacer una sesión finalizada ---------- */
+window.redoSession=function(sid){
+ const s=sessions.find(x=>x.sid===sid);
+ if(!s){notify(T('No encontré esa sesión.','That session was not found.'));return}
+ if(!confirm(T('¿Empezar de nuevo esta sesión con las mismas '+s.questions.length+' preguntas? Se borrarán las respuestas de esta sesión, pero se conservarán tus estadísticas anteriores.','Restart this session with the same '+s.questions.length+' questions? This session\'s answers will be cleared, but your previous statistics will be kept.')))return;
+ s.answers={};s.omitted={};s.recorded={};s.index=0;s.finished=false;s.statsRecorded=false;s.started=Date.now();s.updated=Date.now();
+ currentQuiz=s;saveSessions();
+ try{showView('practice')}catch(e){}
+ renderQuizQuestion();
+ notify(T('Sesión reiniciada. ¡A por ella!','Session restarted. Go for it!'));
+};
+
+/* ---------- Cambiar una respuesta en modo práctica ---------- */
+const _choose=chooseAnswer;
+chooseAnswer=function(id,key){
+ const r=_choose.apply(this,arguments);
+ try{
+  if(currentQuiz&&!currentQuiz.finished&&currentQuiz.mode==='practice'&&currentQuiz.answers[id]!==undefined){
+   currentQuiz.recorded=currentQuiz.recorded||{};
+   if(!currentQuiz.recorded[id]){
+    const q=bank.find(x=>x.id===id);
+    currentQuiz.recorded[id]={attempts:1,correct:q&&q.answer&&q.answer===key?1:0};
+    saveSessions();
+   }
+  }
+ }catch(e){}
+ return r;
+};
+window.resetAnswer=function(id){
+ if(!currentQuiz||currentQuiz.finished||currentQuiz.mode!=='practice')return;
+ if(currentQuiz.answers[id]===undefined)return;
+ const q=bank.find(x=>x.id===id),rec=currentQuiz.recorded&&currentQuiz.recorded[id];
+ if(q&&rec){
+  q.attempts=Math.max(0,(Number(q.attempts)||0)-(Number(rec.attempts)||0));
+  q.correctCount=Math.max(0,(Number(q.correctCount)||0)-(Number(rec.correct)||0));
+  q.updated=Date.now();
+  try{localStorage.setItem(DBKEY,JSON.stringify(bank))}catch(e){}
+ }
+ delete currentQuiz.answers[id];
+ if(currentQuiz.recorded)delete currentQuiz.recorded[id];
+ saveSessions();
+ renderQuizQuestion();
+ try{refreshAll()}catch(e){}
+ notify(T('Respuesta borrada. Elige otra opción.','Answer cleared. Choose another option.'));
+};
+/* ---------- Título del banco que se está estudiando ---------- */
+function sessionBankNames(){
+ if(!currentQuiz)return [];
+ const byId=new Map(bank.map(q=>[q.id,q]));
+ return [...new Set(currentQuiz.questions.map(id=>{const q=byId.get(id);return q?(q.source||'Texto pegado'):null}).filter(Boolean))];
+}
+function decorateQuizBank(label){
+ const host=$('quiz-area');if(!host||!currentQuiz)return;
+ const wrap=host.querySelector('.quizwrap');if(!wrap)return;
+ let bar=wrap.querySelector('.quizbank-bar');
+ if(!bar){
+  bar=document.createElement('div');bar.className='quizbank-bar';
+  const back=wrap.querySelector('.v-back');
+  if(back)back.insertAdjacentElement('afterend',bar);else wrap.insertBefore(bar,wrap.firstChild);
+ }
+ const names=sessionBankNames();
+ const list=names.length?names:[T('Banco no disponible','Bank unavailable')];
+ const full=list.join(' · ');
+ const short=list.length>3?list.slice(0,3).join(' · ')+' +'+(list.length-3):full;
+ bar.innerHTML='<span class="qb-ic">📚</span><span class="qb-lbl">'+esc(label)+'</span><strong title="'+esc(full)+'">'+esc(short)+'</strong>';
+}
+const _rqReset=renderQuizQuestion;
+renderQuizQuestion=function(){
+ const r=_rqReset.apply(this,arguments);
+ try{
+  if(currentQuiz&&!currentQuiz.finished&&currentQuiz.mode==='practice'&&$('view-practice')?.classList.contains('active')){
+   const qid=currentQuiz.questions[currentQuiz.index];
+   if(qid&&currentQuiz.answers[qid]!==undefined){
+    const host=$('quiz-area'),fb=host&&host.querySelector('.feedback');
+    if(fb&&!host.querySelector('.reset-ans-row')){
+     const row=document.createElement('div');row.className='reset-ans-row';
+     const b=document.createElement('button');b.type='button';b.className='btn outline small reset-ans';b.innerHTML='↻ '+T('Cambiar respuesta','Change answer');b.title=T('Borra esta respuesta y vuelve a elegir','Clear this answer and choose again');
+     b.onclick=()=>resetAnswer(qid);row.appendChild(b);fb.insertAdjacentElement('afterend',row);
+    }
+   }
+  }
+ }catch(e){}
+ try{decorateQuizBank(T('Banco en curso','Bank in progress'))}catch(e){}
+ return r;
+};
+const _rrBank=renderQuizResults;
+renderQuizResults=function(){
+ const r=_rrBank.apply(this,arguments);
+ try{decorateQuizBank(T('Banco realizado','Bank completed'))}catch(e){}
+ return r;
+};
+
+/* ---------- Mover marcadas desde la sesión de estudio ---------- */
+function addSessionMove(){
+ const wrapEl=$('quiz-folders-wrap');if(!wrapEl)return;
+ const btn=wrapEl.querySelector('.fmv-session-row');if(btn)return;
+ const d=document.createElement('div');d.className='fmv-session-row';
+ const b=document.createElement('button');b.type='button';b.className='btn outline small';b.innerHTML='↪ '+T('Mover marcadas…','Move flagged…');b.title=T('Elegir preguntas marcadas y moverlas a otra carpeta','Choose flagged questions and move them to another folder');
+ b.onclick=()=>{try{window.openFlagMove('')}catch(e){}};
+ const s=document.createElement('span');s.className='smalltext muted';s.textContent=T('Puedes elegir exactamente qué preguntas transferir.','You can choose exactly which questions to transfer.');
+ d.append(b,s);wrapEl.appendChild(d);
+}
+const _rqs=renderQuizStart;
+renderQuizStart=function(){const r=_rqs.apply(this,arguments);try{addSessionMove();window.__clinqDynCounts&&window.__clinqDynCounts()}catch(e){}return r};
+
+/* ---------- La ventana de marcados también permite mover ---------- */
+const _ofm=window.openFolderModal;
+window.openFolderModal=function(id){
+ const r=_ofm.apply(this,arguments);
+ try{
+  const q=bank.find(x=>x.id===id),f=q?folderOf(q):null,rm=$('fm-remove');
+  if(rm&&!rm.querySelector('.fmv-open-folder')){
+   const b=document.createElement('button');b.type='button';b.className='btn outline fmv-open-folder';
+   b.innerHTML='↪ '+T('Mover marcadas de una carpeta…','Move flagged questions from a folder…');
+   b.onclick=()=>{const x=$('fm-x');if(x)x.click();try{window.openFlagMove(f||'')}catch(e){}};
+   rm.appendChild(b);
+  }
+ }catch(e){}
+ return r;
+};
+
+/* ---------- Buscar una imagen en Google ---------- */
+function googleImageSearch(src){
+ try{
+  if(/^https?:\/\//i.test(src)){window.open('https://lens.google.com/uploadbyurl?url='+encodeURIComponent(src),'_blank','noopener');return}
+  let mime='image/jpeg',bytes=null;
+  if(/^data:image\//i.test(src)){
+   const m=src.match(/^data:([^;,]+)(;base64)?,([\s\S]*)$/);
+   if(m){
+    mime=m[1]||mime;const raw=m[3]||'';
+    bytes=m[2]?Uint8Array.from(atob(raw),c=>c.charCodeAt(0)):new TextEncoder().encode(decodeURIComponent(raw));
+   }
+  }
+  if(!bytes){window.open(src,'_blank','noopener');return}
+  const ext=(mime.split('/')[1]||'jpg').replace('jpeg','jpg').replace('svg+xml','svg').replace('+xml','');
+  const file=new File([bytes],'imagen.'+ext,{type:mime});
+  const form=document.createElement('form');
+  form.action='https://lens.google.com/v3/upload?hl=es';form.method='POST';form.enctype='multipart/form-data';form.target='_blank';form.style.display='none';
+  const input=document.createElement('input');input.type='file';input.name='encoded_image';
+  const dt=new DataTransfer();dt.items.add(file);input.files=dt.files;
+  form.appendChild(input);document.body.appendChild(form);form.submit();
+  setTimeout(()=>form.remove(),2500);
+ }catch(e){notify(T('No se pudo abrir la búsqueda de Google.','Could not open Google search.'))}
+}
+window.googleImageSearch=googleImageSearch;
+const _zi=window.zoomImg;
+window.zoomImg=function(src,opts){
+ const r=_zi.apply(this,arguments);
+ try{
+  const v=$('img-view');if(!v||!v.classList.contains('open'))return r;
+  const side=v.querySelector('.iv-side');if(!side)return r;
+  let b=side.querySelector('.iv-gsearch');
+  if(!b){
+   b=document.createElement('button');b.type='button';b.className='btn outline small iv-gsearch';
+   b.innerHTML='🔎 '+T('Buscar esta imagen en Google','Search this image on Google');
+   side.appendChild(b);
+  }
+  b.onclick=e=>{e.preventDefault();e.stopPropagation();googleImageSearch(src)};
+  side.style.display='block';
+ }catch(e){}
+ return r;
+};
+
+/* ---------- Ajustes ---------- */
+function syncInfo(){
+ let meta={};try{meta=JSON.parse(localStorage.getItem('clinq_sync_meta_v1')||'{}')||{}}catch(e){}
+ return meta;
+}
+function renderSettings(){
+ if(!$('view-settings'))return;
+ const attempts=bank.reduce((n,q)=>n+(Number(q.attempts)||0),0);
+ const flagged=bank.filter(q=>q.flagged).length;
+ const folders=folderNames().length;
+ if($('set-sessions'))$('set-sessions').textContent=sessions.length+(sessions.length===1?' sesión':' sesiones')+' · '+sessions.filter(s=>!s.finished).length+' en curso';
+ if($('set-stats'))$('set-stats').textContent=attempts+(attempts===1?' intento registrado':' intentos registrados');
+ if($('set-folders'))$('set-folders').textContent=flagged+(flagged===1?' pregunta marcada':' preguntas marcadas')+' · '+folders+(folders===1?' carpeta':' carpetas');
+ if($('set-storage')){
+  let bytes=0;try{bytes=(JSON.stringify(bank).length+JSON.stringify(sessions).length)}catch(e){}
+  $('set-storage').textContent=bank.length+' preguntas · '+sessions.length+' sesiones · '+(bytes/1024).toFixed(1)+' KB';
+ }
+ if($('set-dark'))$('set-dark').checked=document.documentElement.classList.contains('dark');
+ if($('set-lang')){try{$('set-lang').value=localStorage.getItem('clinq_lang')==='en'?'en':'es'}catch(e){}}
+ const meta=syncInfo(),signed=!!meta.signedIn;
+ if($('set-sync'))$('set-sync').textContent=signed?('Conectado'+(meta.user&&meta.user.email?' · '+meta.user.email:'')):'Sin conectar';
+ if($('set-sync-btn'))$('set-sync-btn').textContent=signed?T('Desconectar','Disconnect'):T('Conectar','Connect');
+ if($('set-sync-last'))$('set-sync-last').textContent=meta.lastSync?new Date(meta.lastSync).toLocaleString('es-DO',{dateStyle:'medium',timeStyle:'short'}):T('Todavía no se ha sincronizado','Not synced yet');
+}
+window.renderSettings=renderSettings;
+function bindSettings(){
+ if($('set-dark')&&!$('set-dark').dataset.bound){
+  $('set-dark').dataset.bound='1';$('set-dark').addEventListener('change',e=>{
+   const dark=!!e.target.checked;document.documentElement.classList.toggle('dark',dark);
+   try{localStorage.setItem('clinq_theme',dark?'dark':'light')}catch(err){}
+   const t=$('clinq-theme-toggle');if(t)t.checked=dark;
+  });
+ }
+ if($('set-lang')&&!$('set-lang').dataset.bound){
+  $('set-lang').dataset.bound='1';$('set-lang').addEventListener('change',e=>{
+   try{localStorage.setItem('clinq_lang',e.target.value==='en'?'en':'es')}catch(err){}
+   notify(T('Idioma guardado. Recarga la página para aplicarlo.','Language saved. Reload the page to apply it.'));
+  });
+ }
+ if($('set-sync-btn')&&!$('set-sync-btn').dataset.bound){
+  $('set-sync-btn').dataset.bound='1';$('set-sync-btn').onclick=()=>{
+   const meta=syncInfo();
+   try{if(meta.signedIn)cqsMenuAct('out');else cqsMenuAct('in')}catch(e){notify('La sincronización no está disponible.')}
+   setTimeout(renderSettings,500);
+  };
+ }
+ if($('set-sync-now')&&!$('set-sync-now').dataset.bound){
+  $('set-sync-now').dataset.bound='1';$('set-sync-now').onclick=()=>{
+   const meta=syncInfo();
+   try{if(meta.signedIn)cqsMenuAct('sync');else cqsMenuAct('in')}catch(e){notify('La sincronización no está disponible.')}
+   setTimeout(renderSettings,800);
+  };
+ }
+}
+bindSettings();renderSettings();
+
+/* ---------- Contadores dinámicos tras guardar o cambiar de tamaño ---------- */
+const _saveBank=saveBank;
+saveBank=function(){
+ const r=_saveBank.apply(this,arguments);
+ try{
+  if($('view-practice')?.classList.contains('active')&&!currentQuiz)renderQuizStart();
+  window.__clinqDynCounts&&window.__clinqDynCounts();
+  if($('view-settings')?.classList.contains('active'))renderSettings();
+ }catch(e){}
+ return r;
+};
+const _showView=showView;
+showView=function(name){
+ const r=_showView.apply(this,arguments);
+ try{
+  if(name==='settings'){renderSettings();bindSettings()}
+  if(name==='practice')setTimeout(()=>{try{window.__clinqDynCounts&&window.__clinqDynCounts();addSessionMove()}catch(e){}},30);
+ }catch(e){}
+ return r;
+};
+let rzT=null;
+window.addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(()=>{try{window.__clinqDynCounts&&window.__clinqDynCounts()}catch(e){}},160)});
+try{window.__clinqDynCounts&&window.__clinqDynCounts()}catch(e){}
+})();
+</script>
 </body></html>
