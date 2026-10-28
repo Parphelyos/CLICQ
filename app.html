@@ -4545,6 +4545,74 @@ window.renameImportPreviewBank=function(old,neu,onlyId){return applyPreviewRenam
 .anki-done p{margin:0 auto 18px;max-width:46ch;color:var(--muted);font-size:13px}
 html.dark .anki-grade.primary small{color:rgba(16,24,39,.72)}
 
+/* ---------- Anki: opciones y controles de estudio ---------- */
+.anki-options{padding:16px 16px 14px;margin:12px 0 4px}
+.anki-opts-head{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.anki-opts-head strong{display:block;font-size:15px}
+.anki-opts-head p{margin:3px 0 0;font-size:12px;line-height:1.5;color:var(--muted);max-width:78ch}
+.anki-opts-sec{margin-top:16px;padding-top:12px;border-top:1px dashed var(--line)}
+.anki-opts-sec>strong{display:block;font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.anki-opts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:10px}
+.anki-opt{display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:700;color:var(--muted);min-width:0}
+.anki-opt .field{padding:7px 9px;font-size:13px;min-width:0;width:100%}
+.anki-opt-check{flex-direction:row;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--bg)}
+.anki-opt-check input{width:17px;height:17px;accent-color:var(--blue);cursor:pointer}
+.anki-deadline-hint{font-size:12px;font-weight:650;line-height:1.45;color:var(--text);padding:7px 0}
+.anki-opts-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.anki-opts-savebar{position:sticky;bottom:0;background:var(--panel);padding-top:10px;border-top:1px solid var(--line);margin-top:16px}
+.anki-toolbar{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.anki-toolbar .btn{padding:5px 9px;font-size:12px;min-width:30px}
+.anki-toolbar .btn[disabled]{opacity:.45;cursor:not-allowed}
+.anki-study-meta{overflow-wrap:anywhere}
+.anki-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:2px}
+.anki-chip{font-size:9.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:2px 8px;border-radius:99px;background:var(--blue2);color:var(--blue)}
+.anki-chip.flag1{background:var(--redbg);color:var(--red)}
+.anki-chip.flag2{background:#fef3c7;color:#b45309}
+.anki-chip.flag3{background:#dcfce7;color:#15803d}
+.anki-chip.flag4{background:#dbeafe;color:#1d4ed8}
+html.dark .anki-chip.flag2{background:#3a2a12;color:#fbbf24}
+html.dark .anki-chip.flag3{background:#0f2e1b;color:#4ade80}
+html.dark .anki-chip.flag4{background:#12243d;color:#60a5fa}
+.anki-src{display:inline-block;margin-left:6px;font-size:9px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--blue);background:var(--blue2);border-radius:99px;padding:1px 6px;vertical-align:middle}
+@media(max-width:600px){
+ .anki-opts-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+ .anki-grades{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .anki-toolbar{width:100%}
+ .anki-study-meta{margin-left:auto}
+}
+
+/* ---------- AnkiCollab (sincronización de mazos) ---------- */
+.ac-panel{display:flex;flex-direction:column;gap:11px;padding:15px 16px;margin-bottom:12px}
+.ac-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.ac-head-main{display:flex;gap:12px;align-items:center;min-width:0;flex:1 1 320px}
+.ac-head-main strong{display:block;font-size:15px}
+.ac-head-main p{margin:3px 0 0;font-size:12.5px;line-height:1.5;color:var(--muted);max-width:72ch}
+.ac-auto{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:750;color:var(--muted);white-space:nowrap;cursor:pointer}
+.ac-auto input{width:16px;height:16px;accent-color:var(--blue);cursor:pointer}
+.ac-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ac-form .field{flex:1 1 250px;min-width:0}
+.ac-list{display:flex;flex-direction:column;gap:8px}
+.ac-deck{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--line);border-radius:11px;padding:9px 11px;background:var(--bg);min-width:0}
+.ac-deck-main{min-width:0;flex:1 1 230px}
+.ac-deck-main strong{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ac-deck-main small{display:block;margin-top:2px;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ac-deck-main small.err{color:var(--red)}
+.ac-deck-actions{display:flex;gap:6px;flex-wrap:wrap;flex:none}
+.ac-deck-actions .btn{padding:5px 9px;font-size:11.5px}
+.ac-empty{font-size:12.5px;color:var(--muted);padding:2px 1px}
+.ac-adv{border-top:1px dashed var(--line);padding-top:9px;font-size:12px;color:var(--muted)}
+.ac-adv summary{cursor:pointer;font-weight:750;color:var(--text)}
+.ac-adv p{margin:7px 0 0;line-height:1.5}
+.ac-token{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.ac-token .field{flex:1 1 240px;min-width:0}
+html.dark .ac-deck{background:#131e30}
+@media(max-width:600px){
+ .ac-form .field{flex:1 1 100%}
+ .ac-form .btn{flex:1 1 auto}
+ .ac-deck-actions{width:100%}
+ .ac-deck-actions .btn{flex:1 1 auto}
+}
+
 /* ---------- Imported banks (Mi banco) ---------- */
 #bank-groups-wrap{overflow:hidden}
 #bank-groups{display:block!important}
@@ -4851,6 +4919,7 @@ function buildCard(note,model,row,deckId,used){
   extra:cextra,
   tags:String(note.tags||'').split(/\s+/).filter(Boolean).slice(0,20),
   due:null,ivl:0,ease:2.5,reps:0,lapses:0,last:0,
+  state:'new',step:0,buried:'',suspended:false,flag:0,introDay:'',
   created:Date.now()
  };
 }
@@ -5181,24 +5250,42 @@ function setStatus(html,kind){
  el.innerHTML=html||'';
 }
 function counts(){
- const now=Date.now();
- const total=anki.cards.length;
- const fresh=anki.cards.filter(c=>c.due==null).length;
- const due=anki.cards.filter(c=>c.due!=null&&c.due<=now).length;
- return {total,fresh,due,learned:total-fresh-due};
+ refreshAnkiDay();
+ const now=Date.now(),byDeck={};
+ let total=anki.cards.length,susp=0;
+ anki.cards.forEach(c=>{
+  normalizeCard(c);
+  if(c.suspended){susp++;return}
+  if(ankiIsBuried(c))return;
+  const k=String(c.deckId);
+  if(!byDeck[k])byDeck[k]={new:0,due:0};
+  if(c.state==='new')byDeck[k].new++;
+  else if(c.due!=null&&c.due<=now)byDeck[k].due++;
+ });
+ let fresh=0,due=0;
+ Object.keys(byDeck).forEach(k=>{
+  fresh+=Math.min(byDeck[k].new,Math.max(0,(ankiOpts.newPerDay||0)-ankiToday('new',k)));
+  due+=Math.min(byDeck[k].due,Math.max(0,(ankiOpts.reviewsPerDay||0)-ankiToday('rev',k)));
+ });
+ return {total,fresh,due,susp,learned:Math.max(0,total-susp-fresh-due)};
 }
 function renderStats(){
  const host=$('anki-stats');if(!host)return;
  const c=counts();
  host.innerHTML=
   '<div class="stat"><div class="stathead">'+T('Tarjetas','Cards')+' <span class="staticon">🃏</span></div><div class="statnum">'+c.total+'</div><div class="statsub">'+T('en tus mazos','in your decks')+'</div></div>'+
-  '<div class="stat"><div class="stathead">'+T('Nuevas','New')+' <span class="staticon">✨</span></div><div class="statnum">'+c.fresh+'</div><div class="statsub">'+T('sin estudiar','not studied yet')+'</div></div>'+
+  '<div class="stat"><div class="stathead">'+T('Nuevas hoy','New today')+' <span class="staticon">✨</span></div><div class="statnum">'+c.fresh+'</div><div class="statsub">'+T('según tu límite diario','within your daily limit')+'</div></div>'+
   '<div class="stat"><div class="stathead">'+T('Para repasar','Due')+' <span class="staticon">↻</span></div><div class="statnum">'+c.due+'</div><div class="statsub">'+T('pendientes ahora','due now')+'</div></div>'+
-  '<div class="stat"><div class="stathead">'+T('Programadas','Scheduled')+' <span class="staticon">📅</span></div><div class="statnum">'+c.learned+'</div><div class="statsub">'+T('para días futuros','for future days')+'</div></div>';
+  '<div class="stat"><div class="stathead">'+T('Suspendidas','Suspended')+' <span class="staticon">⏸</span></div><div class="statnum">'+c.susp+'</div><div class="statsub">'+T('fuera del repaso','paused')+'</div></div>';
  const all=$('anki-study-all');
  if(all)all.disabled=c.fresh+c.due===0;
 }
 function deckCards(id){return anki.cards.filter(c=>c.deckId===id)}
+function ankiDeckLabel(d){
+ if(!d)return 'Anki';
+ const n=String(d.name||'Anki');
+ return d.source==='ankicollab'?n.replace(/^AnkiCollab · /,''):n;
+}
 function renderDecks(){
  const host=$('anki-decks');if(!host)return;
  const decks=anki.decks.filter(d=>deckCards(d.id).length);
@@ -5209,11 +5296,19 @@ function renderDecks(){
  const now=Date.now();
  decks.sort((a,b)=>a.name.localeCompare(b.name,'es'));
  host.innerHTML=decks.map(d=>{
-  const cards=deckCards(d.id);
-  const fresh=cards.filter(c=>c.due==null).length;
-  const due=cards.filter(c=>c.due!=null&&c.due<=now).length;
+  const cards=deckCards(d.id).map(normalizeCard);
+  let fresh=0,due=0,susp=0;
+  cards.forEach(c=>{
+   if(c.suspended){susp++;return}
+   if(ankiIsBuried(c))return;
+   if(c.state==='new')fresh++;
+   else if(c.due!=null&&c.due<=now)due++;
+  });
+  const freshLeft=Math.min(fresh,Math.max(0,(ankiOpts.newPerDay||0)-ankiToday('new',d.id)));
+  const dueLeft=Math.min(due,Math.max(0,(ankiOpts.reviewsPerDay||0)-ankiToday('rev',d.id)));
+  const src=d.source==='ankicollab'?'<span class="anki-src">AnkiCollab</span>':'';
   return '<div class="panel anki-deck">'+
-   '<div class="anki-deck-main"><strong>'+esc(d.name)+'</strong><small>'+cards.length+' '+T('tarjetas','cards')+' · <span class="anki-new">'+fresh+' '+T('nuevas','new')+'</span> · <span class="anki-due">'+due+' '+T('para repasar','due')+'</span></small></div>'+
+   '<div class="anki-deck-main"><strong>'+esc(ankiDeckLabel(d))+src+'</strong><small>'+cards.length+' '+T('tarjetas','cards')+' · <span class="anki-new">'+freshLeft+' '+T('nuevas','new')+'</span> · <span class="anki-due">'+dueLeft+' '+T('para repasar','due')+'</span>'+(susp?' · '+susp+' '+T('suspendidas','suspended'):'')+'</small></div>'+
    '<div class="anki-deck-actions"><button type="button" class="btn primary small" data-study="'+esc(d.id)+'">▶ '+T('Estudiar','Study')+'</button><button type="button" class="btn outline small" data-del="'+esc(d.id)+'" title="'+T('Borrar mazo','Delete deck')+'" aria-label="'+T('Borrar mazo','Delete deck')+'">🗑</button></div>'+
   '</div>';
  }).join('');
@@ -5223,87 +5318,454 @@ function renderDecks(){
 function renderAnki(){
  if(!$('practice-anki'))return;
  if(ankiSession){renderStudy();return}
+ if(ankiTick){clearInterval(ankiTick);ankiTick=null}
  const lib=$('anki-library'),study=$('anki-study');
  if(lib)lib.style.display='';if(study){study.style.display='none';study.innerHTML=''}
- renderStats();renderDecks();
+ refreshAnkiDay();renderStats();renderDecks();
+ const opt=$('anki-options');
+ if(opt&&opt.style.display!=='none')renderOptions(opt);
 }
 
 /* ---------- Estudio ---------- */
-function cardById(id){return anki.cards.find(c=>String(c.id)===String(id))}
-function intervalFor(c,g){
- const ease=Number(c.ease)||2.5,ivl=Number(c.ivl)||0;
- if(g===0)return T('1 min','1 min');
- let d;
- if(g===1)d=ivl?Math.max(1,Math.round(ivl*1.2)):1;
- else if(g===2)d=ivl?Math.max(1,Math.round(ivl*ease)):1;
- else d=ivl?Math.max(2,Math.round(ivl*ease*1.3)):3;
- return d+(d===1?T(' día',' day'):T(' días',' days'));
+const AOKEY='clinq_anki_opts_v1';
+const ADKEY='clinq_anki_day_v1';
+const ANKI_DEFAULTS={newPerDay:20,reviewsPerDay:200,learnSteps:'1 10',relearnSteps:'10',graduatingIvl:1,easyIvl:4,easyBonus:130,intervalModifier:100,hardFactor:120,maxIvl:36500,startEase:250,minIvl:1,newInterval:0,leechThreshold:8,leechAction:'suspend',fuzz:5,rolloverHour:4,learnAhead:20,deadline:'',showTimer:true};
+function ankiNum(v,min,max,d){v=Number(v);if(!isFinite(v))v=d;return Math.min(max,Math.max(min,v))}
+function ankiStepStr(v,d){
+ const a=(Array.isArray(v)?v:String(v==null?'':v).split(/[\s,]+/)).map(x=>Math.round(Number(x))).filter(x=>isFinite(x)&&x>=1&&x<=10080);
+ return (a.length?a.slice(0,6):String(d).split(' ').map(Number)).join(' ');
 }
-function grade(card,g){
- const now=Date.now(),ease=Number(card.ease)||2.5,ivl=Number(card.ivl)||0;
- if(g===0){card.lapses=(card.lapses||0)+1;card.ease=Math.max(1.3,ease-0.2);card.ivl=0;card.due=now+60000}
- else if(g===1){card.ivl=ivl?Math.max(1,Math.round(ivl*1.2)):1;card.ease=Math.max(1.3,ease-0.15);card.due=now+card.ivl*DAY}
- else if(g===2){card.ivl=ivl?Math.max(1,Math.round(ivl*ease)):1;card.due=now+card.ivl*DAY}
- else{card.ivl=ivl?Math.max(2,Math.round(ivl*ease*1.3)):3;card.ease=Math.min(3.5,ease+0.15);card.due=now+card.ivl*DAY}
- card.reps=(card.reps||0)+1;card.last=now;
+function loadAnkiOpts(){
+ let o={};try{o=JSON.parse(localStorage.getItem(AOKEY)||'{}')||{}}catch(e){}
+ const d=ANKI_DEFAULTS,out={};
+ out.newPerDay=Math.round(ankiNum(o.newPerDay,0,9999,d.newPerDay));
+ out.reviewsPerDay=Math.round(ankiNum(o.reviewsPerDay,0,9999,d.reviewsPerDay));
+ out.learnSteps=ankiStepStr(o.learnSteps,d.learnSteps);
+ out.relearnSteps=ankiStepStr(o.relearnSteps,d.relearnSteps);
+ out.graduatingIvl=Math.round(ankiNum(o.graduatingIvl,1,36500,d.graduatingIvl));
+ out.easyIvl=Math.round(ankiNum(o.easyIvl,1,36500,d.easyIvl));
+ out.easyBonus=Math.round(ankiNum(o.easyBonus,100,500,d.easyBonus));
+ out.intervalModifier=Math.round(ankiNum(o.intervalModifier,10,500,d.intervalModifier));
+ out.hardFactor=Math.round(ankiNum(o.hardFactor,100,500,d.hardFactor));
+ out.maxIvl=Math.round(ankiNum(o.maxIvl,1,36500,d.maxIvl));
+ out.startEase=Math.round(ankiNum(o.startEase,130,500,d.startEase));
+ out.minIvl=Math.round(ankiNum(o.minIvl,1,36500,d.minIvl));
+ out.newInterval=Math.round(ankiNum(o.newInterval,0,100,d.newInterval));
+ out.leechThreshold=Math.round(ankiNum(o.leechThreshold,0,99,d.leechThreshold));
+ out.leechAction=o.leechAction==='tag'?'tag':'suspend';
+ out.fuzz=Math.round(ankiNum(o.fuzz,0,30,d.fuzz));
+ out.rolloverHour=Math.round(ankiNum(o.rolloverHour,0,23,d.rolloverHour));
+ out.learnAhead=Math.round(ankiNum(o.learnAhead,0,180,d.learnAhead));
+ out.deadline=/^\d{4}-\d{2}-\d{2}$/.test(String(o.deadline||''))?String(o.deadline):'';
+ out.showTimer=o.showTimer!==false;
+ return out;
+}
+let ankiOpts=loadAnkiOpts();
+function saveAnkiOpts(){try{localStorage.setItem(AOKEY,JSON.stringify(ankiOpts))}catch(e){}}
+function ankiStamp(ts){
+ const h=ankiOpts?ankiOpts.rolloverHour:4;
+ const d=new Date((ts==null?Date.now():Number(ts))-h*3600000);
+ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function loadAnkiDay(){
+ const t=ankiStamp();
+ let o={};try{o=JSON.parse(localStorage.getItem(ADKEY)||'{}')||{}}catch(e){}
+ if(!o||o.day!==t||!o.decks||typeof o.decks!=='object')o={day:t,decks:{}};
+ return o;
+}
+let ankiDay=loadAnkiDay();
+function saveAnkiDay(){try{localStorage.setItem(ADKEY,JSON.stringify(ankiDay))}catch(e){}}
+function refreshAnkiDay(){
+ const t=ankiStamp();
+ if(!ankiDay||ankiDay.day!==t||!ankiDay.decks){ankiDay={day:t,decks:{}};saveAnkiDay()}
+}
+function ankiDayCounts(deckId){
+ refreshAnkiDay();
+ const k=String(deckId);
+ if(!ankiDay.decks[k])ankiDay.decks[k]={new:0,rev:0};
+ return ankiDay.decks[k];
+}
+function ankiToday(kind,deckId){
+ refreshAnkiDay();
+ if(deckId==null)return 0;
+ return Number((ankiDay.decks[String(deckId)]||{})[kind])||0;
+}
+function normalizeCard(c){
+ if(!c)return c;
+ c.ivl=Math.max(0,Number(c.ivl)||0);
+ c.ease=Math.max(1.3,Number(c.ease)||(ankiOpts.startEase/100));
+ c.reps=Number(c.reps)||0;
+ c.lapses=Number(c.lapses)||0;
+ c.flag=Number(c.flag)||0;
+ c.step=Math.max(0,Math.round(Number(c.step)||0));
+ if(!c.state)c.state=c.due==null?'new':(c.ivl>0?'review':'learn');
+ if(c.state==='new'){c.due=null;c.ivl=0;}
+ else if(c.state==='review'&&!c.ivl)c.ivl=Math.max(1,Math.round(ankiOpts.minIvl));
+ if(c.state!=='learn'&&c.state!=='relearn')c.step=0;
+ if((c.state==='learn'||c.state==='relearn'||c.state==='review')&&c.due==null)c.due=Date.now();
+ if(c.buried&&c.buried!==ankiStamp())c.buried='';
+ return c;
+}
+anki.cards.forEach(normalizeCard);
+function ankiIsBuried(c){return !!c.buried&&c.buried===ankiStamp()}
+function ankiParseSteps(v){return String(v||'').split(/[\s,]+/).map(Number).filter(n=>isFinite(n)&&n>=1).slice(0,6)}
+function ankiDec(v){
+ const s=String(v);
+ let enm=true;try{enm=localStorage.getItem('clinq_lang')!=='es'}catch(e){}
+ return enm?s:s.replace('.',',');
+}
+function ankiFmtMinutes(m){
+ m=Math.max(1,Math.round(m));
+ if(m<60)return m+' min';
+ const h=m/60;
+ if(h<24){
+  const v=h<3?ankiDec(h.toFixed(1).replace(/\.0$/,'')):String(Math.round(h));
+  return v+' h';
+ }
+ return ankiFmtDays(h/24);
+}
+function ankiFmtDays(days){
+ const d=Math.max(1,Math.round(days));
+ if(d<30)return d+(d===1?T(' día',' day'):T(' días',' days'));
+ if(d<365){
+  const m=Math.round(d/30.4375);
+  return m+(m===1?T(' mes',' mo'):T(' meses',' mo'));
+ }
+ const raw=(d/365).toFixed(1).replace(/\.0$/,'');
+ const y=ankiDec(raw);
+ return y+(Math.abs(Number(raw)-1)<0.05?T(' año',' yr'):T(' años',' yrs'));
+}
+function ankiIn(ts){
+ const ms=Number(ts)-Date.now();
+ if(!isFinite(ms)||ms<=0)return T('ahora','now');
+ return T('en ','in ')+(ms<DAY?ankiFmtMinutes(ms/60000):ankiFmtDays(ms/DAY));
+}
+function ankiFuzz(days){
+ if(!ankiOpts.fuzz||days<3)return days;
+ const span=Math.max(1,Math.round(days*ankiOpts.fuzz/100));
+ return Math.max(1,days+(Math.floor(Math.random()*(span*2+1))-span));
+}
+function ankiSchedule(c,g,now){
+ const o=ankiOpts,st=c.state||'new',nowT=now||Date.now();
+ c.ease=Math.max(1.3,Number(c.ease)||(o.startEase/100));
+ const learn=ankiParseSteps(o.learnSteps),relearn=ankiParseSteps(o.relearnSteps);
+ const grad=Math.max(1,Math.round(o.graduatingIvl)),easy=Math.max(grad,Math.round(o.easyIvl));
+ const minI=Math.max(1,Math.round(o.minIvl)),maxI=Math.max(minI,Math.round(o.maxIvl));
+ const cap=d=>Math.min(maxI,Math.max(minI,Math.round(d)));
+ if(st==='new'){
+  if(g===0){c.state='learn';c.step=0;c.due=nowT+learn[0]*60000;return}
+  if(g===1){c.state='learn';c.step=0;c.due=nowT+((learn[0]+(learn[1]!=null?learn[1]:learn[0]*1.5))/2)*60000;return}
+  if(g===2&&learn.length>1){c.state='learn';c.step=1;c.due=nowT+learn[1]*60000;return}
+  c.state='review';c.step=0;c.ivl=cap(g===3?easy:grad);c.due=nowT+c.ivl*DAY;return;
+ }
+ if(st==='learn'){
+  if(g===0){c.step=0;c.due=nowT+learn[0]*60000;return}
+  if(g===1){const i=Math.min(c.step||0,learn.length-1);const nx=learn[i+1]!=null?learn[i+1]:learn[i]*1.5;c.due=nowT+((learn[i]+nx)/2)*60000;return}
+  if(g===2&&(c.step||0)+1<learn.length){c.step=(c.step||0)+1;c.due=nowT+learn[c.step]*60000;return}
+  c.state='review';c.step=0;c.ivl=cap(g===3?easy:grad);c.due=nowT+c.ivl*DAY;return;
+ }
+ if(st==='relearn'){
+  if(g===0){c.step=0;c.due=nowT+relearn[0]*60000;return}
+  if(g===1){const i=Math.min(c.step||0,relearn.length-1);const nx=relearn[i+1]!=null?relearn[i+1]:relearn[i]*1.5;c.due=nowT+((relearn[i]+nx)/2)*60000;return}
+  if(g===2&&(c.step||0)+1<relearn.length){c.step=(c.step||0)+1;c.due=nowT+relearn[c.step]*60000;return}
+  c.state='review';c.step=0;c.ivl=cap(c.pendingIvl||minI);c.due=nowT+c.ivl*DAY;return;
+ }
+ const ivl=Math.max(1,c.ivl||grad);
+ if(g===0){
+  c.lapses=(Number(c.lapses)||0)+1;
+  c.ease=Math.max(1.3,c.ease-0.2);
+  c.pendingIvl=cap(Math.max(minI,Math.round(ivl*(o.newInterval||0)/100)));
+  c.state='relearn';c.step=0;c.due=nowT+relearn[0]*60000;
+  if(o.leechThreshold>0&&c.lapses>=o.leechThreshold){
+   if(o.leechAction==='suspend')c.suspended=true;
+   else{
+    if(!Array.isArray(c.tags))c.tags=[];
+    if(c.tags.indexOf('leech')<0)c.tags.push('leech');
+   }
+  }
+  return;
+ }
+ if(g===1){c.ivl=cap(ankiFuzz(ivl*(o.hardFactor/100)));c.ease=Math.max(1.3,c.ease-0.15)}
+ else if(g===2){c.ivl=cap(ankiFuzz(ivl*c.ease*(o.intervalModifier/100)))}
+ else{c.ivl=cap(ankiFuzz(ivl*c.ease*(o.easyBonus/100)*(o.intervalModifier/100)));c.ease=Math.min(5,c.ease+0.15)}
+ c.state='review';c.step=0;c.due=nowT+c.ivl*DAY;
+}
+function ankiPreview(c,g){
+ const now=Date.now();
+ const copy=JSON.parse(JSON.stringify(c));
+ ankiSchedule(copy,g,now);
+ if(copy.state==='learn'||copy.state==='relearn')return ankiFmtMinutes((copy.due-now)/60000);
+ return ankiFmtDays(copy.ivl);
+}
+function ankiNextDue(pool){
+ const now=Date.now();let t=0;
+ (pool||anki.cards).forEach(c=>{
+  normalizeCard(c);
+  if(c.suspended||c.state==='new')return;
+  if(c.due&&c.due>now&&(!t||c.due<t))t=c.due;
+ });
+ return t;
+}
+function ankiPool(deckId){return deckId?anki.cards.filter(c=>String(c.deckId)===String(deckId)):anki.cards.slice()}
+function ankiQueueFor(pool,now){
+ const o=ankiOpts,ahead=Math.max(0,o.learnAhead)*60000;
+ const learn=[],rev=[],neu=[];
+ (pool||[]).forEach(c=>{
+  normalizeCard(c);
+  if(c.suspended||ankiIsBuried(c))return;
+  if(c.state==='new')neu.push(c);
+  else if(c.state==='review'){if(c.due!=null&&c.due<=now)rev.push(c)}
+  else if(c.due!=null&&c.due<=now+ahead)learn.push(c);
+ });
+ learn.sort((a,b)=>(a.due||0)-(b.due||0));
+ rev.sort((a,b)=>(a.due||0)-(b.due||0));
+ neu.sort((a,b)=>(Number(a.created)||0)-(Number(b.created)||0)||String(a.id).localeCompare(String(b.id)));
+ const usedNew={};
+ const newOk=neu.filter(c=>{
+  const k=String(c.deckId);
+  const allow=Math.max(0,(o.newPerDay||0)-ankiToday('new',k));
+  usedNew[k]=usedNew[k]||0;
+  if(usedNew[k]>=allow)return false;
+  usedNew[k]++;return true;
+ });
+ const usedRev={};
+ const revOk=rev.filter(c=>{
+  const k=String(c.deckId);
+  const allow=Math.max(0,(o.reviewsPerDay||0)-ankiToday('rev',k));
+  usedRev[k]=usedRev[k]||0;
+  if(usedRev[k]>=allow)return false;
+  usedRev[k]++;return true;
+ });
+ return {learn,rev:revOk,neu:newOk};
+}
+function ankiMix(rev,neu){
+ const out=[];let i=0,j=0;
+ if(!neu.length)return rev.slice();
+ if(!rev.length)return neu.slice();
+ const step=Math.max(1,Math.floor(rev.length/Math.max(1,neu.length)));
+ while(i<rev.length||j<neu.length){
+  for(let k=0;k<step&&i<rev.length;k++)out.push(rev[i++]);
+  if(j<neu.length)out.push(neu[j++]);
+  if(i>=rev.length)while(j<neu.length)out.push(neu[j++]);
+ }
+ return out;
 }
 function startStudy(deckId){
+ refreshAnkiDay();
  const now=Date.now();
- const pool=deckId?anki.cards.filter(c=>String(c.deckId)===String(deckId)):anki.cards.slice();
- const due=pool.filter(c=>c.due!=null&&c.due<=now).sort((a,b)=>a.due-b.due);
- const fresh=pool.filter(c=>c.due==null).slice(0,20);
- const queue=due.concat(fresh).map(c=>String(c.id));
- if(!queue.length){notify(T('No hay tarjetas nuevas o pendientes en este mazo.','There are no new or due cards in this deck.'));return}
- ankiSession={deckId:deckId?String(deckId):null,queue,idx:0,revealed:false,done:0,again:0};
+ const pool=ankiPool(deckId);
+ const q=ankiQueueFor(pool,now);
+ const queue=q.learn.concat(ankiMix(q.rev,q.neu)).map(c=>String(c.id));
+ if(!queue.length){
+  const next=ankiNextDue(pool);
+  notify(next?T('Nada para ahora. La próxima tarjeta vence '+ankiIn(next)+'.','Nothing due now. The next card is due '+ankiIn(next)+'.'):T('No hay tarjetas nuevas o pendientes en este mazo.','There are no new or due cards in this deck.'));
+  return;
+ }
+ ankiSession={deckId:deckId?String(deckId):null,queue,idx:0,revealed:false,done:0,again:0,history:[],started:now,cardAt:now,optsOpen:false};
  renderStudy();
 }
-function exitSession(){ankiSession=null;renderAnki()}
+function exitSession(){
+ ankiSession=null;
+ if(ankiTick){clearInterval(ankiTick);ankiTick=null}
+ renderAnki();
+}
+function ankiSnapshot(){
+ if(!ankiSession)return null;
+ const c=cardById(ankiSession.queue[ankiSession.idx]);
+ return {id:c?String(c.id):'',card:c?JSON.stringify(c):'',queue:ankiSession.queue.slice(),idx:ankiSession.idx,done:ankiSession.done,again:ankiSession.again,revealed:ankiSession.revealed,day:JSON.stringify(ankiDay)};
+}
+function ankiPushHistory(){
+ if(!ankiSession)return;
+ const s=ankiSnapshot();if(!s)return;
+ ankiSession.history.push(s);
+ if(ankiSession.history.length>60)ankiSession.history.shift();
+}
+function undoAnki(){
+ if(!ankiSession)return;
+ const s=ankiSession.history.pop();
+ if(!s){notify(T('No hay acciones para deshacer.','Nothing to undo.'));return}
+ const c=cardById(s.id);
+ if(c&&s.card){
+  let obj={};try{obj=JSON.parse(s.card)}catch(e){}
+  Object.keys(c).forEach(k=>{if(!(k in obj))delete c[k]});
+  Object.assign(c,obj);
+ }
+ try{ankiDay=JSON.parse(s.day)}catch(e){}
+ ankiSession.queue=s.queue;ankiSession.idx=s.idx;ankiSession.done=s.done;ankiSession.again=s.again;ankiSession.revealed=s.revealed;ankiSession.cardAt=Date.now();
+ saveAnki();saveAnkiDay();renderStudy();
+}
+function ankiInsertDue(s,id,from){
+ const c=cardById(id);if(!c)return;
+ let i=from==null?s.idx:from;
+ while(i<s.queue.length){
+  const o=cardById(s.queue[i]);
+  if(o&&(o.due||0)>(c.due||0))break;
+  i++;
+ }
+ s.queue.splice(i,0,id);
+}
 function rate(g){
  if(!ankiSession||!ankiSession.revealed)return;
- const c=cardById(ankiSession.queue[ankiSession.idx]);
- if(!c){ankiSession.idx++;renderStudy();return}
- grade(c,g);
+ const id=ankiSession.queue[ankiSession.idx];
+ const c=cardById(id);
+ if(!c){ankiSession.queue.splice(ankiSession.idx,1);ankiSession.revealed=false;renderStudy();return}
+ ankiPushHistory();
+ const before=normalizeCard(c).state;
+ const stamp=ankiStamp();
+ if(before==='new'){
+  const dc=ankiDayCounts(c.deckId);dc.new=(dc.new||0)+1;
+  c.introDay=stamp;
+ }else if(before==='review'&&(!c.last||ankiStamp(c.last)!==stamp)){
+  const dc=ankiDayCounts(c.deckId);dc.rev=(dc.rev||0)+1;
+ }
+ const wasSuspended=!!c.suspended;
+ ankiSchedule(c,g,Date.now());
+ c.reps=(Number(c.reps)||0)+1;
+ c.last=Date.now();
  if(g===0)ankiSession.again++;
  ankiSession.done++;
  ankiSession.idx++;
  ankiSession.revealed=false;
- saveAnki();
+ ankiSession.cardAt=Date.now();
+ if((c.state==='learn'||c.state==='relearn')&&!c.suspended)ankiInsertDue(ankiSession,String(c.id),ankiSession.idx);
+ saveAnki();saveAnkiDay();
+ if(c.suspended&&!wasSuspended)notify(T('Tarjeta suspendida por acumular fallos (leech).','Card suspended after repeated lapses (leech).'));
  renderStudy();
 }
+function skipAnki(){
+ if(!ankiSession)return;
+ const id=ankiSession.queue[ankiSession.idx];
+ if(!id)return;
+ ankiPushHistory();
+ ankiSession.queue.splice(ankiSession.idx,1);
+ ankiSession.queue.push(id);
+ ankiSession.revealed=false;ankiSession.cardAt=Date.now();
+ renderStudy();
+}
+function buryAnki(){
+ if(!ankiSession)return;
+ const c=cardById(ankiSession.queue[ankiSession.idx]);if(!c)return;
+ ankiPushHistory();
+ c.buried=ankiStamp();
+ saveAnki();
+ ankiSession.queue.splice(ankiSession.idx,1);
+ ankiSession.revealed=false;ankiSession.cardAt=Date.now();
+ renderStudy();
+ notify(T('Enterrada hasta mañana.','Buried until tomorrow.'));
+}
+function suspendAnki(){
+ if(!ankiSession)return;
+ const c=cardById(ankiSession.queue[ankiSession.idx]);if(!c)return;
+ ankiPushHistory();
+ c.suspended=true;
+ saveAnki();
+ ankiSession.queue.splice(ankiSession.idx,1);
+ ankiSession.revealed=false;ankiSession.cardAt=Date.now();
+ renderStudy();
+ notify(T('Tarjeta suspendida. Puedes reactivarla en Opciones.','Card suspended. You can reactivate it in Options.'));
+}
+function flagAnki(n){
+ if(!ankiSession)return;
+ const c=cardById(ankiSession.queue[ankiSession.idx]);if(!c)return;
+ const v=n==null?((Number(c.flag)||0)+1)%5:Number(n);
+ c.flag=Math.max(0,Math.min(4,v));
+ saveAnki();renderStudy();
+}
+function ankiFlagName(n){return [T('Sin marca','No flag'),T('Roja','Red'),T('Naranja','Orange'),T('Verde','Green'),T('Azul','Blue')][Number(n)||0]||''}
+function ankiStateLabel(c){
+ const s=c.state||'new';
+ if(s==='new')return T('Nueva','New');
+ if(s==='learn')return T('Aprendizaje','Learning');
+ if(s==='relearn')return T('Reaprendizaje','Relearning');
+ return T('Repaso','Review');
+}
+function ankiClock(ms){
+ const s=Math.max(0,Math.floor(ms/1000));
+ return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+}
+let ankiTick=null;
+function cardById(id){return anki.cards.find(c=>String(c.id)===String(id))}
 function gradeButton(c,g){
  const labels=[T('Otra vez','Again'),T('Difícil','Hard'),T('Bien','Good'),T('Fácil','Easy')];
  const cls=['again','hard','good','easy'][g];
- return '<button type="button" class="btn '+(g===2?'primary':'outline')+' anki-grade '+cls+'" data-grade="'+g+'"><b>'+labels[g]+'</b><small>'+intervalFor(c,g)+'</small></button>';
+ return '<button type="button" class="btn '+(g===2?'primary':'outline')+' anki-grade '+cls+'" data-grade="'+g+'"><b>'+labels[g]+'</b><small>'+ankiPreview(c,g)+'</small></button>';
+}
+function ankiBtn(id,label,title,disabled){
+ return '<button type="button" class="btn outline small" id="'+id+'" title="'+esc(title||label)+'" aria-label="'+esc(title||label)+'"'+(disabled?' disabled':'')+'>'+label+'</button>';
 }
 function renderStudy(){
  const lib=$('anki-library'),host=$('anki-study');
+ if(ankiTick){clearInterval(ankiTick);ankiTick=null}
  if(!ankiSession){if(lib)lib.style.display='';if(host){host.style.display='none';host.innerHTML=''}return}
  if(lib)lib.style.display='none';
  if(!host)return;
  host.style.display='block';
- if(ankiSession.idx>=ankiSession.queue.length){
-  host.innerHTML='<div class="anki-done"><div class="anki-done-ic">✅</div><h3>'+T('Sesión completada','Session complete')+'</h3><p>'+T('Repasaste '+ankiSession.done+' tarjetas.','You reviewed '+ankiSession.done+(ankiSession.done===1?' card.':' cards.'))+(ankiSession.again?' '+T('Repetirás las falladas mañana o en unos minutos.','You will see the missed ones again soon.'):'')+'</p><button type="button" class="btn primary" id="anki-exit">'+T('Volver a los mazos','Back to decks')+'</button></div>';
-  const b=$('anki-exit');if(b)b.onclick=exitSession;
+ while(ankiSession.idx<ankiSession.queue.length&&!cardById(ankiSession.queue[ankiSession.idx]))ankiSession.queue.splice(ankiSession.idx,1);
+ const remain=Math.max(0,ankiSession.queue.length-ankiSession.idx);
+ const c=ankiSession.idx<ankiSession.queue.length?cardById(ankiSession.queue[ankiSession.idx]):null;
+ if(!c){
+  const pool=ankiPool(ankiSession.deckId);
+  const more=ankiQueueFor(pool,Date.now());
+  const hasMore=more.learn.length+more.rev.length+more.neu.length>0;
+  const secs=Math.round((Date.now()-ankiSession.started)/1000);
+  host.innerHTML='<div class="anki-done"><div class="anki-done-ic">✅</div><h3>'+T('Sesión completada','Session complete')+'</h3>'+
+   '<p>'+T('Repasaste '+ankiSession.done+' tarjetas en '+Math.max(1,Math.round(secs/60))+' min · '+ankiSession.again+' falladas.','You reviewed '+ankiSession.done+' cards in '+Math.max(1,Math.round(secs/60))+' min · '+ankiSession.again+' missed.')+'</p>'+
+   '<div class="anki-opts-actions" style="justify-content:center">'+
+    (hasMore?'<button type="button" class="btn primary" id="anki-more">▶ '+T('Seguir estudiando','Keep studying')+'</button>':'')+
+    '<button type="button" class="btn outline" id="anki-exit">'+T('Volver a los mazos','Back to decks')+'</button>'+
+   '</div></div>';
+  const ex=$('anki-exit');if(ex)ex.onclick=exitSession;
+  const mo=$('anki-more');if(mo)mo.onclick=()=>startStudy(ankiSession&&ankiSession.deckId);
   return;
  }
- const c=cardById(ankiSession.queue[ankiSession.idx]);
- if(!c){ankiSession.idx++;return renderStudy()}
+ normalizeCard(c);
  const deck=anki.decks.find(d=>String(d.id)===String(c.deckId));
- const total=ankiSession.queue.length,pos=ankiSession.idx+1,pct=Math.round(ankiSession.idx/total*100);
+ const done=ankiSession.done;
+ const pct=Math.round(done/Math.max(1,done+remain)*100);
  const tags=(c.tags||[]).length?'<div class="anki-tags">'+(c.tags||[]).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div>':'';
- host.innerHTML=
-  '<div class="anki-study-top"><button type="button" class="btn outline small" id="anki-exit">← '+T('Mazos','Decks')+'</button><div class="smalltext muted">'+esc(deck?deck.name:'Anki')+' · '+pos+' / '+total+'</div></div>'+
+ const flag=Number(c.flag)||0;
+ const chips='<div class="anki-chips"><span class="anki-chip">'+ankiStateLabel(c)+'</span>'+
+  (flag?'<span class="anki-chip flag'+flag+'">⚑ '+esc(ankiFlagName(flag))+'</span>':'')+
+  (c.ivl?'<span class="anki-chip">'+T('Intervalo','Interval')+': '+ankiFmtDays(c.ivl)+'</span>':'')+
+  '</div>';
+ const optsPanel=ankiSession.optsOpen?'<div class="panel anki-options" id="anki-options-study"></div>':'';
+ const clock=ankiOpts.showTimer?'<span id="anki-clock">'+ankiClock(Date.now()-ankiSession.cardAt)+'</span>':'';
+ host.innerHTML=optsPanel+
+  '<div class="anki-study-top"><div class="anki-toolbar">'+
+   ankiBtn('anki-exit','← '+T('Mazos','Decks'),T('Volver a los mazos','Back to decks'))+
+   ankiBtn('anki-undo','↶',T('Deshacer última acción (U)','Undo last action (U)'),!ankiSession.history.length)+
+   ankiBtn('anki-skip','⏭',T('Omitir por ahora (S)','Skip for now (S)'))+
+   ankiBtn('anki-bury','⤓',T('Enterrar hasta mañana (-)','Bury until tomorrow (-)'))+
+   ankiBtn('anki-suspend','⏸',T('Suspender tarjeta (=)','Suspend card (=)'))+
+   ankiBtn('anki-flag','⚑',T('Cambiar marca (F)','Change flag (F)'))+
+   ankiBtn('anki-settings','⚙',T('Opciones de repaso','Review options'))+
+  '</div><div class="smalltext muted anki-study-meta">'+esc(deck?ankiDeckLabel(deck):'Anki')+(deck&&deck.source==='ankicollab'?' · AnkiCollab':'')+' · <b>'+remain+'</b> '+T('restantes','left')+(clock?' · '+clock:'')+'</div></div>'+
   '<div class="anki-bar"><div style="width:'+pct+'%"></div></div>'+
-  '<div class="anki-card'+(ankiSession.revealed?' revealed':'')+'">'+tags+
+  '<div class="anki-card'+(ankiSession.revealed?' revealed':'')+'">'+chips+tags+
    '<div class="anki-front">'+(c.front||'<span class="muted">(…)</span>')+'</div>'+
    (ankiSession.revealed?'<div class="anki-divider"></div><div class="anki-back"><div class="anki-label">'+T('Respuesta','Answer')+'</div>'+(String(c.back||'').replace(/^(?:\s*<hr\b[^>]*>\s*)+/i,'')||'<span class="muted">—</span>')+(c.extra?'<div class="anki-extra">'+c.extra+'</div>':'')+'</div>':'')+
   '</div>'+
   (ankiSession.revealed?'<div class="anki-grades">'+[0,1,2,3].map(g=>gradeButton(c,g)).join('')+'</div>':'<button type="button" class="btn primary anki-reveal" id="anki-reveal">'+T('Mostrar respuesta','Show answer')+'</button>')+
-  '<div class="smalltext muted anki-hint">'+T('Espacio: mostrar · 1–4: calificar','Space: show · 1–4: grade')+'</div>';
+  '<div class="smalltext muted anki-hint">'+T('Espacio: mostrar · 1–4: calificar · U: deshacer · S: omitir · -: enterrar · =: suspender · F: marcar','Space: show · 1–4: grade · U: undo · S: skip · -: bury · =: suspend · F: flag')+'</div>';
  const ex=$('anki-exit');if(ex)ex.onclick=exitSession;
+ const un=$('anki-undo');if(un)un.onclick=undoAnki;
+ const sk=$('anki-skip');if(sk)sk.onclick=skipAnki;
+ const bu=$('anki-bury');if(bu)bu.onclick=buryAnki;
+ const su=$('anki-suspend');if(su)su.onclick=suspendAnki;
+ const fl=$('anki-flag');if(fl)fl.onclick=()=>flagAnki();
+ const se=$('anki-settings');
+ if(se)se.onclick=()=>{ankiSession.optsOpen=!ankiSession.optsOpen;renderStudy();if(ankiSession&&ankiSession.optsOpen){const el=$('anki-options-study');if(el)el.scrollIntoView({block:'start',behavior:'smooth'})}};
  const rv=$('anki-reveal');
  if(rv)rv.onclick=()=>{ankiSession.revealed=true;renderStudy()};
  host.querySelectorAll('[data-grade]').forEach(b=>{b.onclick=()=>rate(Number(b.dataset.grade))});
+ if(ankiSession.optsOpen)renderOptions($('anki-options-study'));
+ if(ankiOpts.showTimer&&$('anki-clock')){
+  ankiTick=setInterval(()=>{
+   const el=$('anki-clock');
+   if(!el||!ankiSession){if(ankiTick){clearInterval(ankiTick);ankiTick=null}return}
+   el.textContent=ankiClock(Date.now()-ankiSession.cardAt);
+  },1000);
+ }
  hydrateMedia(host);
 }
 function deleteDeck(id){
@@ -5318,7 +5780,136 @@ function deleteDeck(id){
  if(ankiSession&&String(ankiSession.deckId)===String(id))ankiSession=null;
  renderAnki();
 }
-
+function deadlineInfo(){
+ const d=ankiOpts.deadline;if(!d)return null;
+ const end=new Date(d+'T23:59:59');
+ if(isNaN(end.getTime()))return null;
+ const days=Math.max(0,Math.ceil((end.getTime()-Date.now())/DAY));
+ let pending=0;
+ anki.cards.forEach(c=>{normalizeCard(c);if(c.state==='new'&&!c.suspended)pending++});
+ return {days,pending,perDay:days>0?Math.ceil(pending/days):pending};
+}
+function ankiUnsuspendAll(){
+ let n=0;
+ anki.cards.forEach(c=>{if(c.suspended){c.suspended=false;n++}});
+ if(!n){notify(T('No hay tarjetas suspendidas.','There are no suspended cards.'));return}
+ saveAnki();renderAnki();
+ notify(n+T(' tarjetas reactivadas.',' cards reactivated.'));
+}
+function ankiUnburyToday(){
+ let n=0;
+ anki.cards.forEach(c=>{if(ankiIsBuried(c)){c.buried='';n++}});
+ if(!n){notify(T('No hay tarjetas enterradas hoy.','No cards are buried today.'));return}
+ saveAnki();renderAnki();
+ notify(n+T(' tarjetas desenterradas.',' cards unburied.'));
+}
+function ankiResetDay(){
+ if(!confirm(T('¿Reiniciar los contadores de nuevas y repasos de hoy? No cambia el progreso de las tarjetas.','Reset today\'s new and review counters? Card progress is not changed.')))return;
+ ankiDay={day:ankiStamp(),decks:{}};saveAnkiDay();renderAnki();
+ notify(T('Contadores de hoy reiniciados.','Today\'s counters reset.'));
+}
+function renderOptions(host){
+ host=host||$('anki-options');
+ if(!host)return;
+ const o=ankiOpts;
+ const q=id=>host.querySelector('#'+id);
+ const num=(id,label,v,min,max,step)=>'<label class="anki-opt"><span>'+esc(label)+'</span><input class="field" type="number" id="'+id+'" value="'+esc(v)+'" min="'+min+'" max="'+max+'" step="'+(step||1)+'"></label>';
+ const txt=(id,label,v)=>'<label class="anki-opt"><span>'+esc(label)+'</span><input class="field" type="text" id="'+id+'" value="'+esc(v)+'" inputmode="numeric" spellcheck="false" autocomplete="off"></label>';
+ const dl=deadlineInfo();
+ let dlText=T('Sin plazo definido.','No deadline set.');
+ if(dl){
+  dlText=dl.days>0
+   ?T('Quedan '+dl.days+' días · '+dl.pending+' nuevas pendientes · '+dl.perDay+'/día',''+dl.days+' days left · '+dl.pending+' new pending · '+dl.perDay+'/day')
+   :T('El plazo ya pasó · '+dl.pending+' nuevas pendientes','Deadline passed · '+dl.pending+' new pending');
+ }
+ const susp=anki.cards.filter(c=>c.suspended).length;
+ const buried=anki.cards.filter(c=>ankiIsBuried(c)).length;
+ host.innerHTML=
+  '<div class="anki-opts-head"><div><strong>'+T('Opciones de repaso','Review options')+'</strong><p>'+T('Los valores iniciales siguen a Anki. Los cambios se aplican a las tarjetas que repases desde ahora.','Defaults follow Anki. Changes apply to cards you review from now on.')+'</p></div><button type="button" class="btn outline small" id="anki-opts-close" aria-label="'+T('Cerrar','Close')+'">✕</button></div>'+
+  '<div class="anki-opts-sec"><strong>'+T('Límites diarios','Daily limits')+'</strong><div class="anki-opts-grid">'+
+   num('ao-new',T('Nuevas al día','New per day'),o.newPerDay,0,9999)+
+   num('ao-rev',T('Repasos al día','Reviews per day'),o.reviewsPerDay,0,9999)+
+   num('ao-ahead',T('Adelantar aprendizaje (min)','Learn ahead (min)'),o.learnAhead,0,180)+
+   num('ao-roll',T('Cambio de día (hora)','Day rollover (hour)'),o.rolloverHour,0,23)+
+  '</div></div>'+
+  '<div class="anki-opts-sec"><strong>'+T('Plazos','Deadlines')+'</strong><div class="anki-opts-grid">'+
+   '<label class="anki-opt"><span>'+T('Fecha límite','Target date')+'</span><input class="field" type="date" id="ao-deadline" value="'+esc(o.deadline)+'"></label>'+
+   '<div class="anki-opt"><span>'+T('Plan','Plan')+'</span><div class="anki-deadline-hint" id="anki-deadline-hint">'+esc(dlText)+'</div></div>'+
+  '</div><div class="anki-opts-actions"><button type="button" class="btn outline small" id="anki-deadline-apply"'+(dl?'':' disabled')+'>'+T('Ajustar nuevas/día al plazo','Set new/day to fit deadline')+'</button></div></div>'+
+  '<div class="anki-opts-sec"><strong>'+T('Aprendizaje','Learning')+'</strong><div class="anki-opts-grid">'+
+   txt('ao-learn',T('Pasos de aprendizaje (min)','Learning steps (min)'),o.learnSteps)+
+   txt('ao-relearn',T('Pasos de reaprendizaje (min)','Relearning steps (min)'),o.relearnSteps)+
+   num('ao-grad',T('Intervalo al graduarse (días)','Graduating interval (days)'),o.graduatingIvl,1,36500)+
+   num('ao-easyivl',T('Intervalo Fácil al graduarse (días)','Easy interval on graduation (days)'),o.easyIvl,1,36500)+
+  '</div></div>'+
+  '<div class="anki-opts-sec"><strong>'+T('Repaso','Reviews')+'</strong><div class="anki-opts-grid">'+
+   num('ao-easybonus',T('Bonus Fácil (%)','Easy bonus (%)'),o.easyBonus,100,500)+
+   num('ao-mod',T('Modificador de intervalo (%)','Interval modifier (%)'),o.intervalModifier,10,500)+
+   num('ao-hard',T('Factor Difícil (%)','Hard factor (%)'),o.hardFactor,100,500)+
+   num('ao-max',T('Intervalo máximo (días)','Maximum interval (days)'),o.maxIvl,1,36500)+
+   num('ao-ease',T('Facilidad inicial (%)','Starting ease (%)'),o.startEase,130,500)+
+   num('ao-min',T('Intervalo mínimo (días)','Minimum interval (days)'),o.minIvl,1,36500)+
+   num('ao-newint',T('Nuevo intervalo tras fallo (%)','New interval after a lapse (%)'),o.newInterval,0,100)+
+   num('ao-fuzz',T('Aleatoriedad del intervalo (%)','Interval fuzz (%)'),o.fuzz,0,30)+
+  '</div></div>'+
+  '<div class="anki-opts-sec"><strong>'+T('Leech','Leeches')+'</strong><div class="anki-opts-grid">'+
+   num('ao-leech',T('Umbral de fallos','Lapse threshold'),o.leechThreshold,0,99)+
+   '<label class="anki-opt"><span>'+T('Acción','Action')+'</span><select class="field" id="ao-leechact"><option value="suspend"'+(o.leechAction==='suspend'?' selected':'')+'>'+T('Suspender tarjeta','Suspend card')+'</option><option value="tag"'+(o.leechAction==='tag'?' selected':'')+'>'+T('Etiquetar como leech','Tag as leech')+'</option></select></label>'+
+   '<label class="anki-opt anki-opt-check"><span>'+T('Mostrar cronómetro','Show timer')+'</span><input type="checkbox" id="ao-timer"'+(o.showTimer?' checked':'')+'></label>'+
+  '</div></div>'+
+  '<div class="anki-opts-sec"><strong>'+T('Mantenimiento','Maintenance')+'</strong><div class="anki-opts-actions">'+
+   '<button type="button" class="btn outline small" id="anki-unsuspend"'+(susp?'':' disabled')+'>'+T('Reactivar suspendidas','Unsuspend all')+' ('+susp+')</button>'+
+   '<button type="button" class="btn outline small" id="anki-unbury"'+(buried?'':' disabled')+'>'+T('Desenterrar hoy','Unbury today')+' ('+buried+')</button>'+
+   '<button type="button" class="btn outline small" id="anki-day-reset">'+T('Reiniciar contadores de hoy','Reset counters for today')+'</button>'+
+  '</div><p class="smalltext muted">'+T('Enterrar oculta una tarjeta hasta mañana; suspender la quita del repaso hasta que la reactives.','Burying hides a card until tomorrow; suspending removes it from reviews until you reactivate it.')+'</p></div>'+
+  '<div class="anki-opts-actions anki-opts-savebar"><button type="button" class="btn primary small" id="anki-opts-save">'+T('Guardar','Save')+'</button><button type="button" class="btn outline small" id="anki-opts-reset">'+T('Valores de Anki','Anki defaults')+'</button></div>';
+ const close=q('anki-opts-close');
+ if(close)close.onclick=()=>{
+  if(ankiSession){ankiSession.optsOpen=false;renderStudy()}
+  else{host.style.display='none'}
+ };
+ const sv=q('anki-opts-save');
+ if(sv)sv.onclick=()=>{
+  const val=(id,def,min,max)=>{const el=q(id);return Math.round(ankiNum(el?el.value:def,min,max,def))};
+  o.newPerDay=val('ao-new',o.newPerDay,0,9999);
+  o.reviewsPerDay=val('ao-rev',o.reviewsPerDay,0,9999);
+  o.learnAhead=val('ao-ahead',o.learnAhead,0,180);
+  o.rolloverHour=val('ao-roll',o.rolloverHour,0,23);
+  o.graduatingIvl=val('ao-grad',o.graduatingIvl,1,36500);
+  o.easyIvl=val('ao-easyivl',o.easyIvl,1,36500);
+  o.easyBonus=val('ao-easybonus',o.easyBonus,100,500);
+  o.intervalModifier=val('ao-mod',o.intervalModifier,10,500);
+  o.hardFactor=val('ao-hard',o.hardFactor,100,500);
+  o.maxIvl=val('ao-max',o.maxIvl,1,36500);
+  o.startEase=val('ao-ease',o.startEase,130,500);
+  o.minIvl=val('ao-min',o.minIvl,1,36500);
+  o.newInterval=val('ao-newint',o.newInterval,0,100);
+  o.fuzz=val('ao-fuzz',o.fuzz,0,30);
+  o.leechThreshold=val('ao-leech',o.leechThreshold,0,99);
+  const ls=q('ao-learn');if(ls)o.learnSteps=ankiStepStr(ls.value,ANKI_DEFAULTS.learnSteps);
+  const rs=q('ao-relearn');if(rs)o.relearnSteps=ankiStepStr(rs.value,ANKI_DEFAULTS.relearnSteps);
+  const la=q('ao-leechact');if(la)o.leechAction=la.value==='tag'?'tag':'suspend';
+  const tm=q('ao-timer');o.showTimer=!!(tm&&tm.checked);
+  const dd=q('ao-deadline');o.deadline=dd&&/^\d{4}-\d{2}-\d{2}$/.test(dd.value)?dd.value:'';
+  saveAnkiOpts();refreshAnkiDay();renderAnki();
+  notify(T('Opciones guardadas.','Options saved.'));
+ };
+ const rs2=q('anki-opts-reset');
+ if(rs2)rs2.onclick=()=>{
+  if(!confirm(T('¿Restaurar los valores iniciales de Anki?','Restore Anki default settings?')))return;
+  ankiOpts=Object.assign({},ANKI_DEFAULTS);saveAnkiOpts();renderAnki();
+  notify(T('Valores de Anki restaurados.','Anki defaults restored.'));
+ };
+ const ap=q('anki-deadline-apply');
+ if(ap)ap.onclick=()=>{
+  const info=deadlineInfo();if(!info)return;
+  o.newPerDay=Math.max(1,Math.min(9999,info.perDay));saveAnkiOpts();renderAnki();
+  notify(T('Límite ajustado a '+o.newPerDay+' nuevas al día.','Limit set to '+o.newPerDay+' new cards per day.'));
+ };
+ const us=q('anki-unsuspend');if(us)us.onclick=ankiUnsuspendAll;
+ const ub=q('anki-unbury');if(ub)ub.onclick=ankiUnburyToday;
+ const dr=q('anki-day-reset');if(dr)dr.onclick=ankiResetDay;
+}
 /* ---------- Teclado ---------- */
 document.addEventListener('keydown',e=>{
  if(!ankiSession)return;
@@ -5327,17 +5918,305 @@ document.addEventListener('keydown',e=>{
  if(!view||!view.classList.contains('active'))return;
  const tag=e.target&&e.target.tagName?e.target.tagName.toLowerCase():'';
  if(tag==='input'||tag==='textarea'||tag==='select')return;
+ if(ankiSession.optsOpen)return;
+ const k=e.key;
+ if(e.ctrlKey||e.metaKey){
+  if(k.toLowerCase()==='z'){e.preventDefault();undoAnki()}
+  return;
+ }
+ if(k.toLowerCase()==='u'){e.preventDefault();undoAnki();return}
+ if(k==='-'){e.preventDefault();buryAnki();return}
+ if(k==='='){e.preventDefault();suspendAnki();return}
+ if(k.toLowerCase()==='s'){e.preventDefault();skipAnki();return}
+ if(k.toLowerCase()==='f'){e.preventDefault();flagAnki();return}
  if(!ankiSession.revealed){
-  if(e.code==='Space'||e.key==='Enter'){
+  if(e.code==='Space'||k===' '||k==='Enter'){
    e.preventDefault();ankiSession.revealed=true;renderStudy();
   }
   return;
  }
- if(e.code==='Space'||e.key==='Enter'){e.preventDefault();rate(2);return}
- if(/^[1-4]$/.test(e.key)){e.preventDefault();rate(Number(e.key)-1)}
+ if(e.code==='Space'||k===' '||k==='Enter'){e.preventDefault();rate(2);return}
+ if(/^[1-4]$/.test(k)){e.preventDefault();rate(Number(k)-1)}
 });
 
-/* ---------- Montaje de la sección ---------- */
+/* ---------- AnkiCollab: puente de solo lectura ---------- */
+const ACSKEY='clinq_ankicollab_v1';
+const AC_EPOCH='2022-12-31 23:59:59';
+const AC_POLL_MS=5*60*1000;
+let acState=acLoadState(),acBusy=false,acLastPoll=0,acTimer=null;
+function acLoadState(){
+ let o={};try{o=JSON.parse(localStorage.getItem(ACSKEY)||'{}')||{}}catch(e){}
+ const decks=(Array.isArray(o.decks)?o.decks:[]).filter(d=>d&&typeof d.key==='string'&&d.key).map(d=>({
+  key:String(d.key).trim().toLowerCase(),
+  name:String(d.name||d.key),
+  timestamp:typeof d.timestamp==='string'&&/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(d.timestamp)?d.timestamp:AC_EPOCH,
+  lastSync:Number(d.lastSync)||0,
+  count:Number(d.count)||0,
+  error:String(d.error||'')
+ }));
+ return {v:1,auto:o.auto!==false,decks};
+}
+function acSaveState(){
+ try{
+  localStorage.setItem(ACSKEY,JSON.stringify({v:1,auto:!!acState.auto,decks:acState.decks.map(d=>({key:d.key,name:d.name,timestamp:d.timestamp,lastSync:d.lastSync,count:d.count,error:d.error}))}));
+ }catch(e){}
+}
+function acApiUrl(){
+ if(window.CLINQ_ANKICOLLAB_URL)return String(window.CLINQ_ANKICOLLAB_URL);
+ const g=window.CLINQ_API_URL||'';
+ if(g)return String(g).replace(/\/generate(?:\?.*)?$/,'/ankicollab');
+ return '/api/ankicollab';
+}
+function acToken(){try{return sessionStorage.getItem('clinq_ankicollab_token')||''}catch(e){return ''}}
+function acFind(key){return acState.decks.find(d=>d.key===key)}
+function acValidKey(k){
+ const p=String(k||'').trim().split('-');
+ return [3,5,6].includes(p.length)&&p.every(x=>/^[A-Za-z]+$/.test(x));
+}
+function acSetStatus(html,kind){
+ const el=$('ac-status');if(!el)return;
+ el.style.display=html?'block':'none';
+ el.className='notice anki-status'+(kind==='err'?' err':'');
+ el.innerHTML=html||'';
+}
+function acAgo(ts){
+ if(!ts)return T('nunca','never');
+ const s=Math.max(0,Math.round((Date.now()-ts)/1000));
+ if(s<60)return T('hace unos segundos','a few seconds ago');
+ const m=Math.round(s/60);
+ if(m<60)return T('hace '+m+' min',''+m+' min ago');
+ const h=Math.round(m/60);
+ if(h<24)return T('hace '+h+' h',''+h+' h ago');
+ return T('hace '+Math.round(h/24)+' d',''+Math.round(h/24)+' d ago');
+}
+async function acPost(payload){
+ const body=Object.assign({},payload);
+ const t=acToken();if(t)body.token=t;
+ const r=await fetch(acApiUrl(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store'});
+ let data=null;try{data=await r.json()}catch(e){}
+ if(!r.ok){
+  const e=new Error((data&&data.error)||('Error HTTP '+r.status));
+  e.code=data&&data.code;e.status=r.status;throw e;
+ }
+ return data||{};
+}
+function acRender(){
+ const host=$('ac-decks');if(!host)return;
+ const auto=$('ac-auto');if(auto)auto.checked=!!acState.auto;
+ const note=$('ac-token-note');
+ if(note)note.textContent=acToken()?T('Hay un token guardado solo en esta pestaña.','A token is saved in this tab only.'):'';
+ if(!acState.decks.length){
+  host.innerHTML='<div class="ac-empty">'+T('Todavía no hay mazos conectados. Pega una clave de AnkiCollab y pulsa Conectar.','No decks connected yet. Paste an AnkiCollab key and press Connect.')+'</div>';
+  return;
+ }
+ host.innerHTML=acState.decks.map(d=>{
+  const meta=[];
+  meta.push(d.count?d.count+' '+T('tarjetas','cards'):T('sin tarjetas','no cards'));
+  meta.push(T('actualizado ','updated ')+acAgo(d.lastSync));
+  return '<div class="ac-deck"><div class="ac-deck-main"><strong>'+esc(d.name)+'</strong><small>'+esc(d.key)+' · '+esc(meta.join(' · '))+'</small>'+
+   (d.error?'<small class="err">'+esc(d.error)+'</small>':'')+
+   '</div><div class="ac-deck-actions">'+
+   '<button type="button" class="btn outline small" data-ac-now="'+esc(d.key)+'">'+T('Actualizar','Update')+'</button>'+
+   '<button type="button" class="btn outline small" data-ac-full="'+esc(d.key)+'" title="'+T('Volver a descargar el mazo completo','Download the whole deck again')+'">'+T('Reimportar','Reimport')+'</button>'+
+   '<button type="button" class="btn outline small" data-ac-off="'+esc(d.key)+'">'+T('Quitar','Remove')+'</button>'+
+   '</div></div>';
+ }).join('');
+ host.querySelectorAll('[data-ac-now]').forEach(b=>b.onclick=()=>acSync([b.dataset.acNow],{full:false}));
+ host.querySelectorAll('[data-ac-full]').forEach(b=>b.onclick=()=>acSync([b.dataset.acFull],{full:true,confirm:true}));
+ host.querySelectorAll('[data-ac-off]').forEach(b=>b.onclick=()=>acUnsubscribe(b.dataset.acOff));
+}
+function acSummary(added,updated,removed){
+ const p=[];
+ if(added)p.push(added+' '+T('nuevas','new'));
+ if(updated)p.push(updated+' '+T('actualizadas','updated'));
+ if(removed)p.push(removed+' '+T('eliminadas','removed'));
+ return T('Mazos actualizados: ','Decks updated: ')+p.join(', ');
+}
+function acApply(entry,res,opts){
+ const root=res.deck;
+ const models=new Map();
+ (function collect(node){
+  (node.models||[]).forEach(m=>{if(m&&m.id)models.set(String(m.id),m)});
+  (node.children||[]).forEach(collect);
+ })(root);
+ const existing=new Map();
+ anki.cards.forEach(c=>existing.set(String(c.id),c));
+ let added=0,updated=0,removed=0;
+ const seenNotes=new Set(),seenDecks=new Set();
+ const rootId=root.id||entry.key;
+ function walk(node,parentPath){
+  let full=String(node.name||'AnkiCollab');
+  if(parentPath&&full.indexOf(parentPath+'::')!==0)full=parentPath+'::'+full;
+  if(!parentPath&&node.name)entry.name=String(node.name);
+  const deckId='ac:'+hashStr(rootId+'|'+full);
+  const deck=ensureDeck(deckId,'AnkiCollab · '+full);
+  deck.name='AnkiCollab · '+full;
+  deck.acKey=entry.key;deck.acName=node.name||full;deck.acPath=full;deck.source='ankicollab';
+  seenDecks.add(deckId);
+  (node.notes||[]).forEach(note=>{
+   seenNotes.add(note.guid);
+   try{
+    const raw=models.get(String(note.model));
+    if(!raw)return;
+    const model={
+     name:String(raw.name||'Anki'),
+     type:Number(raw.type)||0,
+     flds:(raw.fields||[]).map(n=>({name:String(n)})),
+     tmpls:(raw.templates||[]).map(t=>({qfmt:String(t.qfmt||''),afmt:String(t.afmt||'')}))
+    };
+    const joined=(note.fields||[]).join('\x1f');
+    const isCloze=model.type===1||/cloze/i.test(model.name)||(note.fields||[]).some(v=>/\{\{c\d+::/.test(String(v)));
+    let ords=[0];
+    if(isCloze){
+     let max=0;
+     (note.fields||[]).forEach(v=>{const re=/\{\{c(\d+)::/g;let m;while((m=re.exec(String(v))))max=Math.max(max,Number(m[1])||0)});
+     ords=[];for(let i=0;i<Math.max(1,Math.min(max,12));i++)ords.push(i);
+    }else if(model.tmpls.length){
+     ords=model.tmpls.map((_,i)=>i).slice(0,12);
+    }
+    const mediaSet=new Set();
+    ords.forEach(ord=>{
+     const c=buildCard({id:note.guid,flds:joined,tags:note.tags,mid:raw.id},model,{id:hashStr(rootId+'|'+note.guid+'|'+ord),nid:note.guid,did:deckId,ord},deckId,mediaSet);
+     if(!c)return;
+     c.id='ac:'+hashStr(rootId+'|'+note.guid+'|'+ord);
+     c.noteId='ac:'+hashStr(rootId+'|'+note.guid);
+     c.acKey=entry.key;c.acGuid=note.guid;c.acDeck=node.id||deckId;c.source='ankicollab';
+     const old=existing.get(c.id);
+     if(old){
+      ['due','ivl','ease','reps','lapses','last','created','state','step','buried','suspended','flag','introDay','pendingIvl'].forEach(k=>{if(old[k]!==undefined)c[k]=old[k]});
+      Object.assign(old,c);updated++;
+     }else{
+      anki.cards.push(c);existing.set(c.id,c);added++;
+     }
+    });
+   }catch(e){console.warn('AnkiCollab note',e)}
+  });
+  (node.children||[]).forEach(ch=>walk(ch,full));
+ }
+ walk(root,'');
+ const dels=new Set((res.deleted||[]).map(String));
+ anki.cards=anki.cards.filter(c=>{
+  if(c.acKey!==entry.key)return true;
+  if((c.acGuid&&dels.has(String(c.acGuid)))||(opts.full&&c.acGuid&&!seenNotes.has(String(c.acGuid)))){removed++;return false}
+  return true;
+ });
+ if(opts.full)anki.decks=anki.decks.filter(d=>d.acKey!==entry.key||seenDecks.has(String(d.id)));
+ return {added,updated,removed,cards:anki.cards.filter(c=>c.acKey===entry.key).length};
+}
+async function acSync(keys,opts){
+ opts=opts||{};
+ const items=(keys&&keys.length?keys:acState.decks.map(d=>d.key)).map(acFind).filter(Boolean);
+ if(!items.length){
+  if(!opts.silent)acSetStatus(esc(T('Conecta primero un mazo.','Connect a deck first.')));
+  return;
+ }
+ if(opts.confirm){
+  const d=items[0];
+  if(!confirm(T('¿Volver a descargar «'+d.name+'» completo? Se conservará tu progreso de repaso.','Download "'+d.name+'" again in full? Your review progress will be kept.')))return;
+ }
+ if(acBusy){
+  if(opts.silent)return;
+  const tries=Number(opts._tries)||0;
+  if(tries<40){
+   setTimeout(()=>acSync(keys,Object.assign({},opts,{_tries:tries+1,confirm:false})),250);
+   return;
+  }
+  acSetStatus(esc(T('Ya hay una sincronización en curso. Inténtalo de nuevo en unos segundos.','A sync is already running. Try again in a few seconds.')));
+  return;
+ }
+ acBusy=true;acLastPoll=Date.now();
+ const btns=[$('ac-add'),$('ac-sync-all')];
+ btns.forEach(b=>{if(b)b.disabled=true});
+ if(!opts.silent)acSetStatus(esc(T('Sincronizando con AnkiCollab…','Syncing with AnkiCollab…')));
+ try{
+  const data=await acPost({decks:items.map(d=>({key:d.key,timestamp:opts.full?AC_EPOCH:d.timestamp}))});
+  const stamp=typeof data.syncedAt==='string'?data.syncedAt:'';
+  let added=0,updated=0,removed=0,total=0;
+  (data.decks||[]).forEach(res=>{
+   const entry=acFind(res.key)||(items.length===1?items[0]:null);
+   if(!entry||!res.deck)return;
+   const r=acApply(entry,res,{full:!!opts.full});
+   added+=r.added;updated+=r.updated;removed+=r.removed;total+=r.cards;
+   entry.error='';entry.lastSync=Date.now();if(stamp)entry.timestamp=stamp;
+   entry.count=anki.cards.filter(c=>c.acKey===entry.key).length;
+  });
+  (data.unchanged||[]).forEach(k=>{
+   const d=acFind(k);
+   if(d){d.lastSync=Date.now();if(stamp)d.timestamp=stamp;d.error=''}
+  });
+  if(!(data.decks||[]).length&&!(data.unchanged||[]).length)throw new Error(T('La respuesta de AnkiCollab llegó vacía.','The AnkiCollab response was empty.'));
+  if(added||updated||removed)saveAnki();
+  acSaveState();
+  if(added||updated||removed){
+   renderAnki();
+   acSetStatus('✓ '+esc(acSummary(added,updated,removed)));
+   notify(T('AnkiCollab: '+total+' tarjetas disponibles.','AnkiCollab: '+total+' cards available.'));
+  }else if(!opts.silent){
+   acSetStatus(esc(T('Todo al día. AnkiCollab solo publica cambios cuando el mantenedor actualiza el mazo.','All up to date. AnkiCollab only publishes changes when the maintainer updates the deck.')));
+  }
+ }catch(e){
+  items.forEach(d=>{if(d)d.error=e.message||String(e)});
+  acSaveState();
+  if(!opts.silent)acSetStatus('⚠ '+esc(e.message||String(e)),'err');
+  if(e.status===401&&!opts.silent)acSetStatus('⚠ '+esc(T('AnkiCollab rechazó la sesión. Si el mazo es privado, añade tu token en Opciones avanzadas.','AnkiCollab rejected the session. If the deck is private, add your token in Advanced options.')),'err');
+ }finally{
+  acBusy=false;btns.forEach(b=>{if(b)b.disabled=false});acRender();
+ }
+}
+async function acAdd(){
+ const inp=$('ac-key');if(!inp)return;
+ const key=String(inp.value||'').trim().toLowerCase();
+ if(!acValidKey(key)){
+  acSetStatus(esc(T('La clave debe tener 3, 5 o 6 palabras separadas por guiones (solo letras).','The key must have 3, 5 or 6 words separated by hyphens (letters only).')),'err');
+  inp.focus();return;
+ }
+ if(acFind(key)){inp.value='';acSetStatus(esc(T('Ese mazo ya está conectado.','That deck is already connected.')));acSync([key],{full:false});return}
+ if(acBusy){acSetStatus(esc(T('Espera a que termine la sincronización actual.','Wait for the current sync to finish.')));inp.focus();return}
+ acBusy=true;
+ const btn=$('ac-add');if(btn)btn.disabled=true;
+ acSetStatus(esc(T('Comprobando la clave en AnkiCollab…','Checking the key with AnkiCollab…')));
+ let added=false;
+ try{
+  const data=await acPost({action:'check',keys:[key]});
+  if((data.dead||[]).includes(key)){
+   acSetStatus(esc(T('AnkiCollab no reconoce esa clave. Revisa que esté copiada completa.','AnkiCollab does not recognize that key. Check that it was copied completely.')),'err');
+   return;
+  }
+  acState.decks.push({key,name:key,timestamp:AC_EPOCH,lastSync:0,count:0,error:''});
+  acSaveState();inp.value='';acRender();added=true;
+ }catch(e){
+  acSetStatus('⚠ '+esc(e.message||String(e)),'err');
+ }finally{
+  acBusy=false;if(btn)btn.disabled=false;
+ }
+ if(added)acSync([key],{full:true});
+}
+function acUnsubscribe(key){
+ const d=acFind(key);if(!d)return;
+ if(!confirm(T('¿Desconectar «'+d.name+'»? Se borrarán sus tarjetas de este navegador; tu progreso no se envía a AnkiCollab.','Disconnect "'+d.name+'"? Its cards will be deleted from this browser; your progress is not sent to AnkiCollab.')))return;
+ const ids=new Set(anki.decks.filter(x=>x.acKey===key).map(x=>String(x.id)));
+ anki.cards=anki.cards.filter(c=>c.acKey!==key&&!ids.has(String(c.deckId)));
+ anki.decks=anki.decks.filter(x=>x.acKey!==key&&!ids.has(String(x.id)));
+ ids.forEach(id=>{try{idbDeletePrefix(id+'|').catch(()=>{})}catch(e){}});
+ acState.decks=acState.decks.filter(x=>x.key!==key);
+ saveAnki();acSaveState();acRender();renderAnki();
+ acSetStatus(esc(T('Mazo desconectado.','Deck disconnected.')));
+}
+function acTokenSave(){
+ const el=$('ac-token');if(!el)return;
+ const v=String(el.value||'').trim();
+ try{if(v)sessionStorage.setItem('clinq_ankicollab_token',v);else sessionStorage.removeItem('clinq_ankicollab_token')}catch(e){}
+ el.value='';acRender();
+ acSetStatus(esc(v?T('Token guardado solo para esta pestaña.','Token saved for this tab only.'):T('Token borrado de esta pestaña.','Token removed from this tab.')));
+}
+function acMaybePoll(force){
+ if(!acState.auto||acBusy||!acState.decks.length)return;
+ if(typeof navigator!=='undefined'&&navigator.onLine===false)return;
+ if(!force&&typeof document!=='undefined'&&document.visibilityState&&document.visibilityState!=='visible')return;
+ if(!force&&Date.now()-acLastPoll<AC_POLL_MS)return;
+ acSync(null,{silent:true});
+}
+
 /* ---------- Montaje de la sección ---------- */
 /* V.2.0: Anki es un subtab de Practicar (Banco / Anki), no una pestaña del menú. */
 const PTAB_KEY='clinq_practice_tab';
@@ -5382,7 +6261,7 @@ function setPracticeTab(tab){
  applyPracticeTab();
  const view=$('view-practice');
  if(!view||!view.classList.contains('active'))return;
- if(practiceTab==='anki'){try{renderAnki()}catch(e){console.error(e)};return}
+ if(practiceTab==='anki'){try{renderAnki()}catch(e){console.error(e)};try{acMaybePoll(false)}catch(e){};return}
  const quiz=$('quiz-area');
  if(quiz&&!quiz.childElementCount){if(currentQuiz)renderQuizQuestion();else renderQuizStart()}
 }
@@ -5407,6 +6286,18 @@ function injectUI(){
   pane.innerHTML=
    '<div id="anki-library">'+
     '<div class="sectionhead"><div><h3>Anki</h3><p>'+T('Importa mazos .apkg y repásalos aquí con repaso espaciado. También puedes exportar tu banco ClinQ a un archivo que Anki importa directamente.','Import .apkg decks and review them here with spaced repetition. You can also export your ClinQ bank to a file Anki imports directly.')+'</p></div></div>'+
+    '<div class="panel ac-panel" id="ac-panel">'+
+     '<div class="ac-head"><div class="ac-head-main"><div class="anki-hero-ic">&#8635;</div><div><strong>AnkiCollab</strong><p>'+T('Conecta un mazo compartido con su clave de suscripción. ClinQ comprueba cambios cada 5 minutos mientras la pestaña está abierta (no es instantáneo: AnkiCollab solo publica cuando el mantenedor actualiza el mazo).','Connect a shared deck with its subscription key. ClinQ checks for changes every 5 minutes while the tab is open (not instant: AnkiCollab only publishes when the maintainer updates the deck).')+'</p></div></div>'+
+      '<label class="ac-auto"><input type="checkbox" id="ac-auto"> '+T('Auto','Auto')+'</label></div>'+
+     '<div class="ac-form"><input class="field" id="ac-key" type="text" placeholder="'+T('clave-del-mazo-de-ejemplo','example-deck-key-words')+'" aria-label="'+T('Clave de suscripción de AnkiCollab','AnkiCollab subscription key')+'" autocomplete="off" spellcheck="false"><button type="button" class="btn primary small" id="ac-add">+ '+T('Conectar','Connect')+'</button><button type="button" class="btn outline small" id="ac-sync-all">&#8635; '+T('Actualizar todo','Update all')+'</button></div>'+
+     '<div class="smalltext muted" id="ac-hint">'+T('Solo mazos públicos, o privados con tu token. Las imágenes de AnkiCollab todavía no se sincronizan.','Public decks only, or private ones with your token. AnkiCollab images are not synced yet.')+'</div>'+
+     '<div class="notice anki-status" id="ac-status" style="display:none"></div>'+
+     '<div class="ac-list" id="ac-decks"></div>'+
+     '<details class="ac-adv"><summary>'+T('Opciones avanzadas','Advanced options')+'</summary>'+
+      '<p>'+T('Para mazos privados, pega tu token de AnkiCollab. Se guarda solo en esta pestaña (sessionStorage) y se envía a la función de ClinQ únicamente para esta comprobación; ClinQ no lo almacena.','For private decks, paste your AnkiCollab token. It is kept only in this tab (sessionStorage) and sent to the ClinQ function only for this check; ClinQ does not store it.')+'</p>'+
+      '<div class="ac-token"><input class="field" id="ac-token" type="password" placeholder="'+T('Token de AnkiCollab (opcional)','AnkiCollab token (optional)')+'" autocomplete="off" spellcheck="false"><button type="button" class="btn outline small" id="ac-token-save">'+T('Usar en esta pestaña','Use in this tab')+'</button></div>'+
+      '<p id="ac-token-note"></p></details>'+
+    '</div>'+
     '<div class="panel anki-hero" id="anki-drop">'+
      '<div class="anki-hero-main"><div class="anki-hero-ic">🃏</div><div><strong>'+T('Trae tus mazos de Anki','Bring your Anki decks')+'</strong><p>'+T('Compatible con .apkg y .colpkg (Basic, Cloze y reversas). Las imágenes se guardan en el almacenamiento del navegador.','Works with .apkg and .colpkg (Basic, Cloze and reversed cards). Images are stored in this browser.')+'</p></div></div>'+
      '<div class="anki-actions"><button type="button" class="btn primary" id="anki-import-btn">📥 '+T('Importar .apkg','Import .apkg')+'</button><button type="button" class="btn outline" id="anki-export-btn">↗ '+T('Exportar a Anki','Export to Anki')+'</button></div>'+
@@ -5414,7 +6305,8 @@ function injectUI(){
     '<div class="notice anki-note">'+T('También acepta el archivo de texto de Anki («Notas en texto sin formato», .txt/.tsv). Arrastra el archivo sobre la tarjeta o usa el botón. Los mazos se guardan solo en este navegador; no se sincronizan con Drive.','It also accepts Anki\'s plain-text export (.txt/.tsv). Drag the file onto the card or use the button. Decks are stored in this browser only; they are not synced to Drive.')+'</div>'+
     '<div id="anki-status" class="notice anki-status" style="display:none"></div>'+
     '<div class="stats" id="anki-stats"></div>'+
-    '<div class="sectionhead anki-decks-head"><div><h3>'+T('Tus mazos','Your decks')+'</h3><p>'+T('Cada sesión incluye las tarjetas pendientes y hasta 20 nuevas.','Each session includes due cards and up to 20 new cards.')+'</p></div><div><button type="button" class="btn primary small" id="anki-study-all">▶ '+T('Estudiar todo','Study all')+'</button></div></div>'+
+    '<div class="panel anki-options" id="anki-options" style="display:none"></div>'+
+    '<div class="sectionhead anki-decks-head"><div><h3>'+T('Tus mazos','Your decks')+'</h3><p>'+T('Cada sesión respeta tus límites diarios, pasos de aprendizaje y plazos.','Each session follows your daily limits, learning steps and deadlines.')+'</p></div><div class="anki-actions"><button type="button" class="btn outline small" id="anki-options-btn">⚙ '+T('Opciones','Options')+'</button><button type="button" class="btn primary small" id="anki-study-all">▶ '+T('Estudiar todo','Study all')+'</button></div></div>'+
     '<div id="anki-decks" class="anki-grid"></div>'+
    '</div>'+
    '<div id="anki-study" class="tl-panel anki-study" style="display:none"></div>'+
@@ -5458,11 +6350,36 @@ function injectUI(){
   if(currentQuiz)setPracticeTab('bank');
   return r;
  };
+ const acAddBtn=$('ac-add');if(acAddBtn)acAddBtn.onclick=acAdd;
+ const acKeyInput=$('ac-key');
+ if(acKeyInput)acKeyInput.addEventListener('keydown',e=>{
+  e.stopPropagation();
+  if(e.key==='Enter'){e.preventDefault();acAdd()}
+ });
+ const acAllBtn=$('ac-sync-all');if(acAllBtn)acAllBtn.onclick=()=>acSync(null,{});
+ const acAutoBox=$('ac-auto');
+ if(acAutoBox){
+  acAutoBox.checked=!!acState.auto;
+  acAutoBox.onchange=()=>{acState.auto=!!acAutoBox.checked;acSaveState();if(acState.auto)acMaybePoll(true)};
+ }
+ const acTokBtn=$('ac-token-save');if(acTokBtn)acTokBtn.onclick=acTokenSave;
+ acRender();
+ if(acTimer)clearInterval(acTimer);
+ acTimer=setInterval(()=>acMaybePoll(false),60000);
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')acMaybePoll(false)});
+ window.addEventListener('online',()=>acMaybePoll(false));
+ setTimeout(()=>acMaybePoll(true),2500);
  const file=$('anki-file');
  if(file)file.onchange=()=>{const f=file.files&&file.files[0];file.value='';if(f)handleFile(f)};
  const imp=$('anki-import-btn');if(imp)imp.onclick=()=>file&&file.click();
  const exp=$('anki-export-btn');if(exp)exp.onclick=exportAnki;
  const all=$('anki-study-all');if(all)all.onclick=()=>startStudy(null);
+ const optBtn=$('anki-options-btn'),optHost=$('anki-options');
+ if(optBtn&&optHost)optBtn.onclick=()=>{
+  const open=optHost.style.display==='none';
+  optHost.style.display=open?'':'none';
+  if(open){renderOptions(optHost);optHost.scrollIntoView({block:'start',behavior:'smooth'})}
+ };
  const drop=$('anki-drop');
  if(drop){
   ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag')}));
