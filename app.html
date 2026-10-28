@@ -3634,4 +3634,149 @@ walk(document.body);go();
 }
 })();
 </script>
+
+<style id="clinq-v3-style">
+.moblogo{display:none}
+/* Modo tutor: la barra de texto ocupa su propia línea y los botones van debajo */
+.wk-gsearch-row,.wk-gi{flex-wrap:wrap!important}
+.wk-gsearch-row input,.wk-gi input{flex:1 1 100%!important;min-width:100%!important}
+.wk-gsearch-row .btn,.wk-gi .btn{flex:1 1 auto!important}
+/* Cifras dinámicas en la sesión de estudio */
+.qcnt.dyn{color:var(--blue)!important;font-weight:800}
+.qcnt.zero{opacity:.55}
+label.qzero{opacity:.6}
+/* Carpetas de marcadas */
+.fg-card{padding:14px;min-width:0}
+.fg-top{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.fg-top strong{display:block;overflow-wrap:anywhere}
+.fm2-list{display:grid;gap:7px;max-height:42vh;overflow:auto}
+.fm2-list .btn{display:flex;justify-content:space-between;gap:8px;text-align:left}
+@media(max-width:700px){
+ .moblogo{display:block;width:44px;height:44px;flex:none;object-fit:contain;align-self:center;background:#101d34;padding:5px;border-radius:13px;box-shadow:0 4px 12px rgba(16,29,52,.25)}
+ .topbar{align-items:center!important;flex-wrap:wrap!important;gap:10px!important}
+ .topbar>div:nth-of-type(1){min-width:0;flex:1 1 0}
+ .topright{flex:1 1 100%!important;justify-content:flex-start;gap:6px!important;flex-wrap:nowrap!important}
+ .topright .syncpill{min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:10px;padding-right:10px;font-size:12px}
+ .topright .avatar,.topright #hub-btn,.topright .themesw{flex:none}
+}
+</style>
+<script id="clinq-v3">
+(function(){
+const L=(function(){try{return localStorage.getItem('clinq_lang')==='en'?'en':'es'}catch(e){return 'es'}})();
+const T=(es,en)=>L==='en'?en:es;
+const $=id=>document.getElementById(id);
+
+/* ===== 1. Logo de ClinQ en móvil ===== */
+(function(){
+ const src=document.querySelector('.brandmark.logo img'),bar=document.querySelector('header.topbar');
+ if(!src||!bar||bar.querySelector('.moblogo'))return;
+ const im=document.createElement('img');im.className='moblogo';im.alt='ClinQ';im.src=src.src;
+ im.onclick=()=>{try{showView('home')}catch(e){}};
+ bar.insertBefore(im,bar.firstChild);
+})();
+
+/* ===== 2. Cifras dinámicas en la sesión de estudio ===== */
+function put(label,x,n){
+ const s=label.querySelector('.muted');if(!s)return;
+ s.classList.add('qcnt');
+ const dyn=x!==n;
+ s.textContent=dyn?'('+x+T(' de ',' of ')+n+')':'('+n+')';
+ s.classList.toggle('dyn',dyn);s.classList.toggle('zero',dyn&&x===0);
+ label.classList.toggle('qzero',dyn&&x===0);
+}
+function tally(pool,keyFn){const m=new Map();pool.forEach(q=>{const k=keyFn(q);if(k!=null)m.set(k,(m.get(k)||0)+1)});return m}
+function dynCounts(){
+ if(!$('quiz-sources')&&!document.querySelector('.quiz-folder-check'))return;
+ const cfg=currentQuizConfig();
+ /* cada grupo se cuenta con todos los demás filtros aplicados, ignorando el suyo */
+ const bySrc=tally(quizPool({...cfg,sources:[],excludeSources:false}),q=>q.source||'Texto pegado');
+ const byFol=tally(quizPool({...cfg,folders:[]}),q=>folderOf(q));
+ const bySpe=tally(quizPool({...cfg,specialties:[]}),q=>inferSpecialty(q.stem,q.source,q.subject));
+ const totSrc=tally(bank,q=>q.source||'Texto pegado'),totFol=tally(bank,q=>folderOf(q)),totSpe=tally(bank,q=>inferSpecialty(q.stem,q.source,q.subject));
+ document.querySelectorAll('.quiz-source-check').forEach(cb=>{const l=cb.closest('label');if(l)put(l,bySrc.get(cb.value)||0,totSrc.get(cb.value)||0)});
+ document.querySelectorAll('.quiz-folder-check').forEach(cb=>{const l=cb.closest('label');if(l)put(l,byFol.get(cb.value)||0,totFol.get(cb.value)||0)});
+ document.querySelectorAll('.quiz-specialty-check').forEach(cb=>{const l=cb.closest('label');if(l)put(l,bySpe.get(cb.value)||0,totSpe.get(cb.value)||0)});
+ /* resumen de cada día de importación */
+ document.querySelectorAll('#quiz-sources .day-f').forEach(f=>{
+  const dn=f.querySelector('summary .dn:not(.dsel)');if(!dn)return;
+  if(!dn.dataset.base)dn.dataset.base=dn.textContent;
+  let x=0,n=0;f.querySelectorAll('.quiz-source-check').forEach(cb=>{x+=bySrc.get(cb.value)||0;n+=totSrc.get(cb.value)||0});
+  const m=dn.dataset.base.match(/^(.*?)(\d+)\s+(pregunta|preguntas|question|questions)\s*$/);
+  const nb=dn.dataset.base.replace(/·\s*\d+\s+(pregunta|preguntas)\s*$/,'').replace(/\s*$/,'');
+  const nbanks=(dn.dataset.base.match(/(\d+)\s+bancos?/)||[])[1]||'0';
+  dn.textContent='· '+nbanks+(nbanks==='1'?T(' banco',' bank'):T(' bancos',' banks'))+' · '+(x!==n?x+T(' de ',' of ')+n:n)+(n===1?T(' pregunta',' question'):T(' preguntas',' questions'));
+ });
+}
+const _uq=updateQuizPreview;
+updateQuizPreview=function(){const r=_uq.apply(this,arguments);try{dynCounts()}catch(e){}return r};
+const _rq=renderQuizStart;
+renderQuizStart=function(){const r=_rq.apply(this,arguments);try{dynCounts()}catch(e){}return r};
+try{dynCounts()}catch(e){}
+
+/* ===== 3. Mover todas las marcadas de una carpeta a otra (Mi banco) ===== */
+const wrap=$('bank-groups-wrap');
+let panel=null,fmv=null,src=null;
+if(wrap){
+ panel=document.createElement('details');panel.className='panel';panel.id='folder-groups-wrap';panel.style.cssText='margin:14px 0 18px;padding:12px 16px';
+ panel.innerHTML='<summary style="cursor:pointer;font-weight:800">⭐ '+T('Carpetas de marcadas','Flagged folders')+' <span id="folder-groups-count" class="muted" style="font-weight:600"></span></summary><div class="smalltext muted" style="margin-top:8px">'+T('Mueve todas las preguntas marcadas de una carpeta a otra (incluida la carpeta «Marcadas»).','Move all flagged questions from one folder to another (including the “Marcadas” folder).')+'</div><div id="folder-groups" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:14px 0 4px"></div>';
+ wrap.after(panel);
+ fmv=document.createElement('div');fmv.className='modalback';fmv.id='fmove-modal';
+ fmv.innerHTML='<div class="modal" style="max-width:440px"><div class="modalhead"><h3>↪ '+T('Mover marcadas','Move flagged')+'</h3><button class="iconbtn" type="button" id="fm2-x">×</button></div><div class="smalltext muted" id="fm2-info" style="margin-bottom:10px"></div><div id="fm2-list" class="fm2-list"></div><div style="margin-top:14px;font-weight:800;font-size:13px">'+T('Nueva carpeta','New folder')+'</div><div style="display:flex;gap:8px;margin-top:6px"><input id="fm2-new" class="field" style="flex:1;min-width:0" maxlength="40" placeholder="'+T('Nombre de la carpeta','Folder name')+'" autocomplete="off"><button class="btn primary" type="button" id="fm2-create">'+T('Crear y mover','Create and move')+'</button></div></div>';
+ document.body.appendChild(fmv);
+}
+const closeMv=()=>{if(fmv)fmv.classList.remove('open');src=null};
+function renderFolderGroups(){
+ const host=$('folder-groups');if(!host)return;
+ const names=folderNames(),tot=bank.filter(q=>folderOf(q)).length;
+ const c=$('folder-groups-count');if(c)c.textContent='· '+names.length+(names.length===1?T(' carpeta',' folder'):T(' carpetas',' folders'))+' · '+tot+(tot===1?T(' marcada',' flagged'):T(' marcadas',' flagged'));
+ host.innerHTML='';
+ names.forEach(f=>{
+  const n=bank.filter(q=>folderOf(q)===f).length,d=document.createElement('div');d.className='panel fg-card';
+  d.innerHTML='<div class="fg-top"><div style="min-width:0"><strong>📁 '+esc(f)+'</strong><span class="smalltext muted">'+n+(n===1?T(' pregunta',' question'):T(' preguntas',' questions'))+'</span></div><button type="button" class="btn outline small" '+(n?'':'disabled')+' title="'+T('Mover todas las preguntas de esta carpeta a otra','Move all questions in this folder to another')+'">↪ '+T('Mover todas a…','Move all to…')+'</button></div>';
+  d.querySelector('button').onclick=()=>openMove(f);
+  host.appendChild(d);
+ });
+}
+function doMove(from,to){
+ if(!to||to===from)return;
+ const qs=bank.filter(q=>folderOf(q)===from);if(!qs.length){closeMv();return}
+ if(!confirm(T('¿Mover '+qs.length+' pregunta(s) de «'+from+'» a «'+to+'»?','Move '+qs.length+' question(s) from “'+from+'” to “'+to+'”?')))return;
+ const now=Date.now();
+ qs.forEach(q=>{q.flagged=true;q.folder=to;q.updated=now;if(!q.nextReviewAt)q.nextReviewAt=now+86400000});
+ closeMv();saveBank();
+ try{renderLibrary()}catch(e){}
+ if(currentQuiz)renderQuizQuestion();else renderQuizStart();
+ notify(T(qs.length+(qs.length===1?' pregunta movida':' preguntas movidas')+' a «'+to+'».',qs.length+(qs.length===1?' question moved':' questions moved')+' to “'+to+'”.'));
+}
+function openMove(from){
+ src=from;
+ const n=bank.filter(q=>folderOf(q)===from).length;
+ $('fm2-info').textContent=T('Origen: «'+from+'» · '+n+(n===1?' pregunta':' preguntas')+'. Elige la carpeta de destino:','From: “'+from+'” · '+n+(n===1?' question':' questions')+'. Choose the destination folder:');
+ const list=$('fm2-list');list.innerHTML='';
+ folderNames().filter(f=>f!==from).forEach(f=>{
+  const k=bank.filter(q=>folderOf(q)===f).length,b=document.createElement('button');b.type='button';b.className='btn outline';
+  b.innerHTML='<span>📁 '+esc(f)+'</span><span class="muted">'+k+'</span>';
+  b.onclick=()=>doMove(from,f);list.appendChild(b);
+ });
+ if(!list.children.length)list.innerHTML='<div class="smalltext muted">'+T('No hay otra carpeta todavía: crea una abajo.','There is no other folder yet: create one below.')+'</div>';
+ $('fm2-new').value='';fmv.classList.add('open');
+}
+if(fmv){
+ $('fm2-x').onclick=closeMv;
+ fmv.addEventListener('mousedown',e=>{if(e.target===fmv)closeMv()});
+ const create=()=>{
+  const nm=$('fm2-new').value.trim().replace(/\s+/g,' ');
+  if(!nm){notify(T('Escribe un nombre para la carpeta','Enter a folder name'));return}
+  const ex=folderNames().find(f=>f.toLowerCase()===nm.toLowerCase());
+  doMove(src,ex||nm);
+ };
+ $('fm2-create').onclick=create;
+ fmv.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')closeMv();if(e.key==='Enter'&&e.target.id==='fm2-new'){e.preventDefault();create()}});
+}
+const _rl=renderLibrary;
+renderLibrary=function(){const r=_rl.apply(this,arguments);try{renderFolderGroups()}catch(e){}return r};
+try{renderFolderGroups()}catch(e){}
+})();
+</script>
+
 </body></html>
