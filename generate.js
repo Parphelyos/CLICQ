@@ -43,32 +43,26 @@ module.exports = async (req, res) => {
   if (b.mode === 'define' ? !String(b.term || '').trim() : (!b.text || String(b.text).length < 200)) return res.status(400).json({ error: 'Texto insuficiente.' });
 
   try {
-    const def = b.mode === 'define';
-    // Para definiciones cortas se prefiere el modelo ligero (más rápido y menos saturado).
-    const models = (def ? [process.env.GEMINI_MODEL, 'gemini-3.1-flash-lite', 'gemini-3.8-flash'] : [process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-3.1-flash-lite']).filter(Boolean);
+    const models = [process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-3.1-flash-lite'].filter(Boolean);
     let r = null;
-    for (let round = 0; round < (def ? 2 : 1); round++) {
-      if (round) await new Promise((ok) => setTimeout(ok, 1200)); // reintento si el servicio de IA está saturado (503)
-      for (let i = 0; i < models.length; i++) {
-        try {
-          r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[i]}:generateContent`, {
-            method: 'POST',
-            signal: AbortSignal.timeout(def ? 8000 : i === 0 ? 35000 : 20000),
-            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-            body: JSON.stringify({
-              systemInstruction: { parts: [{ text: SYS }] },
-              contents: [{ role: 'user', parts: [{ text: prompt(b) }] }],
-              generationConfig: { responseMimeType: 'application/json', temperature: b.mode === 'fidelity' ? 0.1 : def ? 0.2 : 0.5, maxOutputTokens: def ? 512 : 8192 },
-            }),
-          });
-          if (r.status !== 404 && r.status !== 429 && r.status < 500) break; // modelo inexistente, sin cuota (cada modelo tiene la suya), saturado o lento: prueba el siguiente
-        } catch (e) { r = null; }
-      }
-      if (r && (r.ok || r.status === 429)) break; // con 429 no se reintenta: gastaría más cuota
+    for (let i = 0; i < models.length; i++) {
+      try {
+        r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[i]}:generateContent`, {
+          method: 'POST',
+          signal: AbortSignal.timeout(i === 0 ? 35000 : 20000),
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYS }] },
+            contents: [{ role: 'user', parts: [{ text: prompt(b) }] }],
+            generationConfig: { responseMimeType: 'application/json', temperature: b.mode === 'fidelity' ? 0.1 : b.mode === 'define' ? 0.2 : 0.5, maxOutputTokens: b.mode === 'define' ? 512 : 8192 },
+          }),
+        });
+        if (r.status !== 404 && r.status < 500) break; // si el modelo no existe, falla o tarda, prueba el siguiente
+      } catch (e) { r = null; }
     }
     if (!r) return res.status(504).json({ error: 'La IA tardó demasiado. Prueba con menos casos o una sección más corta.' });
     if (r.status === 429) return res.status(429).json({ error: 'Se alcanzó el límite del servicio de IA. Inténtalo en un minuto.' });
-    if (!r.ok) return res.status(502).json({ error: r.status >= 500 ? 'El servicio de IA está saturado en este momento. Inténtalo de nuevo en unos segundos.' : 'El servicio de IA no respondió (' + r.status + ').' });
+    if (!r.ok) return res.status(502).json({ error: 'El servicio de IA no respondió (' + r.status + ').' });
     const j = await r.json();
     const t = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map((p) => p.text || '').join('').replace(/^```json|```$/g, '').trim();
     const parsed = JSON.parse(t);
