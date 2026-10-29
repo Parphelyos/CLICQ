@@ -622,7 +622,7 @@ body.sb-collapsed .sidebar:hover .navgroup.open .navsub{display:grid!important}
   <section class="view" id="view-library">
     <div class="sectionhead"><div><h3 style="transform: translate(6px, -4px);">Mi banco de preguntas</h3><p id="library-subtitle">Tus preguntas guardadas localmente.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn outline small" onclick="exportBank()">↧ Exportar respaldo</button><button class="btn outline small" onclick="backupInput.click()">↥ Importar respaldo</button><button class="btn outline small" onclick="addManualQuestion()">＋ Crear pregunta manual</button><button class="btn primary small" onclick="showView('import')">＋ Importar</button><button class="btn danger small" onclick="deleteEntireBank()">🗑 Borrar banco completo</button></div></div>
     <details class="panel" id="bank-groups-wrap" style="margin:14px 0 18px;padding:12px 16px"><summary style="cursor:pointer;font-weight:800">📚 Bancos importados <span id="bank-groups-count" class="muted" style="font-weight:600"></span></summary><div id="bank-groups" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:14px 0 4px"></div></details>
-    <div class="toolbar"><input class="field search" id="search-q" placeholder="Buscar en enunciados y opciones…" oninput="renderLibrary()"><select class="field" id="filter-source" onchange="renderLibrary()"><option value="">Todos los documentos</option></select><select class="field" id="filter-status" onchange="renderLibrary()"><option value="">Todos los estados</option><option value="wrong">Respondidas mal</option><option value="correct">Respondidas bien</option><option value="omitted">Omitidas</option><option value="unanswered">Nunca respondidas</option><option value="flagged">Marcadas</option></select></div>
+    <div class="toolbar"><input class="field search" id="search-q" placeholder="Buscar en enunciados y opciones…" oninput="renderLibrary()"><select class="field" id="filter-source" onchange="librarySourceChanged()"><option value="">Todos los documentos</option></select><select class="field" id="filter-status" onchange="renderLibrary()"><option value="">Todos los estados</option><option value="wrong">Respondidas mal</option><option value="correct">Respondidas bien</option><option value="omitted">Omitidas</option><option value="unanswered">Nunca respondidas</option><option value="flagged">Marcadas</option></select><div id="library-topic-bar" class="library-topic-bar"></div></div>
     <div id="library-list" class="questionlist"></div>
   </section>
   <section class="view" id="view-practice">
@@ -680,11 +680,12 @@ body.sb-collapsed .sidebar:hover .navgroup.open .navsub{display:grid!important}
 <div class="toast" id="toast"></div>
 <script>
 const DBKEY='clinq_bank_v1';
-let bank=loadBank(), importPreview=[], currentQuiz=null, toastTimer=null;
+let bank=loadBank(), importPreview=[], currentQuiz=null, toastTimer=null, libraryTopic='', libraryTopicSource='';
 function loadBank(){try{let x=JSON.parse(localStorage.getItem(DBKEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return []}}
 function saveBank(){try{localStorage.setItem(DBKEY,JSON.stringify(bank));refreshAll()}catch(e){notify('El almacenamiento local está lleno. Exporta un respaldo o elimina preguntas antiguas.')}}
 function uid(){return 'q_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8)}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function attrJs(v){return esc(JSON.stringify(String(v==null?'':v)))}
 function notify(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800)}
 /* ==== Sesiones, subrayado, disciplinas, selector de banco ==== */
 const SESSKEY='clinq_sessions_v1';
@@ -962,7 +963,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.m
 
 /* Configuración de sesión guardada, enunciado y atajos de teclado */
 const QCFG='clinq_quiz_config_v1';
-function currentQuizConfig(){const g=id=>document.getElementById(id);if(g('quiz-count')){return{source:'',folders:[...document.querySelectorAll('.quiz-folder-check:checked')].map(el=>el.value),sources:[...document.querySelectorAll('.quiz-source-check:checked')].map(el=>el.value),excludeSources:!!g('quiz-source-exclude')?.checked,status:g('quiz-status')?.value||'all',count:g('quiz-count').value||'10',order:g('quiz-order')?.value||'random',review:!!g('quiz-review')?.checked,specialties:[...document.querySelectorAll('.quiz-specialty-check:checked')].map(el=>el.value)}}
+function currentQuizConfig(){const g=id=>document.getElementById(id);if(g('quiz-count')){return{source:'',folders:[...document.querySelectorAll('.quiz-folder-check:checked')].map(el=>el.value),sources:[...document.querySelectorAll('.quiz-source-check:checked')].map(el=>el.value),excludeSources:!!g('quiz-source-exclude')?.checked,status:g('quiz-status')?.value||'all',count:g('quiz-count').value||'10',order:g('quiz-order')?.value||'random',review:!!g('quiz-review')?.checked,specialties:[...document.querySelectorAll('.quiz-specialty-check:checked')].map(el=>el.value),topics:[...document.querySelectorAll('.quiz-topic-check:checked')].map(el=>el.value)}}
  let saved={};try{saved=JSON.parse(localStorage.getItem(QCFG)||'{}')||{}}catch(e){}
  const srcOk='',avail=availableSpecialties();
  return{source:srcOk,folders:(Array.isArray(saved.folders)?saved.folders:[]).filter(f=>folderNames().includes(f)),sources:(Array.isArray(saved.sources)?saved.sources:(saved.source?[saved.source]:[])).filter(x=>sourceNames().includes(x)),excludeSources:!!saved.excludeSources,status:saved.status||'all',count:saved.count||'10',order:saved.order||'random',review:!!saved.review,specialties:(Array.isArray(saved.specialties)?saved.specialties:[]).filter(x=>avail.includes(x))}}
@@ -1020,6 +1021,16 @@ document.querySelectorAll('.nav button[data-view]').forEach(b=>b.addEventListene
 function stats(){let attempts=bank.reduce((n,q)=>n+(q.attempts||0),0),gradedAttempts=bank.reduce((n,q)=>n+(q.answer?(q.attempts||0):0),0),correct=bank.reduce((n,q)=>n+(q.correctCount||0),0),flagged=bank.filter(q=>q.flagged).length,review=bank.filter(q=>q.flagged||(q.answer&&q.attempts>0&&q.correctCount<q.attempts)).length;return{total:bank.length,attempts,correct,accuracy:gradedAttempts?Math.round(correct/gradedAttempts*100):null,flagged,review}}
 function refreshAll(){let s=stats();document.getElementById('stat-total').textContent=s.total;document.getElementById('stat-attempted').textContent=s.attempts;document.getElementById('stat-accuracy').textContent=s.accuracy===null?'—':s.accuracy+'%';document.getElementById('stat-review').textContent=s.review;document.getElementById('p-attempts').textContent=s.attempts;document.getElementById('p-correct').textContent=s.correct;document.getElementById('p-accuracy').textContent=s.accuracy===null?'—':s.accuracy+'%';document.getElementById('p-flagged').textContent=s.flagged;refreshSourceFilters();renderHome();if(document.getElementById('view-library').classList.contains('active'))renderLibrary();if(document.getElementById('view-progress').classList.contains('active'))renderProgress()}
 function sourceNames(){return [...new Set(bank.map(q=>q.source||'Texto pegado'))].sort((a,b)=>a.localeCompare(b))}
+/* Temas (subtemas) de un banco importado: la especialidad/categoría de cada pregunta. */
+function bankTopics(bankName){const map=new Map();bank.filter(q=>(q.source||'Texto pegado')===bankName).forEach(q=>{const t=inferSpecialty(q.stem,q.source,q.subject)||'Sin tema';map.set(t,(map.get(t)||0)+1)});return [...map.entries()].map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name,'es'))}
+function openBankTopic(source,topic=''){
+ libraryTopicSource=String(source||'');libraryTopic=String(topic||'');
+ const f=document.getElementById('filter-source');
+ if(f&&[...f.options].some(o=>o.value===libraryTopicSource))f.value=libraryTopicSource;
+ renderLibrary();
+}
+function clearLibraryTopic(){libraryTopic='';libraryTopicSource='';renderLibrary()}
+function librarySourceChanged(){libraryTopic='';libraryTopicSource='';renderLibrary()}
 function refreshSourceFilters(){['filter-source','quiz-source'].forEach(id=>{let el=document.getElementById(id);if(!el)return;let old=el.value;el.innerHTML='<option value="">'+(id==='filter-source'?'Todos los documentos':'Todos los documentos')+'</option>'+sourceNames().map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');if([...el.options].some(o=>o.value===old))el.value=old})}
 const RECENT_BANKS_KEY='clinq_recent_banks_v1';
 function readRecentBankActivity(){try{const o=JSON.parse(localStorage.getItem(RECENT_BANKS_KEY)||'{}');return o&&typeof o==='object'?o:{}}catch(e){return {}}}
@@ -1031,8 +1042,8 @@ function renderHome(){
  if(!recent.length){host.innerHTML='<div class="panel empty"><div class="emptyicon">🧠</div><strong>Aún no tienes sesiones de práctica.</strong>Empieza una sesión desde Practicar; aparecerá aquí para que puedas continuarla o revisar sus resultados.<div style="margin-top:14px"><button class="btn primary" onclick="showView(\'practice\')">Crear una sesión</button></div></div>';return}
  host.innerHTML='<div class="recent-banks-grid">'+recent.map(s=>{const total=(s.questions||[]).length,answered=Object.keys(s.answers||{}).length,when=new Date(Number(s.updated)||Number(s.started)||Date.now()).toLocaleDateString('es-DO',{day:'numeric',month:'short',year:'numeric'});return `<div class="panel recent-bank-card"><div class="recent-bank-icon">${s.finished?'✓':'🧠'}</div><div class="recent-bank-main"><strong title="${esc(s.label||'Sesión sin nombre')}">${esc(s.label||'Sesión sin nombre')}</strong><span>${s.finished?'Finalizada':'En curso'} · ${answered}/${total} respondidas</span><small>${esc(when)}</small></div><button class="btn primary small" onclick="resumeSession('${s.sid}')">${s.finished?'Ver resultados':'Continuar'} →</button></div>`}).join('')+'</div>';
 }
-function renderLibrary(){renderBankGroups();let search=(document.getElementById('search-q').value||'').toLowerCase(),source=document.getElementById('filter-source').value,status=document.getElementById('filter-status').value;if(source)touchBankActivity(source,'opened');let items=bank.filter(q=>{let txt=[q.stem,q.explanation,q.source,...(q.options||[]).map(o=>o.text)].join(' ').toLowerCase();return(!search||txt.includes(search))&&(!source||q.source===source)&&(!status||(status==='wrong'&&q.answer&&(q.attempts||0)>(q.correctCount||0))||(status==='omitted'&&(q.omittedCount||0)>0)||(status==='unanswered'&&!(q.attempts||0)&&!(q.omittedCount||0))||(status==='correct'&&q.answer&&(q.attempts||0)>0&&q.correctCount===q.attempts)||(status==='flagged'&&q.flagged))});document.getElementById('library-subtitle').textContent=`${items.length} de ${bank.length} preguntas`;let host=document.getElementById('library-list');if(!items.length){host.innerHTML='<div class="panel empty"><div class="emptyicon">🔎</div><strong>'+ (bank.length?'No hay coincidencias.':'Todavía no hay preguntas.')+'</strong>'+(bank.length?'Prueba otra búsqueda o cambia los filtros.':'Importa un PDF, Word, Excel o pega texto para crear tu banco.')+'</div>';return}host.innerHTML=items.map((q,i)=>`<div class="qrow"><div class="qnum">${String(i+1).padStart(2,'0')}</div><div class="qsummary"><strong>${esc(q.stem||'Pregunta sin enunciado')}</strong><span>${esc(inferSpecialty(q.stem,q.source,q.subject))} · ${esc(q.source||'Texto pegado')} · ${q.options?.length||0} opciones · ${q.attempts||0} intentos · ${q.omittedCount||0} omitidas</span></div><div class="qactions">${q.flagged?'<span class="pill gold">★ Marcada</span>':''}${q.needsCorrection?'<span class="pill red">⚑ Corregir</span>':''}<span class="pill ${q.answer?'green':'gold'}">${q.answer?'Clave: '+q.answer:'Sin clave'}</span><button class="btn outline small" onclick="openEdit('${q.id}')">Editar</button><button class="btn outline small" title="Practicar esta pregunta" onclick="startQuiz('practice','${q.id}')">▶</button><button class="btn danger small" title="Eliminar pregunta" onclick="deleteQuestion('${q.id}')">Eliminar</button></div></div>`).join('')}
-function renderBankGroups(){const host=document.getElementById('bank-groups');if(!host)return;const groups=sourceNames().map(name=>({name,questions:bank.filter(q=>(q.source||'Texto pegado')===name)}));if(!groups.length){host.innerHTML='';return}host.innerHTML=groups.map(g=>`<div class="panel" style="padding:14px;min-width:0"><div style="display:flex;gap:10px;align-items:flex-start;justify-content:space-between"><div style="min-width:0"><strong style="display:block;overflow-wrap:anywhere">${esc(g.name)}</strong><span class="smalltext muted">${g.questions.length} pregunta(s)</span></div><button class="btn danger small" onclick="deleteSourceBank(${JSON.stringify(g.name).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;')})" title="Borrar solo este banco">🗑 Borrar banco</button></div></div>`).join('')}
+function renderLibrary(){renderBankGroups();let search=(document.getElementById('search-q').value||'').toLowerCase(),source=document.getElementById('filter-source').value,status=document.getElementById('filter-status').value,topic=libraryTopic;if(topic&&source!==libraryTopicSource){topic='';libraryTopic='';libraryTopicSource=''}if(source)touchBankActivity(source,'opened');let items=bank.filter(q=>{let txt=[q.stem,q.explanation,q.source,...(q.options||[]).map(o=>o.text)].join(' ').toLowerCase();return(!search||txt.includes(search))&&(!source||q.source===source)&&(!topic||inferSpecialty(q.stem,q.source,q.subject)===topic)&&(!status||(status==='wrong'&&q.answer&&(q.attempts||0)>(q.correctCount||0))||(status==='omitted'&&(q.omittedCount||0)>0)||(status==='unanswered'&&!(q.attempts||0)&&!(q.omittedCount||0))||(status==='correct'&&q.answer&&(q.attempts||0)>0&&q.correctCount===q.attempts)||(status==='flagged'&&q.flagged))});document.getElementById('library-subtitle').textContent=`${items.length} de ${bank.length} preguntas`+(topic?` · Tema: ${topic} (${source})`:'');const tbar=document.getElementById('library-topic-bar');if(tbar)tbar.innerHTML=topic?`<button type="button" class="bank-topic on" onclick="clearLibraryTopic()" title="Quitar el filtro de tema">${esc(topic)} · ${esc(source)} <span aria-hidden="true">✕</span></button>`:'';let host=document.getElementById('library-list');if(!items.length){host.innerHTML='<div class="panel empty"><div class="emptyicon">🔎</div><strong>'+ (bank.length?'No hay coincidencias.':'Todavía no hay preguntas.')+'</strong>'+(bank.length?'Prueba otra búsqueda o cambia los filtros.':'Importa un PDF, Word, Excel o pega texto para crear tu banco.')+'</div>';return}host.innerHTML=items.map((q,i)=>`<div class="qrow"><div class="qnum">${String(i+1).padStart(2,'0')}</div><div class="qsummary"><strong>${esc(q.stem||'Pregunta sin enunciado')}</strong><span>${esc(inferSpecialty(q.stem,q.source,q.subject))} · ${esc(q.source||'Texto pegado')} · ${q.options?.length||0} opciones · ${q.attempts||0} intentos · ${q.omittedCount||0} omitidas</span></div><div class="qactions">${q.flagged?'<span class="pill gold">★ Marcada</span>':''}${q.needsCorrection?'<span class="pill red">⚑ Corregir</span>':''}<span class="pill ${q.answer?'green':'gold'}">${q.answer?'Clave: '+q.answer:'Sin clave'}</span><button class="btn outline small" onclick="openEdit('${q.id}')">Editar</button><button class="btn outline small" title="Practicar esta pregunta" onclick="startQuiz('practice','${q.id}')">▶</button><button class="btn danger small" title="Eliminar pregunta" onclick="deleteQuestion('${q.id}')">Eliminar</button></div></div>`).join('')}
+function renderBankGroups(){const host=document.getElementById('bank-groups');if(!host)return;const groups=sourceNames().map(name=>({name,questions:bank.filter(q=>(q.source||'Texto pegado')===name)}));if(!groups.length){host.innerHTML='';return}host.innerHTML=groups.map(g=>{const topics=bankTopics(g.name),active=libraryTopic&&libraryTopicSource===g.name;return `<div class="panel bank-card" style="padding:14px;min-width:0"><div style="display:flex;gap:10px;align-items:flex-start;justify-content:space-between"><div style="min-width:0"><strong style="display:block;overflow-wrap:anywhere">${esc(g.name)}</strong><span class="smalltext muted">${g.questions.length} pregunta(s) · ${topics.length} tema(s)</span></div><button class="btn danger small" onclick="deleteSourceBank(${JSON.stringify(g.name).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;')})" title="Borrar solo este banco">🗑 Borrar banco</button></div><div class="bank-topics"><button type="button" class="bank-topic${!active?' on':''}" onclick="openBankTopic(${attrJs(g.name)})" title="Ver todo el banco">Todos <span>${g.questions.length}</span></button>${topics.map(t=>`<button type="button" class="bank-topic${active&&libraryTopic===t.name?' on':''}" onclick="openBankTopic(${attrJs(g.name)},${attrJs(t.name)})" title="Ver solo este tema">${esc(t.name)} <span>${t.count}</span></button>`).join('')}</div></div>`}).join('')}
 function deleteSourceBank(sourceName){const qs=bank.filter(q=>(q.source||'Texto pegado')===sourceName);if(!qs.length){notify('Ese banco ya no contiene preguntas.');return}if(!confirm(`¿Borrar únicamente el banco «${sourceName}»? Se eliminarán ${qs.length} pregunta(s) y su progreso. Los demás bancos no se modificarán. Esta acción no se puede deshacer.`))return;const ids=new Set(qs.map(q=>q.id));bank=bank.filter(q=>!ids.has(q.id));pruneSessions(ids);try{const recent=readRecentBankActivity();delete recent[sourceName];localStorage.setItem(RECENT_BANKS_KEY,JSON.stringify(recent))}catch(e){}saveBank();renderLibrary();renderHome();notify(`Banco «${sourceName}» eliminado (${qs.length} preguntas).`)}
 function renderProgress(){renderProgressCharts();let host=document.getElementById('source-bars');let sources=sourceNames();if(!sources.length){host.textContent='Aún no hay suficientes datos para mostrar rendimiento.';return}host.innerHTML=sources.map(s=>{let qs=bank.filter(q=>q.source===s),at=qs.reduce((n,q)=>n+(q.answer?(q.attempts||0):0),0),co=qs.reduce((n,q)=>n+(q.correctCount||0),0),pct=at?Math.round(co/at*100):0;return `<div class="baritem"><div class="barlabel"><span>${esc(s)}</span><strong>${at?pct+'%':'Sin intentos'}</strong></div><div class="barbg"><div class="barfill" style="width:${pct}%"></div></div><div class="smalltext muted" style="margin-top:4px">${at?co+' aciertos de '+at+' intentos':qs.length+' preguntas importadas'}</div></div>`}).join('')}
 function normalizeText(s){return String(s||'').replace(/\r\n?/g,'\n').replace(/\u00a0/g,' ').replace(/[\u200b\ufeff\u00ad]/g,'').replace(/([A-Za-zÁÉÍÓÚáéíóúñÑ])-\n(?=[a-záéíóúñ])/g,'$1').replace(/[ \t]+/g,' ').replace(/[ \t]*\n[ \t]*/g,'\n').replace(/\n{3,}/g,'\n\n').replace(/^\s+|\s+$/g,'')}
@@ -1395,7 +1406,7 @@ function folderOf(q){return q&&q.flagged?(q.folder||FOLDER_DEFAULT):null}
 function folderNames(){const set=new Set([FOLDER_DEFAULT]);bank.forEach(q=>{const f=folderOf(q);if(f)set.add(f)});return [...set].sort((a,b)=>a===FOLDER_DEFAULT?-1:b===FOLDER_DEFAULT?1:a.localeCompare(b,'es'))}
 function toggleFlag(id){const q=bank.find(q=>q.id===id);if(q){q.flagged=!q.flagged;if(q.flagged)q.nextReviewAt=Date.now()+24*60*60*1000;else q.nextReviewAt=null;q.updated=Date.now();saveBank();if(currentQuiz)renderQuizQuestion();notify(q.flagged?'Marcada para repasar. Próxima revisión en 1 día.':'Marca eliminada')}}
 
-function renderQuizStart(){if(currentQuiz)return;document.getElementById('quiz-area').innerHTML=`<div class="emptybank panel"><div class="emptyicon">🧠</div><h2>Listo para practicar</h2><p>Elige el modo y trabaja con preguntas de tu banco personal. Puedes mezclar las preguntas o concentrarte en las que necesitas repasar.</p><div class="toolbar" style="justify-content:center"><select class="field" id="quiz-status"><option value="all">Cualquier estado</option><option value="wrong">Solo respondidas mal</option><option value="omitted">Solo omitidas</option><option value="correct">Solo respondidas bien</option><option value="unanswered">Nunca respondidas</option><option value="flagged">Solo marcadas para repasar ★</option></select><select class="field" id="quiz-count"><option value="10">10 preguntas</option><option value="20">20 preguntas</option><option value="40">40 preguntas</option><option value="60">60 preguntas</option><option value="100">100 preguntas</option><option value="all">Todas las preguntas</option></select><select class="field" id="quiz-order" aria-label="Orden de las preguntas"><option value="random">Orden aleatorio</option><option value="bank">Orden del banco</option></select><label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#66758a"><input id="quiz-review" type="checkbox"> Solo repaso</label></div><details id="quiz-sources-wrap" class="panel" style="margin:0 auto 16px;max-width:760px;text-align:left;padding:14px"><summary style="cursor:pointer;font-weight:800;font-size:13px">Bancos / documentos <span id="quiz-sources-sum" class="muted" style="font-weight:600"></span></summary><div class="smalltext muted" style="margin:8px 0 10px">Marca uno o varios (por ejemplo A + B). Si no marcas ninguno, se usan todos.</div><div id="quiz-sources" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">${sourceNames().map(sn=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;border:1px solid #e2e8f0;border-radius:9px"><input type="checkbox" class="quiz-source-check" value="${esc(sn)}"><span>${esc(sn)} <span class="muted">(${bank.filter(q=>(q.source||'Texto pegado')===sn).length})</span></span></label>`).join('')}</div><label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;margin-top:10px"><input id="quiz-source-exclude" type="checkbox"> Excluir los marcados (usar todos menos estos)</label></details><details id="quiz-folders-wrap" class="panel" style="margin:0 auto 16px;max-width:760px;text-align:left;padding:14px"><summary style="cursor:pointer;font-weight:800;font-size:13px">⭐ Marcadas <span id="quiz-folders-sum" class="muted" style="font-weight:600"></span></summary><div class="smalltext muted" style="margin:8px 0 10px">Marca una o varias carpetas para estudiar solo las preguntas que guardaste en ellas. Si no marcas ninguna, no se filtra por carpeta.</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">${folderNames().map(f=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;border:1px solid #e2e8f0;border-radius:9px"><input type="checkbox" class="quiz-folder-check" value="${esc(f)}"><span>📁 ${esc(f)} <span class="muted">(${bank.filter(q=>folderOf(q)===f).length})</span></span></label>`).join('')}</div></details><div class="panel" style="margin:0 auto 16px;max-width:760px;text-align:left;padding:14px"><div style="font-weight:800;font-size:13px;margin-bottom:4px">Especialidades del banco</div><div class="smalltext muted" style="margin-bottom:10px">Marca una o varias. Si no marcas ninguna, se usarán todas las especialidades.</div><div id="quiz-specialties" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">${availableSpecialties().map(sp=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;border:1px solid #e2e8f0;border-radius:9px"><input type="checkbox" class="quiz-specialty-check" value="${esc(sp)}"><span>${esc(sp)} <span class="muted">(${bank.filter(q=>inferSpecialty(q.stem,q.source,q.subject)===sp).length})</span></span></label>`).join('')}</div></div><div id="quiz-preview" class="panel" style="margin:0 auto 16px;max-width:760px;padding:14px;border-color:#b4c3ff;background:#f8faff"></div><div class="panel session-name-create" style="margin:0 auto 14px;max-width:760px;padding:14px;text-align:left"><label for="quiz-session-name" style="display:block;font-size:13px;font-weight:800;margin-bottom:7px">Nombre de la sesión (opcional)</label><input id="quiz-session-name" class="field" type="text" maxlength="90" placeholder="Ej. Uveítis, repaso renal, simulacro de cirugía" style="width:100%"><div class="smalltext muted" style="margin-top:5px">Puedes ponerle nombre antes de empezar y cambiarlo después desde Sesiones abiertas.</div></div><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap"><button class="btn primary" onclick="startQuiz('practice')">▶ Modo práctica</button><button class="btn outline" onclick="startQuiz('exam')">⏱️ Modo examen</button></div></div>`+sessionsPanelHTML();applyQuizConfig()}
+function renderQuizStart(){if(currentQuiz)return;document.getElementById('quiz-area').innerHTML=`<div class="emptybank panel"><div class="emptyicon">🧠</div><h2>Listo para practicar</h2><p>Elige el modo y trabaja con preguntas de tu banco personal. Puedes mezclar las preguntas o concentrarte en las que necesitas repasar.</p><div class="toolbar" style="justify-content:center"><select class="field" id="quiz-status"><option value="all">Cualquier estado</option><option value="wrong">Solo respondidas mal</option><option value="omitted">Solo omitidas</option><option value="correct">Solo respondidas bien</option><option value="unanswered">Nunca respondidas</option><option value="flagged">Solo marcadas para repasar ★</option></select><select class="field" id="quiz-count"><option value="10">10 preguntas</option><option value="20">20 preguntas</option><option value="40">40 preguntas</option><option value="60">60 preguntas</option><option value="100">100 preguntas</option><option value="all">Todas las preguntas</option></select><select class="field" id="quiz-order" aria-label="Orden de las preguntas"><option value="random">Orden aleatorio</option><option value="bank">Orden del banco</option></select><label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#66758a"><input id="quiz-review" type="checkbox"> Solo repaso</label></div><details id="quiz-sources-wrap" class="panel" style="margin:0 auto 16px;max-width:760px;text-align:left;padding:14px"><summary style="cursor:pointer;font-weight:800;font-size:13px">Bancos / documentos <span id="quiz-sources-sum" class="muted" style="font-weight:600"></span></summary><div class="smalltext muted" style="margin:8px 0 10px">Marca uno o varios (por ejemplo A + B). Si no marcas ninguno, se usan todos.</div><div id="quiz-sources" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">${sourceNames().map(sn=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;border:1px solid #e2e8f0;border-radius:9px"><input type="checkbox" class="quiz-source-check" value="${esc(sn)}"><span>${esc(sn)} <span class="muted">(${bank.filter(q=>(q.source||'Texto pegado')===sn).length})</span></span></label>`).join('')}</div><label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;margin-top:10px"><input id="quiz-source-exclude" type="checkbox"> Excluir los marcados (usar todos menos estos)</label></details><details id="quiz-folders-wrap" class="panel" style="margin:0 auto 16px;max-width:760px;text-align:left;padding:14px"><summary style="cursor:pointer;font-weight:800;font-size:13px">⭐ Marcadas <span id="quiz-folders-sum" class="muted" style="font-weight:600"></span></summary><div class="smalltext muted" style="margin:8px 0 10px">Marca una o varias carpetas para estudiar solo las preguntas que guardaste en ellas. Si no marcas ninguna, no se filtra por carpeta.</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">${folderNames().map(f=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;border:1px solid #e2e8f0;border-radius:9px"><input type="checkbox" class="quiz-folder-check" value="${esc(f)}"><span>📁 ${esc(f)} <span class="muted">(${bank.filter(q=>folderOf(q)===f).length})</span></span></label>`).join('')}</div></details><div class="panel quiz-topics-panel" style="margin:0 auto 16px;max-width:760px;text-align:left;padding:14px"><div style="font-weight:800;font-size:13px;margin-bottom:4px">Temas del banco <span id="quiz-topics-sum" class="muted" style="font-weight:600"></span></div><div class="smalltext muted" style="margin-bottom:10px">Cada banco importado puede traer varios temas. Marca los que quieras practicar; si no marcas ninguno, se usan todos los temas.</div><div id="quiz-topics" class="quiz-topics"></div></div><div id="quiz-preview" class="panel" style="margin:0 auto 16px;max-width:760px;padding:14px;border-color:#b4c3ff;background:#f8faff"></div><div class="panel session-name-create" style="margin:0 auto 14px;max-width:760px;padding:14px;text-align:left"><label for="quiz-session-name" style="display:block;font-size:13px;font-weight:800;margin-bottom:7px">Nombre de la sesión (opcional)</label><input id="quiz-session-name" class="field" type="text" maxlength="90" placeholder="Ej. Uveítis, repaso renal, simulacro de cirugía" style="width:100%"><div class="smalltext muted" style="margin-top:5px">Puedes ponerle nombre antes de empezar y cambiarlo después desde Sesiones abiertas.</div></div><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap"><button class="btn primary" onclick="startQuiz('practice')">▶ Modo práctica</button><button class="btn outline" onclick="startQuiz('exam')">⏱️ Modo examen</button></div></div>`+sessionsPanelHTML();applyQuizConfig()}
 function startQuiz(mode,onlyId=null){if(!bank.length){notify('Primero importa preguntas a tu banco.');showView('import');return}let chosen;if(onlyId){chosen=bank.filter(q=>q.id===onlyId)}else{const cfg=currentQuizConfig();saveQuizConfig();let src=cfg.source,onlyReview=cfg.review,quizStatus=cfg.status,count=cfg.count,checkedSpecialties=cfg.specialties;chosen=quizPool(cfg);if(cfg.order==='random')shuffle(chosen);if(count!=='all')chosen=chosen.slice(0,Number(count))}if(!chosen.length){notify('No hay preguntas que coincidan con esos filtros.');return}[...new Set(chosen.map(q=>q.source||'Texto pegado'))].forEach(name=>touchBankActivity(name,'opened'));const requestedName=(document.getElementById('quiz-session-name')?.value||'').trim();currentQuiz={sid:'s_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),mode,label:requestedName||sessionLabel(mode,chosen,onlyId),questions:chosen.map(q=>q.id),index:0,answers:{},finished:false,started:Date.now(),updated:Date.now()};sessions.push(currentQuiz);saveSessions();showView('practice');renderQuizQuestion()}
 function renderQuizQuestion(){let host=document.getElementById('quiz-area');if(!currentQuiz)return renderQuizStart();saveSessions();if(currentQuiz.finished){renderQuizResults();return}let q=bank.find(x=>x.id===currentQuiz.questions[currentQuiz.index]);if(!q){let ni=-1;for(let i=currentQuiz.index+1;i<currentQuiz.questions.length;i++){if(bank.some(x=>x.id===currentQuiz.questions[i])){ni=i;break}}if(ni<0){for(let i=0;i<currentQuiz.index;i++){if(bank.some(x=>x.id===currentQuiz.questions[i])){ni=i;break}}}if(ni<0){host.innerHTML='<div class="emptybank panel"><div class="emptyicon">📝</div><h2>Esta sesión no tiene preguntas disponibles</h2><p>Las preguntas de esta sesión ya no están en tu banco. Puedes cerrarla y crear una nueva.</p><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap"><button class="btn primary" onclick="exitQuiz()">Volver a sesiones</button><button class="btn outline" onclick="closeSession(\''+currentQuiz.sid+'\')">Cerrar esta sesión</button></div></div>';return}currentQuiz.index=ni;return renderQuizQuestion()}let idx=currentQuiz.index+1,total=currentQuiz.questions.length,chosen=currentQuiz.answers[q.id],revealed=currentQuiz.mode==='practice'&&chosen!==undefined;let options=q.options||[];host.innerHTML=`<div class="quizwrap"><div class="quiztop"><button class="btn outline small" onclick="exitQuiz()" title="Tu sesión queda guardada">← Sesiones</button><div class="smalltext muted">${currentQuiz.mode==='exam'?'Modo examen':'Modo práctica'} · Pregunta ${idx} de ${total}</div><button class="btn outline small" onclick="addManualQuestion()">＋ Crear pregunta</button><button class="btn outline small" onclick="toggleFlag('${q.id}')">${q.flagged?'★ Marcada':'☆ Marcar para repasar'}</button><button class="btn danger small" onclick="finishQuiz()">Finalizar sesión</button></div><div class="progressline"><div style="width:${Math.round((idx-1)/total*100)}%"></div></div><div class="quizcard"><div class="casebar"><div id="stem-tools"></div></div><div class="quizstem hlf" id="quiz-stem-${q.id}" data-qid="${q.id}" data-field="stem">${renderQuestionStem(q)}</div>${q.flagged?`<div class="notice" style="margin:8px 0;user-select:none;-webkit-user-select:none">★ Marcada para repasar · Próxima revisión: ${q.nextReviewAt?new Date(q.nextReviewAt).toLocaleString('es-DO',{dateStyle:'medium',timeStyle:'short'}):'mañana'}</div>`:''}<details class="option-disclosure" ${currentQuiz.optionsOpen?.[q.id]!==false?'open':''} ontoggle="setOptionsOpen('${q.id}',this.open)"><summary><span>Opciones de respuesta</span><span class="disclosure-hint">${currentQuiz.optionsOpen?.[q.id]!==false?'Haz clic para ocultarlas':'Abrir para responder'}</span></summary><div class="options">${options.map(o=>{let cls='option';if(chosen===o.key)cls+=' selected';if(revealed&&q.answer===o.key)cls+=' correct';if(revealed&&chosen===o.key&&q.answer&&chosen!==q.answer)cls+=' incorrect';let disabled=(currentQuiz.mode==='practice'&&chosen!==undefined)||currentQuiz.finished;return `<div role="button" tabindex="${disabled?'-1':'0'}" aria-disabled="${disabled?'true':'false'}" class="${cls}" onclick="optClick(event,'${q.id}','${o.key}')"><span class="letter">${o.key}</span><span class="hlf" data-qid="${q.id}" data-field="opt:${o.key}">${renderHL(q,'opt:'+o.key)}</span></div>`}).join('')}</div></details>${revealed?`<div class="feedback ${!q.answer?'neutral':chosen===q.answer?'good':'bad'}"><strong>${!q.answer?'Respuesta no configurada':chosen===q.answer?'✓ Correcto':'✕ Incorrecto'+(q.answer?' · Respuesta: '+q.answer:'')}</strong>${q.explanation?'\n\n<span class="hlf" data-qid="'+q.id+'" data-field="exp">'+renderHL(q,'exp')+'</span>':!q.answer?'\nEdita esta pregunta para añadir la clave correcta y su explicación.':''}</div>`:''}</div><div class="quizdock"><details class="dockfold" ${currentQuiz.dockOpen?.[q.id]===true?'open':''} ontoggle="setDockFold('${q.id}',this.open,this)"><summary><span class="quizdock-title">Corregir esta pregunta</span><span class="dockfold-hint">${currentQuiz.dockOpen?.[q.id]===true?'Ocultar':'Mostrar'}</span></summary><div class="smalltext muted" style="margin-bottom:10px">Si la clave del documento está equivocada, puedes corregirla aquí. Los cambios se guardan en el banco original.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${q.needsCorrection?'primary':'outline'} small" onclick="toggleNeedsCorrection('${q.id}')">${q.needsCorrection?'✓ Marcada para corregir':'⚑ Marcar como incorrecta'}</button><button class="btn outline small" onclick="openEdit('${q.id}')">✎ Editar pregunta y respuesta correcta</button><button class="btn danger small" onclick="deleteQuestion('${q.id}')">🗑 Borrar del banco original</button></div></details><div class="quizbottom"><div class="casenav"><button class="btn outline small" onclick="previousQuestion()" ${currentQuiz.index===0?'disabled':''}>← Anterior</button><button class="btn outline small" onclick="skipQuestion()">${currentQuiz.mode==='exam'?'Saltar por ahora':'Omitir pregunta'}</button></div>${currentQuiz.mode==='practice'?(chosen!==undefined?(idx<total?`<button class="btn primary" onclick="nextQuestion()">Siguiente pregunta →</button>`:'<span class="smalltext muted" style="align-self:center">Última pregunta: finaliza desde el botón superior.</span>'):'<span class="smalltext muted" style="align-self:center">Selecciona una opción o finaliza la sesión.</span>'):(idx<total?`<button class="btn primary" onclick="nextQuestion()">Siguiente →</button>`:'<span class="smalltext muted" style="align-self:center">Última pregunta: finaliza desde el botón superior.</span>')}</div></div></div>`}
 function setOptionsOpen(id,isOpen){if(!currentQuiz)return;currentQuiz.optionsOpen=currentQuiz.optionsOpen||{};currentQuiz.optionsOpen[id]=!!isOpen;saveSessions()}
@@ -1616,22 +1627,46 @@ function renderProgressCharts(){const host=document.getElementById('prog-charts'
  <div class="progressbox"><h4>Cobertura del banco</h4>${pieSVG([{l:'Vistas',v:seen,c:'#2f6bff'},{l:'Sin ver',v:bank.length-seen,c:'#c5cfdd'}])}</div>
  <div class="progressbox"><h4>Preguntas por disciplina</h4>${pieSVG(per.map(x=>({l:x.sp,v:x.n,c:specColor(x.sp)})))}</div></div>
  <div class="progressbox" style="margin-bottom:14px"><h4>Rendimiento por disciplina</h4>${per.map(x=>`<div class="baritem"><div class="barlabel"><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${specColor(x.sp)};margin-right:7px"></i>${esc(x.sp)}</span><strong>${x.at?x.pct+'%':'Sin intentos'}</strong></div><div class="barbg"><div class="barfill" style="width:${x.pct}%;background:${specColor(x.sp)}"></div></div><div class="smalltext muted" style="margin-top:4px">${x.at?x.co+' aciertos de '+x.at+' intentos · ':''}${x.seen}/${x.n} preguntas vistas</div></div>`).join('')}</div>`}
-function quizPool(cfg){const srcs=cfg.sources||[];return bank.filter(q=>{const wrong=!!q.answer&&(q.attempts||0)>(q.correctCount||0),omitted=(q.omittedCount||0)>0,correct=!!q.answer&&(q.attempts||0)>0&&q.correctCount===q.attempts,unanswered=!(q.attempts||0)&&!omitted,sn=q.source||'Texto pegado',sp=inferSpecialty(q.stem,q.source,q.subject),st=cfg.status;
+function quizTopicKey(source,topic){return JSON.stringify([String(source||'Texto pegado'),String(topic||'')])}
+function quizTopicPairs(list){return (list||[]).map(k=>{try{const p=JSON.parse(k);return Array.isArray(p)&&p.length===2?p:null}catch(e){return null}}).filter(Boolean)}
+/* Subtemas por banco: cada banco importado puede traer varias especialidades/temas. */
+function renderQuizTopics(){
+ const host=document.getElementById('quiz-topics');if(!host)return;
+ const had=!!host.querySelector('.quiz-topic-check');
+ let saved=[];try{saved=JSON.parse(localStorage.getItem(QCFG)||'{}').topics||[]}catch(e){saved=[]}
+ const sel=new Set(had?[...host.querySelectorAll('.quiz-topic-check:checked')].map(el=>el.value):saved);
+ const cfg=currentQuizConfig(),srcs=cfg.sources||[];
+ const included=q=>!srcs.length||(cfg.excludeSources?!srcs.includes(q.source||'Texto pegado'):srcs.includes(q.source||'Texto pegado'));
+ const groups=new Map();
+ bank.filter(included).forEach(q=>{const sn=q.source||'Texto pegado',sp=inferSpecialty(q.stem,q.source,q.subject)||'Sin tema';if(!groups.has(sn))groups.set(sn,new Map());const m=groups.get(sn);m.set(sp,(m.get(sp)||0)+1)});
+ const valid=new Set([...groups].flatMap(([sn,m])=>[...m.keys()].map(sp=>quizTopicKey(sn,sp))));
+ [...sel].forEach(k=>{if(!valid.has(k))sel.delete(k)});
+ let chosen=0;
+ const html=[...groups.entries()].sort((a,b)=>a[0].localeCompare(b[0],'es')).map(([sn,m])=>{
+  const chips=[...m.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'es')).map(([sp,n])=>{const key=quizTopicKey(sn,sp),on=sel.has(key);if(on)chosen++;return `<label class="quiz-topic-chip${on?' on':''}" title="${esc(sn)} · ${esc(sp)}: ${n} pregunta(s)"><input type="checkbox" class="quiz-topic-check" value="${esc(key)}"${on?' checked':''}><span>${esc(sp)}</span><b>${n}</b></label>`}).join('');
+  return `<div class="quiz-topic-group"><div class="quiz-topic-src">${esc(sn)}</div><div class="quiz-topic-chips">${chips}</div></div>`
+ }).join('');
+ host.innerHTML=html||'<div class="smalltext muted">Importa preguntas para ver sus temas aquí.</div>';
+ const sum=document.getElementById('quiz-topics-sum');
+ if(sum)sum.textContent=chosen?`· ${chosen} tema(s) seleccionado(s)`:'· todos los temas';
+}
+function quizPool(cfg){const srcs=cfg.sources||[];const topicSel=quizTopicPairs(cfg.topics);return bank.filter(q=>{const wrong=!!q.answer&&(q.attempts||0)>(q.correctCount||0),omitted=(q.omittedCount||0)>0,correct=!!q.answer&&(q.attempts||0)>0&&q.correctCount===q.attempts,unanswered=!(q.attempts||0)&&!omitted,sn=q.source||'Texto pegado',sp=inferSpecialty(q.stem,q.source,q.subject),st=cfg.status;
  const srcOk=!srcs.length||(cfg.excludeSources?!srcs.includes(sn):srcs.includes(sn));
- return srcOk&&(!(cfg.folders||[]).length||cfg.folders.includes(folderOf(q)))&&(!cfg.specialties.length||cfg.specialties.includes(sp))&&(!cfg.review||q.flagged||wrong)&&(st==='all'||(st==='wrong'&&wrong)||(st==='omitted'&&omitted)||(st==='correct'&&correct)||(st==='unanswered'&&unanswered)||(st==='flagged'&&q.flagged))})}
+ const topicOk=!topicSel.length||topicSel.some(p=>sn===p[0]&&sp===p[1]);
+ return srcOk&&topicOk&&(!(cfg.folders||[]).length||cfg.folders.includes(folderOf(q)))&&(!cfg.specialties.length||cfg.specialties.includes(sp))&&(!cfg.review||q.flagged||wrong)&&(st==='all'||(st==='wrong'&&wrong)||(st==='omitted'&&omitted)||(st==='correct'&&correct)||(st==='unanswered'&&unanswered)||(st==='flagged'&&q.flagged))})}
 function setQuizStatus(v){const el=document.getElementById('quiz-status');if(!el)return;el.value=v;saveQuizConfig();updateQuizPreview()}
-function updateQuizPreview(){const el=document.getElementById('quiz-preview');if(!el)return;const cfg=currentQuizConfig(),pool=quizPool(cfg),total=pool.length,n=cfg.count==='all'?total:Math.min(total,Number(cfg.count));
+function updateQuizPreview(){const el=document.getElementById('quiz-preview');if(!el)return;renderQuizTopics();const cfg=currentQuizConfig(),pool=quizPool(cfg),total=pool.length,n=cfg.count==='all'?total:Math.min(total,Number(cfg.count));
  const base=quizPool({...cfg,status:'all'}),cnt={all:base.length,correct:0,wrong:0,omitted:0,unanswered:0,flagged:0};
  base.forEach(q=>{const at=q.attempts||0,om=(q.omittedCount||0)>0;if(q.answer&&at>0&&q.correctCount===at)cnt.correct++;if(q.answer&&at>(q.correctCount||0))cnt.wrong++;if(om)cnt.omitted++;if(!at&&!om)cnt.unanswered++;if(q.flagged)cnt.flagged++});
  const chips=[['all','Todas',cnt.all,'#51627a'],['correct','✓ Bien',cnt.correct,'#12a46f'],['wrong','✕ Mal',cnt.wrong,'#e5484d'],['omitted','Omitidas',cnt.omitted,'#f5a524'],['unanswered','Sin responder',cnt.unanswered,'#2f6bff'],['flagged','★ Marcadas',cnt.flagged,'#8e4ec6']];
  const by={};pool.forEach(q=>{const sp=inferSpecialty(q.stem,q.source,q.subject);by[sp]=(by[sp]||0)+1});
  el.innerHTML=`<div style="font-size:12px;font-weight:800;color:#51627a">VISTA PREVIA DE LA SESIÓN</div>
  <div style="display:flex;gap:22px;flex-wrap:wrap;margin:6px 0 4px"><div><div style="font-size:30px;font-weight:800;line-height:1.1">${total}</div><div class="smalltext muted">preguntas que coinciden</div></div><div><div style="font-size:30px;font-weight:800;line-height:1.1;color:var(--blue)">${n}</div><div class="smalltext muted">se usarán en la sesión${n<total?` (límite: ${cfg.count}, ${cfg.order==='random'?'al azar':'orden del banco'})`:''}</div></div></div>
- <div class="smalltext muted" style="margin:10px 0 6px">Estado de las preguntas en tu selección de bancos/especialidades (toca uno para filtrar):</div>
+ <div class="smalltext muted" style="margin:10px 0 6px">Estado de las preguntas en tu selección de bancos/temas (toca uno para filtrar):</div>
  <div style="display:flex;gap:6px;flex-wrap:wrap">${chips.map(([k,l,v,c])=>`<button type="button" onclick="setQuizStatus('${k}')" class="pill" style="border:2px solid ${cfg.status===k?c:'transparent'};background:${c}22;color:${c};cursor:pointer;font-size:12px;padding:5px 10px">${l} · ${v}</button>`).join('')}</div>
  ${total?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${Object.entries(by).map(([k,v])=>`<span class="pill" style="background:${specColor(k)}22;color:${specColor(k)}">${esc(k)} · ${v}</span>`).join('')}</div>`:'<div class="smalltext" style="margin-top:10px;color:#bd3f4b">No hay preguntas con esta selección.</div>'}
  ${cfg.sources.length?`<div class="smalltext muted" style="margin-top:8px">${cfg.excludeSources?'Excluyendo':'Solo'} ${cfg.sources.length} banco(s)</div>`:''}`}
-(function(){const qa=document.getElementById('quiz-area');['change','input'].forEach(ev=>qa.addEventListener(ev,()=>{if(!currentQuiz)updateQuizPreview()}));
+(function(){const qa=document.getElementById('quiz-area');['change','input'].forEach(ev=>qa.addEventListener(ev,()=>{if(!currentQuiz){updateQuizPreview();saveQuizConfig()}}));
  const _r=renderQuizStart;renderQuizStart=function(){_r.apply(this,arguments);updateQuizPreview()}})();
 </script>
 <script>
@@ -4642,8 +4677,14 @@ html.dark .ac-deck{background:#131e30}
 .imp-n{font-size:10.5px;font-weight:800;color:var(--blue);background:var(--blue2);padding:2px 7px;border-radius:99px;white-space:nowrap}
 .imp-name{font-size:13px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .imp-meta{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.imp-subjs{display:flex;gap:4px;flex-wrap:wrap;max-height:19px;overflow:hidden}
-.imp-subjs span{font-size:10px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:0 6px;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis}
+.imp-subjs{display:flex;gap:4px;flex-wrap:wrap;max-height:21px;overflow:hidden}
+.imp-subj{font-size:10px;font-weight:700;line-height:1.4;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:1px 7px;background:transparent;white-space:nowrap;max-width:132px;overflow:hidden;text-overflow:ellipsis;display:inline-flex;align-items:center;gap:4px;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.imp-subj b{font-size:9.5px;font-weight:800;color:var(--blue)}
+.imp-subj:hover{border-color:var(--blue);background:var(--blue2);color:var(--text)}
+.imp-subj.on{background:var(--blue2);border-color:var(--blue);color:var(--text)}
+.imp-subj-more{font-weight:800;color:var(--blue);border-style:dashed}
+.imp-bank.imp-topics-open .imp-subjs{max-height:none}
+.imp-bank.imp-filtered{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue2) inset}
 .imp-acts{display:flex;gap:6px;justify-content:flex-end;margin-top:auto;padding-top:3px}
 .imp-ic{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:4px 7px;font-size:12px;line-height:1;color:inherit;cursor:pointer}
 .imp-ic:hover{border-color:var(--blue);background:var(--blue2)}
@@ -4657,6 +4698,31 @@ html.dark .imp-bank{background:#131e30}
 html.dark .imp-ic{background:#1b2940}
 html.dark .imp-bank:hover,html.dark .imp-bank:focus-within{box-shadow:0 6px 18px rgba(0,0,0,.35)}
 /* V.2.0: Practice subtabs (Banco / Anki) */
+/* Subtemas de los bancos importados */
+.bank-topics{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.bank-topic{border:1px solid #dbe3f0;background:#f7f9fd;color:#33445e;font-size:11.5px;line-height:1.2;font-weight:700;padding:5px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.bank-topic span{font-size:10.5px;font-weight:800;color:#7b8aa1}
+.bank-topic:hover{border-color:#8ca6ff;color:#1d3a8a;background:#eef3ff}
+.bank-topic.on{background:#e8efff;border-color:#6483ff;color:#1d3a8a}
+.bank-topic.on span{color:#3158e5}
+.library-topic-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.quiz-topics{display:grid;gap:13px}
+.quiz-topic-group{display:grid;gap:7px}
+.quiz-topic-src{font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#7b8aa1;overflow-wrap:anywhere}
+.quiz-topic-chips{display:flex;flex-wrap:wrap;gap:6px}
+.quiz-topic-chip{position:relative;display:inline-flex;align-items:center;gap:7px;border:1px solid #dbe3f0;background:#fff;color:#33445e;font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:999px;cursor:pointer;line-height:1.2;transition:background .15s,border-color .15s,color .15s}
+.quiz-topic-chip input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.quiz-topic-chip b{font-size:10.5px;color:#7b8aa1}
+.quiz-topic-chip:hover{border-color:#8ca6ff;color:#1d3a8a}
+.quiz-topic-chip.on{background:#e8efff;border-color:#6483ff;color:#1d3a8a}
+.quiz-topic-chip.on b{color:#3158e5}
+.quiz-topic-chip:focus-within{outline:2px solid #6483ff;outline-offset:2px}
+html.dark .bank-topic,html.dark .quiz-topic-chip{background:#16233a;border-color:#2c405c;color:#dce7ff}
+html.dark .bank-topic span,html.dark .quiz-topic-chip b{color:#a9bbd6}
+html.dark .bank-topic:hover,html.dark .quiz-topic-chip:hover{border-color:#6483ff;color:#dce7ff}
+html.dark .bank-topic.on,html.dark .quiz-topic-chip.on{background:#22344f;border-color:#6483ff;color:#dce7ff}
+html.dark .bank-topic.on span,html.dark .quiz-topic-chip.on b{color:#9db6ff}
+html.dark .quiz-topic-src{color:#a9bbd6}
 .practice-tabs{display:flex;gap:6px;margin:0 0 18px;padding:5px;background:#e9eef8;border:1px solid #dbe3f0;border-radius:13px;max-width:420px}
 .practice-tabs button{flex:1 1 0;border:0;background:transparent;color:#5a6b85;font-weight:800;font-size:13px;padding:9px 14px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:background .15s,color .15s,box-shadow .15s}
 .practice-tabs button:hover{color:#1d3a8a}
@@ -4685,6 +4751,22 @@ html.dark .practice-tabs button.active{background:#22344f;color:#dce7ff}
 .anki-deck-tools .field{flex:1 1 280px;min-width:0}
 .anki-deck-tools .btn{flex:none}
 .anki-deck-tools .btn[hidden]{display:none}
+/* Subpestañas de Anki: bancos (.apkg) y sus grupos/temas */
+.anki-scope{display:grid;gap:7px;margin:0 0 11px;min-width:0}
+.anki-scope[hidden]{display:none}
+.anki-scope-row{display:flex;align-items:flex-start;gap:8px;min-width:0}
+.anki-scope-lbl{flex:none;min-width:50px;padding:7px 0 0;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+.anki-scope-tabs{display:flex;gap:6px;min-width:0;overflow-x:auto;padding:1px 1px 4px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.anki-scope-tabs::-webkit-scrollbar{height:8px}
+.anki-scope-tabs::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+.anki-scope-tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;max-width:270px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--text);font-size:12px;font-weight:700;line-height:1.2;padding:6px 9px 6px 11px;white-space:nowrap;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.anki-scope-tab .name{overflow:hidden;text-overflow:ellipsis;max-width:205px}
+.anki-scope-tab b{flex:none;font-size:10px;font-weight:800;color:var(--muted);background:var(--blue2);padding:1px 6px;border-radius:99px}
+.anki-scope-tab:hover{border-color:var(--blue);color:var(--blue)}
+.anki-scope-tab.on{background:var(--blue2);border-color:var(--blue);color:var(--blue)}
+.anki-scope-tab.on b{color:var(--blue)}
+.anki-scope-tab:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+@media(max-width:700px){.anki-scope-lbl{display:none}}
 .anki-tree{display:flex;flex-direction:column;gap:7px}
 .anki-tree .anki-trow{--lv:0;margin-left:calc(var(--lv) * 16px);display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:8px 11px;min-width:0}
 .anki-tree .anki-tgroup{background:var(--blue2);border-color:transparent;padding:7px 11px;box-shadow:none}
@@ -4785,19 +4867,6 @@ html.quiz-fit-on{overflow:hidden}
  #view-practice.quiz-fit .quiztop .btn{font-size:11.5px;padding:6px 8px}
 }
 html.quiz-fit-on .main{padding-bottom:14px}
-/* Dos columnas cuando hay espacio (clase puesta por JS midiendo el ancho real): el caso queda a la izquierda y las opciones a la derecha, juntos en pantalla */
-#view-practice.quiz-fit.quiz-two .quizcard{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);grid-template-rows:auto auto minmax(0,1fr) auto auto auto;gap:6px 22px;overflow-y:auto}
-#view-practice.quiz-fit.quiz-two .quizcard>.casebar{grid-column:1/-1;grid-row:1}
-#view-practice.quiz-fit.quiz-two .quizcard>.qnote{grid-column:1/-1;grid-row:2}
-#view-practice.quiz-fit.quiz-two .quizcard>.quizstem{grid-column:1;grid-row:3;min-height:0;overflow-y:auto;overscroll-behavior:contain}
-#view-practice.quiz-fit.quiz-two .quizcard>.option-disclosure{grid-column:2;grid-row:3;margin-top:0;overflow:hidden;align-self:stretch}
-#view-practice.quiz-fit.quiz-two .quizcard>.option-disclosure>.options{max-height:var(--q2-opts-h,320px);overflow-y:auto;overscroll-behavior:contain;padding-top:10px}
-#view-practice.quiz-fit.quiz-two .quizcard>.feedback{grid-column:1;grid-row:4;margin-top:0}
-#view-practice.quiz-fit.quiz-two .quizcard>.reset-ans-row{grid-column:1;grid-row:5}
-#view-practice.quiz-fit.quiz-two .quizcard>.quizbottom{grid-column:1/-1;grid-row:6;margin-top:2px}
-#view-practice.quiz-fit.quiz-two .quizcard>.qarrow{display:none}
-#view-practice.quiz-fit.quiz-two .option{padding:9px 11px;font-size:13.5px}
-#view-practice.quiz-fit.quiz-two .option .letter{width:22px;height:22px;font-size:11px}
 </style>
 <script id="clinq-v6">
 (function(){
@@ -5447,17 +5516,179 @@ function ankiDeckMeta(s){
   (s.susp?' · '+s.susp+' '+T('suspendidas','suspended'):'');
 }
 let ankiDeckQuery='';
+let ankiStudyScope=null;
+/* ---------- Bancos (.apkg) y sus grupos/temas: subpestañas del módulo Anki ---------- */
+const ASCOPE_KEY='clinq_anki_scope_v1';
+let ankiScope={bank:'',group:''};
+try{
+ const so=JSON.parse(localStorage.getItem(ASCOPE_KEY)||'{}');
+ if(so&&typeof so==='object'){ankiScope.bank=String(so.bank||'');ankiScope.group=String(so.group||'')}
+}catch(e){}
+function ankiScopeSave(){try{localStorage.setItem(ASCOPE_KEY,JSON.stringify(ankiScope))}catch(e){}}
+function ankiCleanSeg(s){return String(s||'').replace(/^[\s\-–—:·|]+/,'').replace(/\s+/g,' ').trim()}
+/* Mazos planos (sin ::) que comparten un prefijo claro se agrupan como banco + grupos. */
+function ankiFlatPrefixInfo(flat){
+ const rows=flat.map(d=>{const label=String(ankiDeckLabel(d)).trim();return {d,label,tokens:label.split(/\s+/).filter(Boolean)}});
+ const out=new Map();
+ const put=(row,k,bank,group)=>{
+  const id=String(row.d.id),prev=out.get(id);
+  if(prev&&prev.k>=k)return;
+  out.set(id,{k,bank:ankiCleanSeg(bank),group:ankiCleanSeg(group)});
+ };
+ for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++){
+  const a=rows[i],b=rows[j],ta=a.tokens,tb=b.tokens;
+  if(ta.length<4||tb.length<4)continue;
+  let k=0;
+  while(k<ta.length&&k<tb.length&&ta[k].toLowerCase()===tb[k].toLowerCase())k++;
+  if(k<3)continue;
+  if(k<ta.length&&k<tb.length){
+   const bank=ta.slice(0,k).join(' ');
+   put(a,k,bank,ta.slice(k).join(' '));
+   put(b,k,bank,tb.slice(k).join(' '));
+  }else{
+   const short=ta.length<=tb.length?a:b,long=short===a?b:a;
+   const bank=short.tokens.join(' ');
+   put(short,k,bank,'');
+   put(long,k,bank,long.tokens.slice(k).join(' '));
+  }
+ }
+ return out;
+}
+function ankiScopeModel(decks){
+ const banks=new Map(),alias=new Map();
+ const keyOf=name=>{
+  const n=ankiCleanSeg(name)||T('Sin banco','No bank');
+  const norm=ankiNorm(n);
+  if(alias.has(norm))return alias.get(norm);
+  alias.set(norm,n);return n;
+ };
+ const add=(bank,group,d)=>{
+  const bn=keyOf(bank),gn=ankiCleanSeg(group);
+  let b=banks.get(bn);
+  if(!b){b={name:bn,deckIds:new Set(),groups:new Map()};banks.set(bn,b)}
+  b.deckIds.add(String(d.id));
+  let g=b.groups.get(gn);
+  if(!g){g={name:gn,deckIds:new Set()};b.groups.set(gn,g)}
+  g.deckIds.add(String(d.id));
+ };
+ const flat=[],hier=[];
+ decks.forEach(d=>{
+  const segs=ankiDeckSegments(d);
+  if(segs.length>1)hier.push({d,segs});else flat.push(d);
+ });
+ hier.forEach(x=>add(x.segs[0],x.segs[1]||'',x.d));
+ const findBank=label=>{
+  const n=ankiNorm(label);
+  for(const k of banks.keys())if(ankiNorm(k)===n)return k;
+  return '';
+ };
+ const rest=[];
+ flat.forEach(d=>{
+  const label=ankiCleanSeg(ankiDeckLabel(d));
+  const hit=findBank(label);
+  if(hit)add(hit,'',d);else rest.push(d);
+ });
+ const prefix=ankiFlatPrefixInfo(rest);
+ rest.forEach(d=>{
+  const info=prefix.get(String(d.id));
+  if(info)add(info.bank,info.group,d);
+  else add(ankiDeckLabel(d),'',d);
+ });
+ return banks;
+}
+function ankiResolveScope(scopes){
+ const allIds=new Set();
+ scopes.forEach(b=>b.deckIds.forEach(id=>allIds.add(id)));
+ let bank=String(ankiScope.bank||'');
+ if(bank&&!scopes.has(bank)){
+  const n=ankiNorm(bank),hit=[...scopes.keys()].find(k=>ankiNorm(k)===n);
+  bank=hit||'';
+ }
+ if(!bank&&scopes.size===1)bank=[...scopes.keys()][0];
+ const b=bank?scopes.get(bank):null;
+ let group=String(ankiScope.group||'');
+ if(!b)group='';
+ else if(group==='__general'){if(!b.groups.has(''))group=''}
+ else if(group&&!b.groups.has(group))group='';
+ let ids,label='';
+ if(!b){ids=allIds}
+ else if(group==='__general'){ids=new Set(b.groups.get('').deckIds);label=bank+' · '+T('General','General')}
+ else if(group){ids=new Set(b.groups.get(group).deckIds);label=bank+' · '+group}
+ else{ids=new Set(b.deckIds);label=bank}
+ if(ankiScope.bank!==bank||ankiScope.group!==group){ankiScope.bank=bank;ankiScope.group=group;ankiScopeSave()}
+ return {bank,group,ids,label,bankObj:b};
+}
+function ankiScopeCards(ids,stats){
+ let n=0;(ids||[]).forEach(id=>{const s=stats[id];if(s)n+=s.total});
+ return n;
+}
+function renderAnkiScope(scopes,scope,stats){
+ const host=$('anki-scope');
+ const allBtn=$('anki-study-all');
+ if(!host)return;
+ if(!scopes||!scopes.size){
+  host.hidden=true;host.innerHTML='';
+  ankiStudyScope=null;
+  if(allBtn)allBtn.textContent='▶ '+T('Estudiar todo','Study all');
+  return;
+ }
+ const banks=[...scopes.values()].sort((a,b)=>a.name.localeCompare(b.name,'es'));
+ const totalIds=new Set();banks.forEach(b=>b.deckIds.forEach(id=>totalIds.add(id)));
+ const total=ankiScopeCards(totalIds,stats);
+ const showBanks=banks.length>1;
+ const b=scope&&scope.bank?scopes.get(scope.bank):null;
+ const groups=b?[...b.groups.values()]:[];
+ const showGroups=!!b&&groups.length>=2;
+ const tab=(attrs,name,count,on,title)=>'<button type="button" class="anki-scope-tab'+(on?' on':'')+'" '+attrs+' role="tab" aria-selected="'+(on?'true':'false')+'" title="'+esc(title||name)+'"><span class="name">'+esc(name)+'</span><b>'+count+'</b></button>';
+ let html='';
+ if(showBanks){
+  let tabs=tab('data-scope-bank="__all"',T('Todos','All'),total,!(scope&&scope.bank),T('Todos los bancos','All banks'));
+  banks.forEach(x=>{
+   tabs+=tab('data-scope-bank="'+esc(x.name)+'"',x.name,ankiScopeCards(x.deckIds,stats),!!(scope&&scope.bank===x.name),x.name);
+  });
+  html+='<div class="anki-scope-row"><span class="anki-scope-lbl">'+T('Bancos','Banks')+'</span><div class="anki-scope-tabs" role="tablist">'+tabs+'</div></div>';
+ }
+ if(showGroups){
+  const sorted=groups.slice().sort((a,c)=>(a.name?1:0)-(c.name?1:0)||a.name.localeCompare(c.name,'es'));
+  let tabs=tab('data-scope-group="__all"',T('Todos','All'),ankiScopeCards(b.deckIds,stats),!scope.group,T('Todos los grupos','All groups'));
+  sorted.forEach(g=>{
+   const key=g.name?g.name:'__general';
+   tabs+=tab('data-scope-group="'+esc(key)+'"',g.name||T('General','General'),ankiScopeCards(g.deckIds,stats),scope.group===key,(g.name||T('General','General'))+' — '+b.name);
+  });
+  html+='<div class="anki-scope-row"><span class="anki-scope-lbl">'+T('Grupos','Groups')+'</span><div class="anki-scope-tabs" role="tablist">'+tabs+'</div></div>';
+ }
+ host.innerHTML=html;
+ host.hidden=!html;
+ const scoped=showGroups||(showBanks&&scope&&scope.bank);
+ ankiStudyScope=scoped&&scope?{ids:[...scope.ids],label:scope.label}:null;
+ if(allBtn)allBtn.textContent='▶ '+(showGroups&&scope&&scope.group?T('Estudiar grupo','Study group'):(showBanks&&scope&&scope.bank?T('Estudiar banco','Study bank'):T('Estudiar todo','Study all')));
+}
 const ankiTreeOpen={};
 function renderDecks(){
  const host=$('anki-decks');if(!host)return;
  const decks=anki.decks.filter(d=>deckCards(d.id).length);
  if(!decks.length){
+  renderAnkiScope(null,null,{});
   host.innerHTML='<div class="panel anki-empty"><div class="anki-empty-ic">🃏</div><strong>'+T('Todavía no hay mazos de Anki','No Anki decks yet')+'</strong><p>'+T('Importa un archivo .apkg o el texto exportado por Anki para empezar.','Import an .apkg file or the text exported by Anki to get started.')+'</p></div>';
   return;
  }
  const q=ankiNorm(String(ankiDeckQuery||'').trim());
  const stats=ankiStatsByDeck();
- const shown=q?decks.filter(d=>ankiNorm(ankiDeckLabel(d)).indexOf(q)>=0||ankiNorm(d.acPath||'').indexOf(q)>=0):decks.slice();
+ const scopes=ankiScopeModel(decks);
+ const scope=ankiResolveScope(scopes);
+ renderAnkiScope(scopes,scope,stats);
+ const base=q?decks:decks.filter(d=>scope.ids.has(String(d.id)));
+ const shown=q?base.filter(d=>ankiNorm(ankiDeckLabel(d)).indexOf(q)>=0||ankiNorm(d.acPath||'').indexOf(q)>=0):base;
+ if(q){
+  const allBtn=$('anki-study-all');
+  if(shown.length){
+   ankiStudyScope={ids:shown.map(d=>String(d.id)),label:(ankiDeckQuery||'').trim()};
+   if(allBtn)allBtn.textContent='▶ '+T('Estudiar resultados','Study results');
+  }else{
+   ankiStudyScope={ids:[],label:''};
+   if(allBtn)allBtn.textContent='▶ '+T('Estudiar resultados','Study results');
+  }
+ }
  if(!shown.length){
   host.innerHTML='<div class="anki-empty-inline">'+T('Ningún mazo coincide con «'+esc(ankiDeckQuery)+'».','No deck matches "'+esc(ankiDeckQuery)+'".')+'</div>';
   return;
@@ -6666,6 +6897,7 @@ function injectUI(){
     '<div class="stats" id="anki-stats"></div>'+
     '<div class="panel anki-options" id="anki-options" style="display:none"></div>'+
     '<div class="sectionhead anki-decks-head"><div><h3>'+T('Tus mazos','Your decks')+'</h3><p>'+T('Cada sesión respeta tus límites diarios, pasos de aprendizaje y plazos.','Each session follows your daily limits, learning steps and deadlines.')+'</p></div><div class="anki-actions"><button type="button" class="btn outline small" id="anki-options-btn">⚙ '+T('Opciones','Options')+'</button><button type="button" class="btn primary small" id="anki-study-all">▶ '+T('Estudiar todo','Study all')+'</button></div></div>'+
+    '<div class="anki-scope" id="anki-scope" hidden></div>'+
     '<div class="anki-deck-tools"><input class="field" id="anki-deck-search" type="search" placeholder="'+T('Buscar mazo (ej. Robin::Cardio)…','Search decks (e.g. Robin::Cardio)…')+'" aria-label="'+T('Buscar mazo','Search decks')+'" autocomplete="off" spellcheck="false"><button type="button" class="btn outline small" id="anki-deck-search-clear" hidden>✕</button></div>'+
     '<div id="anki-decks" class="anki-tree"></div>'+
    '</div>'+
@@ -6733,7 +6965,37 @@ function injectUI(){
  if(file)file.onchange=()=>{const f=file.files&&file.files[0];file.value='';if(f)handleFile(f)};
  const imp=$('anki-import-btn');if(imp)imp.onclick=()=>file&&file.click();
  const exp=$('anki-export-btn');if(exp)exp.onclick=exportAnki;
- const all=$('anki-study-all');if(all)all.onclick=()=>startStudy(null);
+ const all=$('anki-study-all');if(all)all.onclick=()=>{
+  if(ankiStudyScope&&ankiStudyScope.ids&&ankiStudyScope.ids.length)startStudy(ankiStudyScope.ids,{label:ankiStudyScope.label});
+  else if(ankiStudyScope&&ankiStudyScope.ids)notify(T('No hay mazos que coincidan con la búsqueda.','No decks match the search.'));
+  else startStudy(null);
+ };
+ const scopeHost=$('anki-scope');
+ if(scopeHost)scopeHost.addEventListener('click',e=>{
+  const btn=e.target&&e.target.closest?e.target.closest('[data-scope-bank],[data-scope-group]'):null;
+  if(!btn||!scopeHost.contains(btn))return;
+  e.preventDefault();
+  const bank=btn.getAttribute('data-scope-bank');
+  const group=btn.getAttribute('data-scope-group');
+  if(bank!==null){
+   ankiScope.bank=bank==='__all'?'':bank;
+   ankiScope.group='';
+  }else if(group!==null){
+   ankiScope.group=group==='__all'?'':(group==='__general'?'__general':group);
+  }
+  ankiScopeSave();
+  if(ankiDeckQuery){
+   ankiDeckQuery='';
+   const ds=$('anki-deck-search'),dc=$('anki-deck-search-clear');
+   if(ds)ds.value='';
+   if(dc)dc.hidden=true;
+  }
+  const attr=bank!==null?'data-scope-bank':'data-scope-group';
+  const val=bank!==null?bank:group;
+  renderDecks();
+  const again=[...scopeHost.querySelectorAll('[data-scope-bank],[data-scope-group]')].find(b=>b.getAttribute(attr)===val);
+  if(again)again.focus({preventScroll:true});
+ });
  const deckSearch=$('anki-deck-search'),deckClear=$('anki-deck-search-clear');
  if(deckSearch){
   deckSearch.addEventListener('input',()=>{
@@ -6816,12 +7078,22 @@ function subjectsOf(name,qs){
  const m=new Map();
  qs.forEach(q=>{
   let s=String(q.subject||'').trim();
-  if(!s){try{s=String(inferSpecialty(q.stem,q.source)||'').trim()}catch(e){s=''}}
+  if(!s){try{s=String(inferSpecialty(q.stem,q.source,q.subject)||'').trim()}catch(e){s=''}}
   if(s)m.set(s,(m.get(s)||0)+1);
  });
- const list=[...m.entries()].sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+ const list=[...m.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).map(([name,count])=>({name,count}));
  subjCache.set(name,{sig,list});
  return list;
+}
+/* Chips de temas de un banco: se pueden pulsar para filtrar la biblioteca por ese tema. */
+function topicsHTML(topics,all,active){
+ const shown=all?topics:topics.slice(0,3);
+ const extra=topics.length-shown.length;
+ let html='<div class="imp-subjs">';
+ html+=shown.map(t=>'<button type="button" class="imp-subj'+(active===t.name?' on':'')+'" data-act="topic" data-topic="'+esc2(t.name)+'" title="'+esc2(t.name+' — '+T('ver solo este tema','view only this topic'))+'">'+esc2(t.name)+' <b>'+t.count+'</b></button>').join('');
+ if(extra>0)html+='<button type="button" class="imp-subj imp-subj-more" data-act="topics" title="'+esc2(T('Ver todos los temas de este banco','Show every topic in this bank'))+'">+'+extra+'</button>';
+ else if(all&&topics.length>3)html+='<button type="button" class="imp-subj imp-subj-more" data-act="topics" title="'+esc2(T('Ver menos temas','Show fewer topics'))+'">−</button>';
+ return html+'</div>';
 }
 function bankRows(){
  const names=typeof sourceNames==='function'?sourceNames():[...new Set(bank.map(q=>q.source||'Texto pegado'))];
@@ -6833,7 +7105,8 @@ function bankRows(){
    if(c&&(!min||c<min))min=c;
    if(q.answer){attempts+=Number(q.attempts)||0;correct+=Number(q.correctCount)||0}
   });
-  return {name,qs,count:qs.length,created:min,attempts,correct,subjects:subjectsOf(name,qs)};
+  const topics=subjectsOf(name,qs);
+  return {name,qs,count:qs.length,created:min,attempts,correct,topics,subjects:topics.map(t=>t.name)};
  });
  return rows;
 }
@@ -6907,6 +7180,25 @@ function ensureShell(host){
    e.preventDefault();e.stopPropagation();
    if(act.dataset.act==='ren'){if(typeof window.openBankRenamer==='function')window.openBankRenamer([name])}
    else if(act.dataset.act==='del'&&typeof deleteSourceBank==='function')deleteSourceBank(name);
+   else if(act.dataset.act==='topics'){
+    const all=!card.classList.contains('imp-topics-open');
+    card.classList.toggle('imp-topics-open',all);
+    const box=card.querySelector('.imp-subjs'),topics=card.__topics||[];
+    if(box&&topics.length){
+     const holder=document.createElement('div');
+     holder.innerHTML=topicsHTML(topics,all,(libraryTopicSource===name)?libraryTopic:'');
+     const next=holder.firstChild;
+     if(next)box.replaceWith(next);
+    }
+   }else if(act.dataset.act==='topic'){
+    const topic=act.dataset.topic||'';
+    try{
+     if(typeof openBankTopic==='function'){
+      if(libraryTopicSource===name&&libraryTopic===topic)clearLibraryTopic();
+      else openBankTopic(name,topic);
+     }
+    }catch(err){console.error(err)}
+   }
    return;
   }
   try{
@@ -6949,6 +7241,7 @@ function paint(){
   }
   ensureShell(host);
   const scroll=$('imp-scroll');if(!scroll)return;
+  const keepTop=scroll.scrollTop;
   const sort=readSort(),open=readOpen();
   const groups=new Map();
   rows.forEach(r=>{const k=r.created?dayKey(r.created):'0000';(groups.get(k)||groups.set(k,[]).get(k)).push(r)});
@@ -6978,16 +7271,22 @@ function paint(){
     card.tabIndex=0;
     card.setAttribute('aria-label',r.name+' — '+meta);
     card.dataset.hay=nz([r.name,r.subjects.join(' '),label.title].join(' '));
+    const activeTopic=(libraryTopicSource===r.name)?libraryTopic:'';
+    const showAll=!!activeTopic&&!r.topics.slice(0,3).some(t=>t.name===activeTopic);
+    card.__topics=r.topics;
+    if(showAll)card.classList.add('imp-topics-open');
+    if(activeTopic)card.classList.add('imp-filtered');
     card.innerHTML='<div class="imp-top"><span class="imp-when">'+esc2(when)+'</span><span class="imp-n">'+r.count+'</span></div>'+
      '<strong class="imp-name" title="'+esc2(r.name)+'">'+esc2(r.name)+'</strong>'+
      '<div class="imp-meta">'+esc2(meta)+'</div>'+
-     (r.subjects.length?'<div class="imp-subjs">'+r.subjects.slice(0,3).map(s=>'<span title="'+esc2(s)+'">'+esc2(s)+'</span>').join('')+'</div>':'')+
+     (r.topics.length?topicsHTML(r.topics,showAll,activeTopic):'')+
      '<div class="imp-acts"><button type="button" class="imp-ic" data-act="ren" title="'+esc2(T('Cambiar nombre de este banco','Rename this bank'))+'" aria-label="'+esc2(T('Cambiar nombre de este banco','Rename this bank'))+'">✏️</button><button type="button" class="imp-ic danger" data-act="del" title="'+esc2(T('Borrar este banco','Delete this bank'))+'" aria-label="'+esc2(T('Borrar este banco','Delete this bank'))+'">🗑</button></div>';
     g.appendChild(card);
    });
    f.append(sm,g);frag.appendChild(f);
   });
   scroll.innerHTML='';scroll.appendChild(frag);
+  scroll.scrollTop=keepTop;
   scroll.dataset.questions=String(totalQ);
   updateSummary(rows.length,totalQ,keys.length);
   if(host.__impApply)host.__impApply();
@@ -7029,25 +7328,12 @@ function quizFit(){
  const wrap=host.querySelector('.quizwrap');
  const on=!!(wrap&&view.classList.contains('active')&&host.style.display!=='none'&&window.innerWidth>=760&&!(typeof currentQuiz!=='undefined'&&currentQuiz&&currentQuiz.finished));
  view.classList.toggle('quiz-fit',on);
- view.classList.toggle('quiz-two',on&&view.clientWidth>=640);
  document.documentElement.classList.toggle('quiz-fit-on',on);
  if(!on){host.style.removeProperty('--quiz-fit-h');return}
  if(window.scrollY>0){try{window.scrollTo(0,0)}catch(e){}}
  const top=Math.max(0,Math.round(host.getBoundingClientRect().top));
  const h=Math.max(300,window.innerHeight-top-10);
  host.style.setProperty('--quiz-fit-h',h+'px');
- /* Dos columnas: mide la fila del caso/opciones y fija la altura util del panel de opciones */
- const card=host.querySelector('.quizcard'),disc=card&&card.querySelector('.option-disclosure');
- if(card&&disc&&view.classList.contains('quiz-two')){
-  const cs=getComputedStyle(card);
-  const pad=(parseFloat(cs.paddingTop)||0)+(parseFloat(cs.paddingBottom)||0);
-  let others=0;
-  [...card.children].forEach(el=>{if(el!==disc&&el.tagName!=='BUTTON')others+=el.getBoundingClientRect().height});
-  const sum=disc.querySelector('summary');
-  const sumH=sum?sum.getBoundingClientRect().height:0;
-  const r3=card.clientHeight-others-30-pad; /* 30 = 5 huecos de 6px entre las 6 filas */
-  card.style.setProperty('--q2-opts-h',Math.max(150,Math.round(r3-sumH-12))+'px');
- }else if(card){card.style.removeProperty('--q2-opts-h')}
 }
 window.clinQQuizFit=quizFit;
 (function(){
