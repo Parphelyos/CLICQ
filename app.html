@@ -8614,4 +8614,71 @@ try{paint(true)}catch(e){}
 })();
 
 </script>
+<script id="clinq-failed-import-cleanup-v1">
+/* Limpia únicamente residuos de importaciones fallidas: metadatos sin preguntas
+   y blobs de imagen que ninguna pregunta guardada utiliza. No borra preguntas. */
+(function(){
+'use strict';
+const tr=(es,en)=>{try{return localStorage.getItem('clinq_lang')==='es'?es:en}catch(e){return es}};
+function getStaleRecentNames(){
+ let recent={};try{recent=JSON.parse(localStorage.getItem('clinq_recent_banks_v1')||'{}')||{}}catch(e){recent={}}
+ const valid=new Set((typeof sourceNames==='function'?sourceNames():[]).map(String));
+ return Object.keys(recent).filter(n=>!valid.has(n));
+}
+async function getOrphanImageKeys(){
+ if(typeof clinqOpenQImgDB!=='function')return [];
+ const refs=new Set();
+ (Array.isArray(bank)?bank:[]).forEach(q=>{
+  ['images','expImages'].forEach(field=>{
+   const a=q&&q[field];if(!Array.isArray(a))return;
+   a.forEach(v=>{if(typeof v==='string'&&v.startsWith('idbimg:'))refs.add(v.slice(7));});
+  });
+ });
+ const db=await clinqOpenQImgDB();
+ const keys=await new Promise((resolve,reject)=>{
+  const tx=db.transaction('images','readonly'),req=tx.objectStore('images').getAllKeys();
+  req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error||new Error('No se pudieron leer las imágenes guardadas.'));
+ });
+ return keys.filter(k=>!refs.has(String(k)));
+}
+async function cleanFailedImportResidues(){
+ let stale=[];try{stale=getStaleRecentNames()}catch(e){}
+ let orphan=[];let imageCheckFailed=false;
+ try{orphan=await getOrphanImageKeys()}catch(e){imageCheckFailed=true}
+ const summary=tr('Se encontraron:\n• '+stale.length+' nombres de importación sin preguntas guardadas.\n• '+(imageCheckFailed?'No se pudieron comprobar las imágenes.':orphan.length+' imágenes sin ninguna pregunta vinculada.')+'\n\nEsto NO borrará bancos ni preguntas que sí estén guardados. ¿Continuar?',
+ 'Found:\n• '+stale.length+' import names with no saved questions.\n• '+(imageCheckFailed?'Could not inspect stored images.':orphan.length+' images not linked to any question.')+'\n\nThis will NOT delete saved banks or questions. Continue?');
+ if(!window.confirm(summary))return;
+ let namesRemoved=0,imagesRemoved=0;
+ try{
+  const raw=JSON.parse(localStorage.getItem('clinq_recent_banks_v1')||'{}')||{};
+  const valid=new Set((typeof sourceNames==='function'?sourceNames():[]).map(String));
+  for(const name of Object.keys(raw)){if(!valid.has(name)){delete raw[name];namesRemoved++}}
+  localStorage.setItem('clinq_recent_banks_v1',JSON.stringify(raw));
+ }catch(e){console.warn('No se pudieron limpiar los metadatos de importación',e)}
+ if(!imageCheckFailed&&orphan.length&&typeof clinqOpenQImgDB==='function'){
+  try{
+   const db=await clinqOpenQImgDB();
+   imagesRemoved=await new Promise((resolve,reject)=>{
+    const tx=db.transaction('images','readwrite'),store=tx.objectStore('images');
+    orphan.forEach(k=>store.delete(k));
+    tx.oncomplete=()=>resolve(orphan.length);tx.onerror=()=>reject(tx.error||new Error('No se pudieron borrar imágenes huérfanas.'));tx.onabort=()=>reject(tx.error||new Error('Limpieza cancelada.'));
+   });
+  }catch(e){console.error(e);window.alert(tr('Se limpiaron los nombres, pero no se pudieron borrar todas las imágenes huérfanas.','Names were cleaned, but some orphaned images could not be deleted.'))}
+ }
+ const msg=tr('Limpieza completada: '+namesRemoved+' registros sin preguntas y '+imagesRemoved+' imágenes huérfanas eliminados. No se borró ninguna pregunta guardada.','Cleanup complete: removed '+namesRemoved+' stale import records and '+imagesRemoved+' orphaned images. No saved questions were deleted.');
+ if(typeof notify==='function')notify(msg);else window.alert(msg);
+ try{if(typeof renderLibrary==='function')renderLibrary();if(typeof window.__impBanksRefresh==='function')window.__impBanksRefresh()}catch(e){}
+}
+window.cleanFailedImportResidues=cleanFailedImportResidues;
+function install(){
+ const tools=document.querySelector('#bank-groups .imp-tools');
+ if(!tools||tools.querySelector('[data-imp-clean-residues]'))return;
+ const b=document.createElement('button');b.type='button';b.dataset.impCleanResidues='1';
+ b.textContent=tr('Limpiar residuos','Clean leftovers');
+ b.title=tr('Borra metadatos de importaciones fallidas y archivos de imagen no vinculados; conserva las preguntas guardadas.','Removes failed-import metadata and unlinked image files; keeps saved questions.');
+ b.style.color='var(--red)';b.addEventListener('click',cleanFailedImportResidues);tools.appendChild(b);
+}
+try{install();const host=document.getElementById('bank-groups');if(host)new MutationObserver(install).observe(host,{childList:true,subtree:true});}catch(e){}
+})();
+</script>
 </body></html>
