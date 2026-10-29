@@ -581,7 +581,7 @@ body.sb-collapsed .sidebar:hover .navgroup.open .navsub{display:grid!important}
 <main class="main">
   <header class="topbar"><div><div class="eyebrow" id="eyebrow">TU ESPACIO DE ESTUDIO</div><h1 class="pagetitle" id="pagetitle">Tu banco médico</h1></div><div class="topright"><button class="syncpill out" id="sync-pill" type="button">☁ Iniciar sesión con Google</button><button class="avatar" id="sync-avatar" type="button" title="Cuenta y sincronización">CQ</button><div class="syncmenu" id="sync-menu"></div></div></header>
   <section class="view active" id="view-home">
-    <div class="hero"><div><h2>Estudia con tus propios bancos de preguntas.</h2><p>Importa tus materiales, convierte preguntas en sesiones de práctica y registra qué necesitas repasar. Inspirado en el flujo de bancos tipo USMLE.</p></div><div class="hero-actions"><button class="btn light" onclick="showView('import')">⇧ Importar documentos</button><button class="btn ghost" onclick="startQuiz('practice')">▶ Empezar a practicar</button></div></div>
+    <div class="hero"><div><h2>Estudia con tus propios bancos de preguntas.</h2><p>Importa tus materiales, convierte preguntas en sesiones de práctica y registra qué necesitas repasar. Inspirado en el flujo de bancos tipo USMLE.</p></div><div class="hero-actions"><button class="btn light" onclick="showView('import')">⇧ Importar documentos</button><button class="btn ghost" onclick="startQuiz('practice')">▶ Empezar a practicar</button><button class="btn ghost" onclick="exportBank()" title="Descargar una copia de seguridad de las preguntas y sesiones">↧ Exportar respaldo</button></div></div>
     <div class="stats">
       <div class="stat"><div class="stathead">Preguntas en tu banco <span class="staticon">▤</span></div><div class="statnum" id="stat-total">0</div><div class="statsub">Importadas o añadidas por ti</div></div>
       <div class="stat"><div class="stathead">Respondidas <span class="staticon">✓</span></div><div class="statnum" id="stat-attempted">0</div><div class="statsub">Intentos registrados</div></div>
@@ -688,9 +688,78 @@ body.sb-collapsed .sidebar:hover .navgroup.open .navsub{display:grid!important}
 <div class="toast" id="toast"></div>
 <script>
 const DBKEY='clinq_bank_v1';
+/* Compatibilidad defensiva: un registro con campos opcionales en formato inesperado
+   no debe impedir que se muestren las demás preguntas del banco. Se conserva el
+   contenido original de cada objeto y solo se normalizan los campos que usa la UI. */
+function bankText(value,fallback=''){
+ if(value==null)return fallback;
+ if(typeof value==='string')return value;
+ if(typeof value==='number'||typeof value==='boolean')return String(value);
+ if(Array.isArray(value))return value.map(v=>bankText(v)).filter(Boolean).join('\n');
+ if(typeof value==='object'){
+  for(const k of ['text','value','stem','question','vignette','prompt','enunciado','name','title','label','filename','fileName']){
+   if(value[k]!=null&&value[k]!==value)return bankText(value[k],fallback);
+  }
+  try{return JSON.stringify(value)}catch(e){return fallback}
+ }
+ return fallback;
+}
+function bankSource(value){
+ if(typeof value==='string'&&value.trim())return value.trim();
+ if(typeof value==='number'&&Number.isFinite(value))return String(value);
+ if(value&&typeof value==='object'){
+  for(const k of ['name','title','filename','fileName','label','sourceName','documentName'])if(value[k]!=null&&String(value[k]).trim())return String(value[k]).trim();
+ }
+ return 'Texto pegado';
+}
+function normalizeBankOption(option,index){
+ const fallbackKey=String.fromCharCode(65+Math.min(index,25));let key='',text='';
+ if(typeof option==='string'||typeof option==='number')text=String(option).trim();
+ else if(option&&typeof option==='object'){
+  key=String(option.key??option.letter??option.choice??option.optionKey??'').trim().toUpperCase();
+  text=bankText(option.text??option.value??option.content??option.description??option.optionText??option.answer??'', '').trim();
+  if(!text&&typeof option.label==='string'&&!/^[A-Z]$/i.test(option.label.trim()))text=option.label.trim();
+ }
+ const prefix=text.match(/^\s*\(?([A-Z])\)?[.):\-]\s+(.*)$/s);
+ if(!/^[A-Z]$/.test(key))key=prefix?prefix[1].toUpperCase():fallbackKey;
+ if(prefix&&prefix[1].toUpperCase()===key)text=prefix[2].trim();
+ return { ...(option&&typeof option==='object'&&!Array.isArray(option)?option:{}), key, text };
+}
+function normalizeBankQuestion(raw,index=0){
+ const q=raw&&typeof raw==='object'&&!Array.isArray(raw)?{...raw}:{stem:bankText(raw)};
+ if(q.id==null||String(q.id).trim()==='')q.id=uid();else q.id=String(q.id);
+ q.stem=bankText(q.stem??q.vignette??q.question??q.prompt??q.enunciado??q.case??q.clinicalVignette??q.text??'', '');
+ if(!q.stem.trim())q.stem='Pregunta importada sin enunciado visible';
+ if(typeof q.source!=='string'&&q.source!=null&&!q.sourceMetadata)q.sourceMetadata=q.source;
+ q.source=bankSource(q.source??q.bank??q.document??q.filename??q.fileName??q.sourceName);
+ if(q.subject!=null&&typeof q.subject!=='string')q.subject=bankText(q.subject,'');
+ if(q.subject==null)q.subject='';
+ let rawOptions=q.options??q.choices??q.answerOptions??q.optionsList??[];
+ if(Array.isArray(rawOptions))q.options=rawOptions.map(normalizeBankOption);
+ else if(rawOptions&&typeof rawOptions==='object')q.options=Object.entries(rawOptions).map(([k,v],i)=>{
+  const mapped=normalizeBankOption(typeof v==='object'&&v?{...v,key:v.key??v.letter??k,text:v.text??v.value??v.content??v.answer??v.label}: {key:k,text:v},i);
+  if(!/^[A-Z]$/.test(mapped.key))mapped.key=/^[A-Z]$/i.test(k)?k.toUpperCase():String.fromCharCode(65+Math.min(i,25));
+  return mapped;
+ });
+ else if(typeof rawOptions==='string'){
+  const lines=rawOptions.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  const parsed=lines.map((line,i)=>{const m=line.match(/^\(?([A-E])\)?[.):\-]\s+(.+)$/i);return m?{key:m[1].toUpperCase(),text:m[2]}:null}).filter(Boolean);
+  q.options=parsed.length>=2?parsed:[];
+  if(!parsed.length&&rawOptions.trim())q.optionsText=rawOptions;
+ }else q.options=[];
+ const ans=q.answer??q.correctAnswer??q.correct_answer??q.correctOption??q.answerKey??'';
+ q.answer=String(ans&&typeof ans==='object'?(ans.key??ans.letter??ans.value??''):ans).trim().toUpperCase().match(/(?:^|\b)([A-E])(?:\b|$)/)?.[1]||'';
+ q.explanation=bankText(q.explanation??q.rationale??q.feedback??q.justification??'', '');
+ q.attempts=Math.max(0,Number(q.attempts)||0);
+ q.correctCount=Math.max(0,Number(q.correctCount??q.correct_count)||0);
+ q.omittedCount=Math.max(0,Number(q.omittedCount??q.omitted_count)||0);
+ q.flagged=!!q.flagged;
+ return q;
+}
+function normalizeBankRecords(rows){return (Array.isArray(rows)?rows:[]).map((q,i)=>normalizeBankQuestion(q,i))}
 let bank=loadBank(), importPreview=[], currentQuiz=null, toastTimer=null, libraryTopic='', libraryTopicSource='';
-function loadBank(){try{let x=JSON.parse(localStorage.getItem(DBKEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return []}}
-function saveBank(){try{localStorage.setItem(DBKEY,JSON.stringify(bank));refreshAll()}catch(e){notify('El almacenamiento local está lleno. Exporta un respaldo o elimina preguntas antiguas.')}}
+function loadBank(){try{let x=JSON.parse(localStorage.getItem(DBKEY)||'[]');return Array.isArray(x)?normalizeBankRecords(x):[]}catch(e){return []}}
+function saveBank(){try{bank=normalizeBankRecords(bank);localStorage.setItem(DBKEY,JSON.stringify(bank));refreshAll()}catch(e){notify('El almacenamiento local está lleno. Exporta un respaldo o elimina preguntas antiguas.')}}
 function uid(){return 'q_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8)}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function attrJs(v){return esc(JSON.stringify(String(v==null?'':v)))}
@@ -1039,9 +1108,9 @@ function showView(name){document.querySelectorAll('.view').forEach(v=>v.classLis
 document.querySelectorAll('.nav button[data-view]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
 function stats(){let attempts=bank.reduce((n,q)=>n+(q.attempts||0),0),gradedAttempts=bank.reduce((n,q)=>n+(q.answer?(q.attempts||0):0),0),correct=bank.reduce((n,q)=>n+(q.correctCount||0),0),flagged=bank.filter(q=>q.flagged).length,review=bank.filter(q=>q.flagged||(q.answer&&q.attempts>0&&q.correctCount<q.attempts)).length;return{total:bank.length,attempts,correct,accuracy:gradedAttempts?Math.round(correct/gradedAttempts*100):null,flagged,review}}
 function refreshAll(){let s=stats();document.getElementById('stat-total').textContent=s.total;document.getElementById('stat-attempted').textContent=s.attempts;document.getElementById('stat-accuracy').textContent=s.accuracy===null?'—':s.accuracy+'%';document.getElementById('stat-review').textContent=s.review;document.getElementById('p-attempts').textContent=s.attempts;document.getElementById('p-correct').textContent=s.correct;document.getElementById('p-accuracy').textContent=s.accuracy===null?'—':s.accuracy+'%';document.getElementById('p-flagged').textContent=s.flagged;refreshSourceFilters();renderHome();if(document.getElementById('view-library').classList.contains('active'))renderLibrary();if(document.getElementById('view-progress').classList.contains('active'))renderProgress()}
-function sourceNames(){return [...new Set(bank.map(q=>q.source||'Texto pegado'))].sort((a,b)=>a.localeCompare(b))}
+function sourceNames(){return [...new Set(bank.map(q=>bankSource(q&&q.source)))].sort((a,b)=>String(a).localeCompare(String(b),'es'))}
 /* Temas (subtemas) de un banco importado: la especialidad/categoría de cada pregunta. */
-function bankTopics(bankName){const map=new Map();bank.filter(q=>(q.source||'Texto pegado')===bankName).forEach(q=>{const t=inferSpecialty(q.stem,q.source,q.subject)||'Sin tema';map.set(t,(map.get(t)||0)+1)});return [...map.entries()].map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name,'es'))}
+function bankTopics(bankName){const map=new Map();bank.filter(q=>bankSource(q&&q.source)===String(bankName)).forEach(q=>{const t=inferSpecialty(q.stem,bankSource(q.source),q.subject)||'Sin tema';map.set(t,(map.get(t)||0)+1)});return [...map.entries()].map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name,'es'))}
 function openBankTopic(source,topic=''){
  libraryTopicSource=String(source||'');libraryTopic=String(topic||'');
  const f=document.getElementById('filter-source');
@@ -1061,7 +1130,7 @@ function renderHome(){
  if(!recent.length){host.innerHTML='<div class="panel empty"><div class="emptyicon">🧠</div><strong>Aún no tienes sesiones de práctica.</strong>Empieza una sesión desde Practicar; aparecerá aquí para que puedas continuarla o revisar sus resultados.<div style="margin-top:14px"><button class="btn primary" onclick="showView(\'practice\')">Crear una sesión</button></div></div>';return}
  host.innerHTML='<div class="recent-banks-grid">'+recent.map(s=>{const total=(s.questions||[]).length,answered=Object.keys(s.answers||{}).length,when=new Date(Number(s.updated)||Number(s.started)||Date.now()).toLocaleDateString('es-DO',{day:'numeric',month:'short',year:'numeric'});return `<div class="panel recent-bank-card"><div class="recent-bank-icon">${s.finished?'✓':'🧠'}</div><div class="recent-bank-main"><strong title="${esc(s.label||'Sesión sin nombre')}">${esc(s.label||'Sesión sin nombre')}</strong><span>${s.finished?'Finalizada':'En curso'} · ${answered}/${total} respondidas</span><small>${esc(when)}</small></div><button class="btn primary small" onclick="resumeSession('${s.sid}')">${s.finished?'Ver resultados':'Continuar'} →</button></div>`}).join('')+'</div>';
 }
-function renderLibrary(){renderBankGroups();let search=(document.getElementById('search-q').value||'').toLowerCase(),source=document.getElementById('filter-source').value,status=document.getElementById('filter-status').value,topic=libraryTopic;if(topic&&source!==libraryTopicSource){topic='';libraryTopic='';libraryTopicSource=''}if(source)touchBankActivity(source,'opened');let items=bank.filter(q=>{let txt=[q.stem,q.explanation,q.source,...(q.options||[]).map(o=>o.text)].join(' ').toLowerCase();return(!search||txt.includes(search))&&(!source||q.source===source)&&(!topic||inferSpecialty(q.stem,q.source,q.subject)===topic)&&(!status||(status==='wrong'&&q.answer&&(q.attempts||0)>(q.correctCount||0))||(status==='omitted'&&(q.omittedCount||0)>0)||(status==='unanswered'&&!(q.attempts||0)&&!(q.omittedCount||0))||(status==='correct'&&q.answer&&(q.attempts||0)>0&&q.correctCount===q.attempts)||(status==='flagged'&&q.flagged))});document.getElementById('library-subtitle').textContent=`${items.length} de ${bank.length} preguntas`+(topic?` · Tema: ${topic} (${source})`:'');const tbar=document.getElementById('library-topic-bar');if(tbar)tbar.innerHTML=topic?`<button type="button" class="bank-topic on" onclick="clearLibraryTopic()" title="Quitar el filtro de tema">${esc(topic)} · ${esc(source)} <span aria-hidden="true">✕</span></button>`:'';let host=document.getElementById('library-list');if(!items.length){host.innerHTML='<div class="panel empty"><div class="emptyicon">🔎</div><strong>'+ (bank.length?'No hay coincidencias.':'Todavía no hay preguntas.')+'</strong>'+(bank.length?'Prueba otra búsqueda o cambia los filtros.':'Importa un PDF, Word, Excel o pega texto para crear tu banco.')+'</div>';return}host.innerHTML=items.map((q,i)=>`<div class="qrow"><div class="qnum">${String(i+1).padStart(2,'0')}</div><div class="qsummary"><strong>${esc(q.stem||'Pregunta sin enunciado')}</strong><span>${esc(inferSpecialty(q.stem,q.source,q.subject))} · ${esc(q.source||'Texto pegado')} · ${q.options?.length||0} opciones · ${q.attempts||0} intentos · ${q.omittedCount||0} omitidas</span></div><div class="qactions">${q.flagged?'<span class="pill gold">★ Marcada</span>':''}${q.needsCorrection?'<span class="pill red">⚑ Corregir</span>':''}<span class="pill ${q.answer?'green':'gold'}">${q.answer?'Clave: '+q.answer:'Sin clave'}</span><button class="btn outline small" onclick="openEdit('${q.id}')">Editar</button><button class="btn outline small" title="Practicar esta pregunta" onclick="startQuiz('practice','${q.id}')">▶</button><button class="btn danger small" title="Eliminar pregunta" onclick="deleteQuestion('${q.id}')">Eliminar</button></div></div>`).join('')}
+function renderLibrary(){renderBankGroups();let search=(document.getElementById('search-q').value||'').toLowerCase(),source=document.getElementById('filter-source').value,status=document.getElementById('filter-status').value,topic=libraryTopic;if(topic&&source!==libraryTopicSource){topic='';libraryTopic='';libraryTopicSource=''}if(source)touchBankActivity(source,'opened');let items=bank.filter(q=>{let txt=[q.stem,q.explanation,q.source,...(Array.isArray(q.options)?q.options.map(o=>typeof o==='object'&&o?bankText(o.text??o.value??o.content??''):bankText(o)):[])].join(' ').toLowerCase();return(!search||txt.includes(search))&&(!source||q.source===source)&&(!topic||inferSpecialty(q.stem,q.source,q.subject)===topic)&&(!status||(status==='wrong'&&q.answer&&(q.attempts||0)>(q.correctCount||0))||(status==='omitted'&&(q.omittedCount||0)>0)||(status==='unanswered'&&!(q.attempts||0)&&!(q.omittedCount||0))||(status==='correct'&&q.answer&&(q.attempts||0)>0&&q.correctCount===q.attempts)||(status==='flagged'&&q.flagged))});document.getElementById('library-subtitle').textContent=`${items.length} de ${bank.length} preguntas`+(topic?` · Tema: ${topic} (${source})`:'');const tbar=document.getElementById('library-topic-bar');if(tbar)tbar.innerHTML=topic?`<button type="button" class="bank-topic on" onclick="clearLibraryTopic()" title="Quitar el filtro de tema">${esc(topic)} · ${esc(source)} <span aria-hidden="true">✕</span></button>`:'';let host=document.getElementById('library-list');if(!items.length){host.innerHTML='<div class="panel empty"><div class="emptyicon">🔎</div><strong>'+ (bank.length?'No hay coincidencias.':'Todavía no hay preguntas.')+'</strong>'+(bank.length?'Prueba otra búsqueda o cambia los filtros.':'Importa un PDF, Word, Excel o pega texto para crear tu banco.')+'</div>';return}host.innerHTML=items.map((q,i)=>`<div class="qrow"><div class="qnum">${String(i+1).padStart(2,'0')}</div><div class="qsummary"><strong>${esc(q.stem||'Pregunta sin enunciado')}</strong><span>${esc(inferSpecialty(q.stem,q.source,q.subject))} · ${esc(q.source||'Texto pegado')} · ${q.options?.length||0} opciones · ${q.attempts||0} intentos · ${q.omittedCount||0} omitidas</span></div><div class="qactions">${q.flagged?'<span class="pill gold">★ Marcada</span>':''}${q.needsCorrection?'<span class="pill red">⚑ Corregir</span>':''}<span class="pill ${q.answer?'green':'gold'}">${q.answer?'Clave: '+q.answer:'Sin clave'}</span><button class="btn outline small" onclick="openEdit('${q.id}')">Editar</button><button class="btn outline small" title="Practicar esta pregunta" onclick="startQuiz('practice','${q.id}')">▶</button><button class="btn danger small" title="Eliminar pregunta" onclick="deleteQuestion('${q.id}')">Eliminar</button></div></div>`).join('')}
 function renderBankGroups(){const host=document.getElementById('bank-groups');if(!host)return;const groups=sourceNames().map(name=>({name,questions:bank.filter(q=>(q.source||'Texto pegado')===name)}));if(!groups.length){host.innerHTML='';return}host.innerHTML=groups.map(g=>{const topics=bankTopics(g.name),active=libraryTopic&&libraryTopicSource===g.name;return `<div class="panel bank-card" style="padding:14px;min-width:0"><div style="display:flex;gap:10px;align-items:flex-start;justify-content:space-between"><div style="min-width:0"><strong style="display:block;overflow-wrap:anywhere">${esc(g.name)}</strong><span class="smalltext muted">${g.questions.length} pregunta(s) · ${topics.length} tema(s)</span></div><button class="btn danger small" onclick="deleteSourceBank(${JSON.stringify(g.name).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;')})" title="Borrar solo este banco">🗑 Borrar banco</button></div><div class="bank-topics"><button type="button" class="bank-topic${!active?' on':''}" onclick="openBankTopic(${attrJs(g.name)})" title="Ver todo el banco">Todos <span>${g.questions.length}</span></button>${topics.map(t=>`<button type="button" class="bank-topic${active&&libraryTopic===t.name?' on':''}" onclick="openBankTopic(${attrJs(g.name)},${attrJs(t.name)})" title="Ver solo este tema">${esc(t.name)} <span>${t.count}</span></button>`).join('')}</div></div>`}).join('')}
 function deleteSourceBank(sourceName){const qs=bank.filter(q=>(q.source||'Texto pegado')===sourceName);if(!qs.length){notify('Ese banco ya no contiene preguntas.');return}if(!confirm(`¿Borrar únicamente el banco «${sourceName}»? Se eliminarán ${qs.length} pregunta(s) y su progreso. Los demás bancos no se modificarán. Esta acción no se puede deshacer.`))return;const ids=new Set(qs.map(q=>q.id));bank=bank.filter(q=>!ids.has(q.id));pruneSessions(ids);try{const recent=readRecentBankActivity();delete recent[sourceName];localStorage.setItem(RECENT_BANKS_KEY,JSON.stringify(recent))}catch(e){}saveBank();renderLibrary();renderHome();notify(`Banco «${sourceName}» eliminado (${qs.length} preguntas).`)}
 function renderProgress(){renderProgressCharts();let host=document.getElementById('source-bars');let sources=sourceNames();if(!sources.length){host.textContent='Aún no hay suficientes datos para mostrar rendimiento.';return}host.innerHTML=sources.map(s=>{let qs=bank.filter(q=>q.source===s),at=qs.reduce((n,q)=>n+(q.answer?(q.attempts||0):0),0),co=qs.reduce((n,q)=>n+(q.correctCount||0),0),pct=at?Math.round(co/at*100):0;return `<div class="baritem"><div class="barlabel"><span>${esc(s)}</span><strong>${at?pct+'%':'Sin intentos'}</strong></div><div class="barbg"><div class="barfill" style="width:${pct}%"></div></div><div class="smalltext muted" style="margin-top:4px">${at?co+' aciertos de '+at+' intentos':qs.length+' preguntas importadas'}</div></div>`}).join('')}
@@ -1456,7 +1525,7 @@ function importBackup(file){let r=new FileReader();r.onload=()=>{try{
  const skipped=qs.length-fresh.length;
  if(!fresh.length){notify('Todas las preguntas de ese respaldo ya estaban en tu banco.');return}
  if(!confirm(`¿Importar ${fresh.length} preguntas del respaldo?`+(skipped?` (${skipped} ya existen y se omitirán.)`:'')+' Se conservan tu progreso, subrayados y notas.'))return;
- let cleaned=fresh.map(q=>({...q,id:q.id||uid(),created:q.created||Date.now(),attempts:Number(q.attempts)||0,correctCount:Number(q.correctCount)||0,omittedCount:Number(q.omittedCount)||0,flagged:!!q.flagged,options:Array.isArray(q.options)?q.options:[]}));
+ let cleaned=fresh.map((q,i)=>normalizeBankQuestion({...q,id:q.id||uid(),created:q.created||Date.now(),attempts:Number(q.attempts)||0,correctCount:Number(q.correctCount)||0,omittedCount:Number(q.omittedCount)||0,flagged:!!q.flagged},i));
  bank=[...bank,...cleaned];
  const ss=!Array.isArray(data)&&data.sessions;
  if(ss&&Array.isArray(ss.sessions)){const haveS=new Set(sessions.map(x=>x.sid));ss.sessions.forEach(x=>{if(x&&x.sid&&!haveS.has(x.sid))sessions.push(x)})}
