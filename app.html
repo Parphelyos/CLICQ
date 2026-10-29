@@ -759,7 +759,7 @@ function normalizeBankQuestion(raw,index=0){
 function normalizeBankRecords(rows){return (Array.isArray(rows)?rows:[]).map((q,i)=>normalizeBankQuestion(q,i))}
 let bank=loadBank(), importPreview=[], currentQuiz=null, toastTimer=null, libraryTopic='', libraryTopicSource='';
 function loadBank(){try{let x=JSON.parse(localStorage.getItem(DBKEY)||'[]');return Array.isArray(x)?normalizeBankRecords(x):[]}catch(e){return []}}
-function saveBank(){try{bank=normalizeBankRecords(bank);localStorage.setItem(DBKEY,JSON.stringify(bank));refreshAll()}catch(e){notify('El almacenamiento local está lleno. Exporta un respaldo o elimina preguntas antiguas.')}}
+function saveBank(){try{bank=normalizeBankRecords(bank);localStorage.setItem(DBKEY,JSON.stringify(bank));refreshAll();return true}catch(e){notify('El almacenamiento local está lleno. Exporta un respaldo o elimina preguntas antiguas.');return false}}
 function uid(){return 'q_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8)}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function attrJs(v){return esc(JSON.stringify(String(v==null?'':v)))}
@@ -1471,7 +1471,90 @@ function deleteAIQuestionsEverywhere(){
 // Keep a compatibility wrapper for older UI references, but route to the complete deletion flow.
 function deleteGeneratedQuestionsFromBank(){deleteAIQuestionsEverywhere();}
 
-function saveImported(){if(!importPreview.length)return;const savedSources=[...new Set(importPreview.map(q=>q.source||'Texto pegado'))];const n=importPreview.length;bank=[...bank,...importPreview];savedSources.forEach(name=>touchBankActivity(name,'created'));importPreview=[];document.getElementById('preview-area').innerHTML='';document.getElementById('import-status').textContent=`Se guardaron ${n} preguntas en este navegador.`;document.getElementById('paste-text').value='';saveBank();notify(`${n} preguntas guardadas`);showView('library')}
+/* Imágenes grandes de los bancos: guardar blobs en IndexedDB, no dentro de localStorage. */
+const CLINQ_QIMG_DB='clinq_question_images_v1';
+let clinqQImgDBPromise=null;
+const clinqQImgURLCache=new Map();
+function clinqOpenQImgDB(){
+ if(!window.indexedDB)return Promise.reject(new Error('Este navegador no permite IndexedDB para guardar imágenes grandes.'));
+ if(clinqQImgDBPromise)return clinqQImgDBPromise;
+ clinqQImgDBPromise=new Promise((resolve,reject)=>{
+  const req=indexedDB.open(CLINQ_QIMG_DB,1);
+  req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('images'))req.result.createObjectStore('images')};
+  req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('No se pudo abrir el almacén de imágenes.'));
+ });
+ return clinqQImgDBPromise;
+}
+async function clinqQImgPut(key,blob){
+ const db=await clinqOpenQImgDB();
+ return new Promise((resolve,reject)=>{const tx=db.transaction('images','readwrite');tx.objectStore('images').put(blob,key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||new Error('No se pudo guardar una imagen.'));tx.onabort=()=>reject(tx.error||new Error('Se canceló el guardado de una imagen.'))});
+}
+async function clinqQImgGet(key){
+ const db=await clinqOpenQImgDB();
+ return new Promise((resolve,reject)=>{const tx=db.transaction('images','readonly'),req=tx.objectStore('images').get(key);req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error||new Error('No se pudo leer una imagen guardada.'))});
+}
+async function clinqExternalizeQuestionImages(questions){
+ const changes=[],dedup=new Map();let stored=0;
+ for(const q of questions){
+  if(!q||typeof q!=='object')continue;
+  for(const field of ['images','expImages']){
+   const arr=q[field];if(!Array.isArray(arr))continue;
+   for(let i=0;i<arr.length;i++){
+    const src=arr[i];if(typeof src!=='string'||!/^data:image\//i.test(src))continue;
+    let marker=dedup.get(src);
+    if(!marker){
+     const response=await fetch(src);if(!response.ok)throw new Error('No se pudo procesar una imagen del banco.');
+     const blob=await response.blob();const key='qimg_'+String(q.id||'question').replace(/[^a-zA-Z0-9_-]/g,'_')+'_'+field+'_'+i+'_'+Math.random().toString(36).slice(2,9);
+     await clinqQImgPut(key,blob);marker='idbimg:'+key;dedup.set(src,marker);stored++;
+    }
+    changes.push({arr,index:i,marker});
+   }
+  }
+ }
+ changes.forEach(c=>{c.arr[c.index]=c.marker});
+ return {stored,refs:changes.length};
+}
+function clinqHydrateImage(img){
+ if(!img||!img.getAttribute)return;const marker=img.getAttribute('src')||'';if(!marker.startsWith('idbimg:'))return;
+ const key=marker.slice(7);img.dataset.clinqImageMarker=marker;
+ clinqQImgGet(key).then(blob=>{
+  if(!blob||!img.isConnected||img.getAttribute('src')!==marker)return;
+  let url=clinqQImgURLCache.get(key);if(!url){url=URL.createObjectURL(blob);clinqQImgURLCache.set(key,url)}
+  img.setAttribute('src',url);
+ }).catch(()=>{});
+}
+function clinqHydrateImages(root){
+ if(!root)return;if(root.matches&&root.matches('img[src^="idbimg:"]'))clinqHydrateImage(root);
+ if(root.querySelectorAll)root.querySelectorAll('img[src^="idbimg:"]').forEach(clinqHydrateImage);
+}
+(function(){
+ const obs=new MutationObserver(records=>records.forEach(r=>{
+  if(r.type==='attributes'){if(r.target&&r.target.tagName==='IMG')clinqHydrateImage(r.target)}
+  else r.addedNodes&&r.addedNodes.forEach(n=>{if(n.nodeType===1)clinqHydrateImages(n)});
+ }));
+ if(document.documentElement)obs.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['src']});
+ clinqHydrateImages(document);
+})();
+async function clinqBlobToDataURL(blob){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=()=>reject(r.error||new Error('No se pudo preparar la imagen para el respaldo.'));r.readAsDataURL(blob)})}
+async function clinqInlineImagesForExport(questions){
+ const copy=JSON.parse(JSON.stringify(questions));
+ for(const q of copy){for(const field of ['images','expImages']){if(!Array.isArray(q[field]))continue;for(let i=0;i<q[field].length;i++){
+  const v=q[field][i];if(typeof v!=='string'||!v.startsWith('idbimg:'))continue;
+  const blob=await clinqQImgGet(v.slice(7));if(!blob)throw new Error('Falta una imagen guardada en IndexedDB; no puedo hacer un respaldo completo.');
+  q[field][i]=await clinqBlobToDataURL(blob);
+ }}}
+ return copy;
+}
+async function saveImported(){
+ if(!importPreview.length)return;
+ const savedSources=[...new Set(importPreview.map(q=>q.source||'Texto pegado'))],n=importPreview.length,previous=bank;
+ let candidate;
+ try{candidate=JSON.parse(JSON.stringify([...bank,...importPreview]));await clinqExternalizeQuestionImages(candidate)}
+ catch(e){notify('No se pudo preparar el banco y sus imágenes: '+(e.message||'error de almacenamiento'));return}
+ bank=candidate;
+ if(!saveBank()){bank=previous;refreshAll();document.getElementById('import-status').textContent='No se pudo guardar el banco. Las preguntas siguen en la vista previa; exporta un respaldo o libera espacio.';return}
+ savedSources.forEach(name=>touchBankActivity(name,'created'));importPreview=[];document.getElementById('preview-area').innerHTML='';document.getElementById('import-status').textContent=`Se guardaron ${n} preguntas en este navegador.`;document.getElementById('paste-text').value='';notify(`${n} preguntas guardadas`);showView('library');
+}
 function removePreviewQuestion(id){importPreview=importPreview.filter(q=>q.id!==id);renderPreview();document.getElementById('import-status').textContent=`Vista previa: ${importPreview.length} pregunta(s) pendientes.`;notify('Pregunta quitada de la vista previa')}
 function clearPreview(){importPreview=[];previewLimit=PREVIEW_PAGE;document.getElementById('preview-area').innerHTML='';document.getElementById('import-status').textContent='Vista previa descartada.'}
 function openEdit(id,preview=false){let q=(preview?importPreview:bank).find(x=>x.id===id);if(!q)return;document.getElementById('edit-modal-title').textContent='Editar pregunta';document.getElementById('edit-id').value=(preview?'preview:':'')+id;document.getElementById('edit-stem').value=q.stem||'';document.getElementById('edit-answer').value=q.answer||'';document.getElementById('edit-explanation').value=q.explanation||'';document.getElementById('edit-subject').value=q.subject||inferSpecialty(q.stem,q.source,q.subject);fillSourceSelect(q.source||'');document.getElementById('edit-options').innerHTML='';(q.options||[]).forEach(o=>{let label=document.createElement('label');label.textContent='Opción '+o.key;let input=document.createElement('textarea');input.className='field edit-opt';input.dataset.key=o.key;input.value=o.text;input.style.width='100%';input.style.minHeight='55px';document.getElementById('edit-options').append(label,input)});document.getElementById('edit-modal').classList.add('open')}
@@ -1510,14 +1593,18 @@ function renderQuizResults(){if(!currentQuiz)return;const ids=currentQuiz.questi
  const bySpecialty=resultBars(groupSessionResults(qs,q=>inferSpecialty(q.stem,q.source,q.subject))),byDiscipline=resultBars(groupSessionResults(qs,q=>inferDiscipline(q)));
  host.innerHTML=`<div class="quizwrap panel" style="text-align:center;padding:34px 22px"><div class="emptyicon">${gradable.length?'🎯':'📝'}</div><div class="eyebrow">SESIÓN COMPLETADA</div><h2 style="margin:6px 0 8px;font-size:25px">${currentQuiz.mode==='exam'?'Examen finalizado':'Sesión finalizada'}</h2><p class="muted" style="max-width:600px;margin:0 auto 22px;font-size:13px">${answered} de ${ids.length} preguntas respondidas. ${gradable.length?`Aciertos: ${correct}/${gradable.length} (${Math.round(correct/gradable.length*100)}%).`:'No se puede calcular la precisión global porque las respuestas contestadas no tienen una clave correcta configurada.'}</p><div class="stats" style="max-width:600px;margin:0 auto 22px"><div class="stat"><div class="stathead">Respondidas</div><div class="statnum">${answered}</div></div><div class="stat"><div class="stathead">Sin responder</div><div class="statnum">${ids.length-answered}</div></div><div class="stat"><div class="stathead">Aciertos</div><div class="statnum">${correct}</div></div><div class="stat"><div class="stathead">Preguntas sin clave</div><div class="statnum">${qs.filter(q=>!q.answer).length}</div></div></div><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap"><button class="btn primary" onclick="exitQuiz()">Nueva sesión</button><button class="btn outline" onclick="exitQuiz();showView('library')">Revisar mi banco</button><button class="btn outline" onclick="redoSession('${currentQuiz.sid}')">↻ Rehacer sesión</button><button class="btn outline" onclick="exitQuiz();showView('progress')">Ver progreso</button></div><div style="margin-top:25px;text-align:left"><h3 style="font-size:15px">Resultados por especialidad</h3><p class="smalltext muted">Solo se cuentan como correctas las preguntas que tienen una clave configurada y fueron respondidas.</p>${bySpecialty}<h3 style="font-size:15px;margin-top:25px">Resultados por disciplina</h3><p class="smalltext muted">La disciplina (diagnóstico, farmacología, microbiología, etc.) se deduce del texto de cada pregunta.</p>${byDiscipline}<h3 style="font-size:15px;margin-top:25px">Revisar respuestas</h3>${qs.map((q,i)=>{let given=currentQuiz.answers[q.id];return `<div class="qrow" style="margin-top:8px"><div class="qnum">${i+1}</div><div class="qsummary"><strong>${esc(q.stem||'Pregunta')}</strong><span>${esc(inferSpecialty(q.stem,q.source,q.subject))} · ${esc(inferDiscipline(q))} · Tu respuesta: ${given||'Sin responder'} · Clave: ${q.answer||'No indicada'}${given!==undefined&&q.answer?(given===q.answer?' · Correcta':' · Incorrecta'):''}</span></div><button class="btn outline small" onclick="openEdit('${q.id}')">Editar clave</button></div>`}).join('')}</div></div>`}
 function exitQuiz(){currentQuiz=null;saveSessions();renderQuizStart()}
-function exportBank(){
+async function exportBank(){
  if(!bank.length){notify('No hay preguntas para exportar.');return}
- const data={app:'clinq',version:2,exportedAt:new Date().toISOString(),questions:bank,sessions:{sessions:sessions,active:currentQuiz?currentQuiz.sid:null}};
- const blob=new Blob([JSON.stringify(data)],{type:'application/json'}),a=document.createElement('a');
- a.href=URL.createObjectURL(blob);a.download='clinq-respaldo-'+new Date().toISOString().slice(0,10)+'.json';
- document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
- notify('Respaldo descargado ('+bank.length+' preguntas)')}
-function importBackup(file){let r=new FileReader();r.onload=()=>{try{
+ try{
+  const questions=await clinqInlineImagesForExport(bank);
+  const data={app:'clinq',version:3,exportedAt:new Date().toISOString(),questions,sessions:{sessions:sessions,active:currentQuiz?currentQuiz.sid:null}};
+  const blob=new Blob([JSON.stringify(data)],{type:'application/json'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='clinq-respaldo-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+  notify('Respaldo descargado ('+bank.length+' preguntas)')
+ }catch(e){notify('No se pudo exportar el respaldo completo: '+(e.message||'error al leer imágenes'))}
+}
+function importBackup(file){let r=new FileReader();r.onload=async()=>{const previousBank=bank,previousSessions=sessions;try{
  let data=JSON.parse(r.result),qs=Array.isArray(data)?data:data.questions;
  if(!Array.isArray(qs))throw Error('No hay lista de preguntas');
  const haveQ=new Set(bank.map(q=>q.id));
@@ -1526,11 +1613,12 @@ function importBackup(file){let r=new FileReader();r.onload=()=>{try{
  if(!fresh.length){notify('Todas las preguntas de ese respaldo ya estaban en tu banco.');return}
  if(!confirm(`¿Importar ${fresh.length} preguntas del respaldo?`+(skipped?` (${skipped} ya existen y se omitirán.)`:'')+' Se conservan tu progreso, subrayados y notas.'))return;
  let cleaned=fresh.map((q,i)=>normalizeBankQuestion({...q,id:q.id||uid(),created:q.created||Date.now(),attempts:Number(q.attempts)||0,correctCount:Number(q.correctCount)||0,omittedCount:Number(q.omittedCount)||0,flagged:!!q.flagged},i));
- bank=[...bank,...cleaned];
+ const candidate=JSON.parse(JSON.stringify([...bank,...cleaned]));await clinqExternalizeQuestionImages(candidate);bank=candidate;
+ if(!saveBank()){bank=previousBank;refreshAll();notify('No se pudo guardar el respaldo: el banco anterior se conservó.');return}
  const ss=!Array.isArray(data)&&data.sessions;
  if(ss&&Array.isArray(ss.sessions)){const haveS=new Set(sessions.map(x=>x.sid));ss.sessions.forEach(x=>{if(x&&x.sid&&!haveS.has(x.sid))sessions.push(x)})}
- saveBank();saveSessions();notify('Respaldo importado: '+cleaned.length+' preguntas');showView('library')
- }catch(e){notify('No se pudo leer el respaldo JSON')}};r.readAsText(file)}
+ saveSessions();notify('Respaldo importado: '+cleaned.length+' preguntas');showView('library')
+ }catch(e){bank=previousBank;sessions=previousSessions;refreshAll();notify('No se pudo importar el respaldo: '+(e.message||'JSON no válido'))}};r.readAsText(file)}
 // Respaldo restaurable desde la sección de banco
 const backupInput=document.createElement('input');backupInput.type='file';backupInput.accept='.json,application/json';backupInput.hidden=true;backupInput.addEventListener('change',()=>{if(backupInput.files?.[0])importBackup(backupInput.files[0]);backupInput.value=''});document.body.appendChild(backupInput);
 
@@ -3449,8 +3537,12 @@ async function expand(files){
  for(const f of files){
   if(/\.zip$/i.test(f.name)){
    try{const Z=await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js','JSZip'),z=await Z.loadAsync(f);
-    for(const e of Object.values(z.files)){if(e.dir||/(^|\/)(__MACOSX|\.)/.test(e.name))continue;const nm=base(e.name),b=await e.async('blob');
-     if(EXT.test(nm))sib.set(nm,new File([b],nm,{type:MT[nm.split('.').pop()]||b.type}));else if(/\.(json|txt|md|csv)$/i.test(nm))rest.push(new File([b],e.name.split('/').pop()))}
+    const ents=Object.values(z.files).filter(e=>!e.dir&&!/(^|\/)(__MACOSX|\.)/.test(e.name));
+    const jsons=ents.filter(e=>/\.json$/i.test(e.name));
+    for(const e of ents){const nm=base(e.name),b=await e.async('blob');
+     if(EXT.test(nm))sib.set(nm,new File([b],nm,{type:MT[nm.split('.').pop()]||b.type}));
+     else if(/\.(json|txt|md|csv)$/i.test(nm)){const internalName=e.name.split('/').pop();const outName=/\.json$/i.test(nm)&&jsons.length===1?f.name.replace(/\.zip$/i,'.json'):internalName;rest.push(new File([b],outName))}
+    }
    }catch(err){notify('No se pudo abrir el ZIP: '+(err.message||err))}
   }else if(isImg(f))sib.set(base(f.name),f);else rest.push(f);
  }
