@@ -31,6 +31,7 @@
     maxImagesPerDoc: 120,      // tope de imágenes incrustadas a leer por documento
     minImagePx: 60,            // ignora imágenes más pequeñas (iconos, viñetas)
     ocrImages: true,           // leer también el texto dentro de imágenes/capturas
+    detectMarks: true,         // detectar la opción marcada como correcta (punto, check, círculo, subrayado, resaltado, color, negrita)
     // Para trabajar 100 % sin conexión, aloja estos archivos y pon aquí sus rutas:
     workerPath: null, corePath: null, langPath: null, gzip: null,
     urls: CDN
@@ -194,6 +195,7 @@
     g.imageSmoothingQuality = 'high';
     g.drawImage(src, 0, 0, cv.width, cv.height);
     const im = g.getImageData(0, 0, cv.width, cv.height), d = im.data, n = d.length / 4;
+    const colorCopy = cfg.detectMarks ? new Uint8ClampedArray(d) : null;   // color original, para detectar marcas
     const hist = new Uint32Array(256); let sum = 0;
     for (let i = 0, p = 0; i < n; i++, p += 4) {
       const y = (d[p] * 299 + d[p + 1] * 587 + d[p + 2] * 114) / 1000 | 0;
@@ -213,6 +215,7 @@
       d[p] = d[p + 1] = d[p + 2] = v; d[p + 3] = 255;
     }
     g.putImageData(im, 0, 0);
+    cv._color = colorCopy && !inv ? { d: colorCopy, w: cv.width, h: cv.height } : null;
     return cv;
   }
   function linesFrom(data) {
@@ -234,11 +237,184 @@
     }
     return out;
   }
+  // Igual que linesFrom, pero conserva la posición (bbox) y las palabras de cada línea para analizar marcas.
+  function linesFromEx(data) {
+    if (!Array.isArray(data.lines) || !data.lines.length) return null;
+    const out = [];
+    for (const l of data.lines) {
+      const conf = l.confidence == null ? 100 : l.confidence;
+      const raw = String(l.text || '');
+      if (conf < cfg.minConf && !(conf >= 30 && OPT_RX.test(raw))) continue;   // una opción con punto/círculo puede leerse con menos confianza
+      const t = raw.replace(/\s+/g, ' ').trim();
+      const alnum = (t.match(/[\p{L}\p{N}]/gu) || []).length;
+      if (!t || alnum < 2 || alnum / t.length < 0.45) continue;
+      const b = l.bbox || {};
+      out.push({ text: t, x0: b.x0 || 0, y0: b.y0 || 0, x1: b.x1 || 0, y1: b.y1 || 0, words: l.words || null });
+    }
+    return out;
+  }
+  /* ---------- Marcas visuales de la respuesta correcta ----------
+     Detecta, comparando las opciones A–E entre sí (la "distinta" es la marcada):
+       · glifos de texto (● ◉ ■ ☑ ✅ ✔ ✓ [x] (x)) · punto/check dibujado a la izquierda o al final
+       · círculo alrededor de la letra · subrayado · resaltado de fondo · texto de otro color · negrita.
+     Si una sola opción destaca, su línea se devuelve como "✓ B. texto", que el importador ya entiende. */
+  const LEAD = String.raw`(?:\[\s*[xX✓✔]?\s*\]|\(\s*[xX✓✔]?\s*\)|[^\p{L}\p{N}\s(\[]|[eoO©®@](?=\s))`;
+  const OPT_RX = new RegExp(String.raw`^\s*(?:${LEAD}\s*)?[(\[]?([A-Ea-e])[)\].:-]\s*\S`, 'u');
+  const STRIP_RX = new RegExp(String.raw`^\s*(?:${LEAD}\s*)?(?=[(\[]?[A-Ea-e][)\].:-]\s*\S)`, 'u');
+  const GLYPH_RX = /^\s*(?:[●◉⦿■☑☒✅✔✓➤►▶]|\[\s*[xX]\s*\]|\(\s*[xX]\s*\))\s*/;
+  const HEAD_RX = /^\s*(?:pregunta|caso|question|case|\d{1,3}\s*[.)])/i;
+  const med = (a) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+  const medOthers = (arr, i) => med(arr.filter((_, k) => k !== i));
+  const cdist = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]);
+
+  function hasOptionSeq(L) {
+    let n = 0;
+    for (const l of L) { const m = OPT_RX.exec(l.text); if (m && m[1].toUpperCase().charCodeAt(0) - 65 === n) n++; if (n >= 2) return true; }
+    return false;
+  }
+  function optionGroups(L) {
+    const groups = []; let cur = null;
+    const close = () => { if (cur && cur.opts.length >= 2) groups.push(cur); cur = null; };
+    for (let i = 0; i < L.length; i++) {
+      const m = OPT_RX.exec(L[i].text), idx = m ? m[1].toUpperCase().charCodeAt(0) - 65 : -1;
+      if (idx === 0) { close(); cur = { opts: [{ first: i, last: i }] }; continue; }
+      if (!cur) continue;
+      if (idx === cur.opts.length && idx <= 4) { cur.opts.push({ first: i, last: i }); continue; }
+      const prev = L[cur.opts[cur.opts.length - 1].last], lh = Math.max(4, prev.y1 - prev.y0);
+      if (idx < 0 && !HEAD_RX.test(L[i].text) && L[i].y0 - prev.y1 < 0.9 * lh && L[i].y0 >= prev.y0) cur.opts[cur.opts.length - 1].last = i;
+      else if (idx < 0) close();
+    }
+    close();
+    return groups;
+  }
+
+  // Estadísticas de un rectángulo: fondo (moda de color), tinta, color medio de la tinta, subrayado.
+  function boxStats(C, x0, y0, x1, y1, lh, wantUnder) {
+    if (!C) return null;
+    x0 = Math.max(0, Math.round(x0)); y0 = Math.max(0, Math.round(y0)); x1 = Math.min(C.w, Math.round(x1)); y1 = Math.min(C.h, Math.round(y1));
+    const w = x1 - x0, h = y1 - y0;
+    if (w < 4 || h < 3) return null;
+    const d = C.d, bins = new Map();
+    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+      const p = (y * C.w + x) * 4, k = (d[p] >> 4) << 8 | (d[p + 1] >> 4) << 4 | (d[p + 2] >> 4);
+      bins.set(k, (bins.get(k) || 0) + 1);
+    }
+    let bk = 0, bn = -1; bins.forEach((n, k) => { if (n > bn) { bn = n; bk = k; } });
+    const bg = [((bk >> 8) & 15) * 16 + 8, ((bk >> 4) & 15) * 16 + 8, (bk & 15) * 16 + 8];
+    let ink = 0, sr = 0, sg = 0, sb = 0, sn = 0;
+    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+      const p = (y * C.w + x) * 4, dd = Math.abs(d[p] - bg[0]) + Math.abs(d[p + 1] - bg[1]) + Math.abs(d[p + 2] - bg[2]);
+      if (dd > 140) { ink++; if (dd > 260) { sr += d[p]; sg += d[p + 1]; sb += d[p + 2]; sn++; } }
+    }
+    const out = { bg, ink, area: w * h, dens: ink / (w * h), inkRGB: sn > 8 ? [sr / sn, sg / sn, sb / sn] : null, under: 0 };
+    if (wantUnder) {
+      const ya = Math.max(0, Math.round(y1 - 0.30 * lh)), yb = Math.min(C.h, Math.round(y1 + 0.45 * lh)), gap = Math.max(2, Math.round(lh * 0.12));
+      let best = 0;
+      for (let y = ya; y < yb; y++) {
+        let run = 0, miss = 0, mx = 0;
+        for (let x = x0; x < x1; x++) {
+          const p = (y * C.w + x) * 4, dd = Math.abs(d[p] - bg[0]) + Math.abs(d[p + 1] - bg[1]) + Math.abs(d[p + 2] - bg[2]);
+          if (dd > 140) { run += 1 + miss; miss = 0; if (run > mx) mx = run; } else if (run && ++miss > gap) { run = 0; miss = 0; }
+        }
+        if (mx > best) best = mx;
+      }
+      out.under = best / w;
+    }
+    return out;
+  }
+  const inkPx = (C, x0, y0, x1, y1, lh) => { const s = boxStats(C, x0, y0, x1, y1, lh, false); return s ? s.ink / (lh * lh) : 0; };
+
+  function markGroup(C, L, g) {
+    const n = g.opts.length, hs = [];
+    g.opts.forEach((o) => { for (let i = o.first; i <= o.last; i++) hs.push(L[i].y1 - L[i].y0); });
+    const lh = Math.max(6, med(hs));
+    const F = g.opts.map((o) => {
+      const f = { bg: null, under: 0, margin: 0, ring: 0, tail: 0, dens: 0, ink: null, text: GLYPH_RX.test(L[o.first].text) };
+      const l0 = L[o.first];
+      let lx0 = l0.x0;
+      if (l0.words && l0.words.length > 1) {   // si el OCR leyó un punto/círculo como palabra suelta, el texto empieza en la letra
+        const wt = (w) => String(w.text || '').trim();
+        let w = l0.words.find((w) => /^[(\[]?[A-Ea-e][)\].:-]/.test(wt(w)));
+        if (!w && wt(l0.words[0]).length <= 2) w = l0.words[1];
+        if (w && w.bbox && w.bbox.x0 > l0.x0 + 0.3 * lh) lx0 = w.bbox.x0;
+      }
+      for (let i = o.first; i <= o.last; i++) {
+        const l = L[i], s = boxStats(C, i === o.first ? lx0 : l.x0, l.y0, l.x1, l.y1, lh, true);
+        if (!s) continue;
+        if (i === o.first) { f.bg = s.bg; f.ink = s.inkRGB; f.dens = s.dens; }
+        else if (f.bg && cdist(s.bg, f.bg) > 60) f.bg = s.bg;
+        if (s.under > f.under) f.under = s.under;
+      }
+      // zona izquierda (punto / check dibujado), anillo alrededor de la letra y zona derecha (check al final)
+      f.margin = inkPx(C, lx0 - 2.7 * lh, l0.y0, lx0 - 0.1 * lh, l0.y1, lh) + (lx0 > l0.x0 + 0.3 * lh ? inkPx(C, l0.x0, l0.y0, lx0 - 0.05 * lh, l0.y1, lh) : 0);
+      const lw = 1.0 * lh, e = 0.22 * lh;
+      const ringBox = (x0, y0, x1, y1) => { const s = boxStats(C, x0, y0, x1, y1, lh, false); return s ? s.ink / s.area : 0; };
+      const rl = ringBox(lx0 - e, l0.y0, lx0, l0.y1), rt = ringBox(lx0, l0.y0 - e, lx0 + lw, l0.y0), rb = ringBox(lx0, l0.y1, lx0 + lw, l0.y1 + e);
+      f.ring = Math.min(rl, Math.max(rt, rb)) * 1.0 + (rt > 0.1 && rb > 0.1 && rl > 0.1 ? 0.1 : 0);
+      const lastL = L[o.last];
+      f.tail = inkPx(C, lastL.x1 + 0.3 * lh, lastL.y0, lastL.x1 + 2.8 * lh, lastL.y1, lh);
+      return f;
+    });
+    // 1) glifos de texto
+    const tx = F.map((f) => f.text), nt = tx.filter(Boolean).length;
+    const votes = new Array(n).fill(0);
+    if (nt === 1) tx.forEach((t, i) => { if (t) votes[i] += 4; });
+    // 2) rasgos visuales: cada uno compara la opción con la mediana de las demás
+    const bgs = F.map((f) => f.bg), mbg = (i) => { const o = bgs.filter((b, k) => k !== i && b); return o.length ? [0, 1, 2].map((c) => med(o.map((b) => b[c]))) : null; };
+    F.forEach((f, i) => {
+      const mb = mbg(i);
+      if (f.bg && mb && cdist(f.bg, mb) >= 60) votes[i] += 3;                                               // resaltado
+      if (f.under >= 0.55 && f.under - medOthers(F.map((x) => x.under), i) >= 0.35) votes[i] += 3;          // subrayado
+      if (f.ring >= 0.18 && f.ring - medOthers(F.map((x) => x.ring), i) >= 0.12) votes[i] += 3;             // círculo en la letra
+      if (f.margin >= 0.07 && f.margin - medOthers(F.map((x) => x.margin), i) >= 0.06) votes[i] += 2.6;     // punto / check a la izquierda
+      if (f.tail >= 0.07 && f.tail - medOthers(F.map((x) => x.tail), i) >= 0.06) votes[i] += 2.5;           // check al final
+      const bd = medOthers(F.map((x) => x.dens), i);
+      if (bd > 0 && f.dens >= 0.10 && f.dens / bd >= 1.35) votes[i] += 2.5;                                  // negrita
+      if (f.ink) {
+        const oth = F.filter((x, k) => k !== i && x.ink).map((x) => x.ink);
+        if (oth.length) {
+          const mi = [0, 1, 2].map((c) => med(oth.map((b) => b[c])));
+          const ch = (a) => Math.max(...a) - Math.min(...a);
+          if (cdist(f.ink, mi) >= 90 && ch(f.ink) >= 60 && ch(mi) < 45) {
+            const [r, gg, b] = f.ink, red = r > gg * 1.5 && r > b * 1.5;
+            votes[i] += red ? 1.4 : 2.6;                                                                       // texto de otro color
+          }
+        }
+      }
+    });
+    let bi = -1, bv = 0, sv = 0;
+    votes.forEach((v, i) => { if (v > bv) { sv = bv; bv = v; bi = i; } else if (v > sv) sv = v; });
+    const chosen = bv >= 2.5 && sv * 1.8 <= bv ? bi : -1;
+    // reescritura de las líneas: quita puntos/casillas sueltos y antepone ✓ a la elegida
+    const allGlyph = nt === n;
+    g.opts.forEach((o, i) => {
+      const l = L[o.first];
+      let t = l.text.replace(STRIP_RX, '');
+      if (allGlyph || i === chosen) t = t.replace(GLYPH_RX, '');
+      l.text = i === chosen ? '✓ ' + t : t;
+    });
+    return chosen;
+  }
+  // Punto de entrada: L = [{text,x0,y0,x1,y1,words?}] en píxeles de C = {d,w,h}. Modifica L[i].text.
+  function markVisual(L, C) {
+    if (!cfg.detectMarks || !L || L.length < 2) return 0;
+    let done = 0;
+    for (const g of optionGroups(L)) {
+      try { markGroup(C, L, g); done++; } catch (e) { /* ignora grupos raros */ }
+    }
+    return done;
+  }
+
   async function ocrSource(src, ctx) {
     const sch = await ensurePool(ctx.say);
     const cv = prepCanvas(src);
-    try { const { data } = await sch.addJob('recognize', cv); return linesFrom(data); }
-    finally { cv.width = cv.height = 0; }
+    try {
+      const { data } = await sch.addJob('recognize', cv);
+      const L = cfg.detectMarks ? linesFromEx(data) : null;
+      if (!L) return linesFrom(data);
+      try { markVisual(L, cv._color); } catch (e) { /* sin marcas: se usa el texto tal cual */ }
+      return L.map((l) => l.text);
+    } finally { cv.width = cv.height = 0; cv._color = null; }
   }
   // Devuelve solo las líneas del OCR que NO están ya en el texto del documento.
   function extras(baseText, lines) {
@@ -298,7 +474,7 @@
   }
 
   /* ---------- PDF ---------- */
-  function layerText(tc) {
+  function layerLinesRaw(tc) {
     const items = tc.items.filter((it) => it.str && it.str.trim())
       .map((it) => ({ x: it.transform[4], y: it.transform[5], h: Math.abs(it.height || it.transform[3]) || 10, w: it.width || 0, s: it.str }));
     items.sort((a, b) => b.y - a.y || a.x - b.x);
@@ -310,14 +486,16 @@
     lines.sort((a, b) => b.y - a.y);
     return lines.map((l) => {
       l.items.sort((a, b) => a.x - b.x);
-      let s = '', px = null;
+      let s = '', px = null, x0 = Infinity, x1 = -Infinity, hh = 0;
       for (const it of l.items) {
         if (px !== null && it.x - px > it.h * 0.15 && !/\s$/.test(s) && !/^\s/.test(it.s)) s += ' ';
         s += it.s; px = it.x + it.w;
+        x0 = Math.min(x0, it.x); x1 = Math.max(x1, it.x + it.w); hh = Math.max(hh, it.h);
       }
-      return s.replace(/\s+/g, ' ').trim();
-    }).filter(Boolean).join('\n');
+      return { text: s.replace(/\s+/g, ' ').trim(), px0: x0, px1: x1, py0: l.y - 0.22 * hh, py1: l.y + 0.85 * hh };
+    }).filter((l) => l.text);
   }
+  function layerText(tc) { return layerLinesRaw(tc).map((l) => l.text).join('\n'); }
   async function pdfExtract(file, ctx) {
     const lib = await load(cfg.urls.pdfjs, 'pdfjsLib');
     lib.GlobalWorkerOptions.workerSrc = cfg.urls.pdfWorker;
@@ -327,9 +505,22 @@
     await mapLimit([...Array(N).keys()], cfg.workers + 1, async (i) => {
       if (cancelFlag) return;
       const page = await pdf.getPage(i + 1);
-      let layer = '';
-      try { layer = layerText(await page.getTextContent()); } catch (e) { /* sin capa de texto */ }
+      let layer = '', lobj = [];
+      try { lobj = layerLinesRaw(await page.getTextContent()); layer = lobj.map((l) => l.text).join('\n'); } catch (e) { /* sin capa de texto */ }
       const scanned = layer.replace(/\s/g, '').length < 40;
+      // Páginas con opciones A, B… en la capa de texto: se analiza el render para ver cuál está marcada.
+      const wantMarks = cfg.detectMarks && !scanned && lobj.length > 1 && hasOptionSeq(lobj);
+      const markLayer = (cv, vp) => {
+        try {
+          const g2 = cv.getContext('2d', { willReadFrequently: true });
+          const C = { d: g2.getImageData(0, 0, cv.width, cv.height).data, w: cv.width, h: cv.height };
+          lobj.forEach((l) => {
+            const r = vp.convertToViewportRectangle([l.px0, l.py0, l.px1, l.py1]);
+            l.x0 = Math.min(r[0], r[2]); l.x1 = Math.max(r[0], r[2]); l.y0 = Math.min(r[1], r[3]); l.y1 = Math.max(r[1], r[3]);
+          });
+          if (markVisual(lobj, C)) layer = lobj.map((l) => l.text).join('\n');
+        } catch (e) { /* sin marcas */ }
+      };
       let hasImg = false;
       if (ctx.ocrImages && !scanned) {
         try {
@@ -348,10 +539,22 @@
         const g = cv.getContext('2d');
         g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
         await page.render({ canvasContext: g, viewport: vp }).promise;
+        if (wantMarks) markLayer(cv, vp);
         const lines = await ocrSource(cv, ctx);
         cv.width = cv.height = 0;
         extra = extras(layer, lines);
         ctx.stats.ocrPages++;
+      }
+      if (wantMarks && !(scanned || hasImg)) {
+        const v1 = page.getViewport({ scale: 1 });
+        const sc = Math.min(3, Math.max(1.6, 1900 / Math.max(v1.width, v1.height)));
+        const vp = page.getViewport({ scale: sc });
+        const cv = document.createElement('canvas');
+        cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+        const g = cv.getContext('2d', { willReadFrequently: true });
+        g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
+        try { await page.render({ canvasContext: g, viewport: vp }).promise; markLayer(cv, vp); } catch (e) { /* sin marcas */ }
+        cv.width = cv.height = 0;
       }
       pages[i] = layer + (extra.length ? (layer ? '\n' : '') + extra.join('\n') : '');
       ctx.say('Leyendo ' + file.name + ': página ' + (++done) + ' de ' + N + (scanned || hasImg ? ' (con OCR)' : '') + '…');
@@ -688,7 +891,7 @@
     } finally { release(); }
   }
 
-  window.NativeOCR = { version: '1.0', config: cfg, extract, detect, zipKind, cancel: () => { cancelFlag = true; }, _t: { norm, extras, rtfToText, rawStrings, decodeText, htmlToText, linesFrom, layerText } };
+  window.NativeOCR = { version: '1.0', config: cfg, extract, detect, zipKind, cancel: () => { cancelFlag = true; }, _t: { norm, extras, rtfToText, rawStrings, decodeText, htmlToText, linesFrom, layerText, markVisual, optionGroups } };
 
   /* =====================================================================
      Integración con ClinQ: reemplaza extractFile y amplía la importación
