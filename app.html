@@ -482,7 +482,7 @@ body.pl-open #pl-dock{display:flex}
 .pl-dh{display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid var(--line)}
 .pl-dh select{flex:1;min-width:0;max-width:100%}
 #pl-dhost{flex:1;min-height:0;display:flex}
-@media(min-width:901px){body.pl-open .main{margin-right:var(--pl-w,min(46vw,720px))}}
+@media(min-width:901px){body.pl-open .main{width:calc(100% - var(--pl-w,min(46vw,720px)));max-width:none;margin-left:0;margin-right:0}}
 @media(max-width:900px){
  .pl-grid{grid-template-columns:minmax(0,1fr)}
  #pl-vhost{height:75vh}
