@@ -78,7 +78,7 @@ html.dark .recent-bank-main span,html.dark .recent-bank-main small{color:#c2d0e5
 <!-- Google Drive Sync Setup -->
 <script>
   // Pega aquí TU ID de cliente OAuth (termina en .apps.googleusercontent.com)
-  window.CLINQ_GOOGLE_CLIENT_ID = "";
+  window.CLINQ_GOOGLE_CLIENT_ID = "254152852718-1umbi74ltam3e1m197ni71nrbgvaa8c8.apps.googleusercontent.com";
   // URL de tu función en Vercel, p. ej. "https://clinq-api.vercel.app/api/generate"
   window.CLINQ_API_URL = "https://clinq-api.vercel.app/api/generate";
 </script>
@@ -1465,6 +1465,7 @@ const backupInput=document.createElement('input');backupInput.type='file';backup
 updateJSONMode();
 loadSessions();refreshAll();if(currentQuiz)renderQuizQuestion();else renderQuizStart();
 /* ==== Sincronización con Google Drive (carpeta oculta appDataFolder) ==== */
+const DEFAULT_CLIENT_ID_HINT='254152852718-1umbi74ltam3e1m197ni71nrbgvaa8c8.apps.googleusercontent.com'; // Valor que aparece siempre precargado en el cuadro de texto
 const GOOGLE_CLIENT_ID=''; // Opcional: pega aquí tu ID de cliente OAuth. Si lo dejas vacío, la app te lo pedirá al iniciar sesión.
 const CQS_CID_KEY='clinq_google_client_id',CQS_META_KEY='clinq_sync_meta_v1',CQS_TOK_KEY='clinq_sync_token',CQS_FILE='clinq-data.json';
 const CQS_SCOPE='https://www.googleapis.com/auth/drive.appdata openid email profile';
@@ -1503,7 +1504,7 @@ function cqsMenu(){
 function cqsMenuAct(a){document.getElementById('sync-menu').style.display='none';
  if(a==='sync'){if(cqsTokenOk())cqsSync();else cqsSignIn()}
  else if(a==='out')cqsSignOut();else if(a==='in')cqsSignIn();
- else if(a==='cid'){const v=(prompt('ID de cliente OAuth de Google (termina en .apps.googleusercontent.com):',localStorage.getItem(CQS_CID_KEY)||'')||'').trim();if(v){localStorage.setItem(CQS_CID_KEY,v);cqs.client=null;notify('ID de cliente guardado')}}}
+ else if(a==='cid'){const v=(prompt('ID de cliente OAuth de Google (termina en .apps.googleusercontent.com):',localStorage.getItem(CQS_CID_KEY)||DEFAULT_CLIENT_ID_HINT)||'').trim();if(v){localStorage.setItem(CQS_CID_KEY,v);cqs.client=null;notify('ID de cliente guardado')}}}
 
 /* Autenticación (Google Identity Services, flujo de token) */
 function cqsGisReady(){return new Promise((res,rej)=>{let n=0;(function t(){if(window.google&&google.accounts&&google.accounts.oauth2)return res();if(++n>100)return rej(new Error('gis'));setTimeout(t,100)})()})}
@@ -1525,7 +1526,7 @@ async function cqsLoadUser(){try{const j=await (await cqsApi('https://www.google
 async function cqsSignIn(){
  if(location.protocol==='file:'){alert('Google no permite iniciar sesión desde un archivo abierto con doble clic (file://).\n\nAbre la app desde un servidor local:\n1) En la carpeta de este archivo, abre una terminal.\n2) Ejecuta: python -m http.server 8080\n3) Entra a http://localhost:8080/\n\n(O publícala en GitHub Pages / Netlify.)');return}
  let id=cqsClientId();
- if(!id){id=(prompt('Pega tu ID de cliente OAuth de Google (termina en .apps.googleusercontent.com):')||'').trim();if(!id)return;if(!/\.apps\.googleusercontent\.com$/.test(id)){alert('Ese ID no parece válido. Debe terminar en .apps.googleusercontent.com');return}localStorage.setItem(CQS_CID_KEY,id);cqs.client=null}
+ if(!id){id=(prompt('Pega tu ID de cliente OAuth de Google (termina en .apps.googleusercontent.com):',DEFAULT_CLIENT_ID_HINT)||'').trim();if(!id)return;if(!/\.apps\.googleusercontent\.com$/.test(id)){alert('Ese ID no parece válido. Debe terminar en .apps.googleusercontent.com');return}localStorage.setItem(CQS_CID_KEY,id);cqs.client=null}
  const prevState=cqs.state;cqsSetStatus('syncing','Conectando con Google…');
  try{await cqsGisReady()}catch(e){cqsSetStatus(prevState==='needslogin'?'needslogin':'out','No se pudo cargar Google. Revisa tu conexión.');notify('No se pudo cargar el servicio de Google. Revisa tu conexión.');return}
  const ok=await cqsRequestToken(cqsMeta.signedIn?'':'select_account');
