@@ -223,6 +223,13 @@ html.dark .sidebar{background:#090f1c}
 .wk-gl{font-size:12px;margin:8px 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.wk-gl strong{color:var(--text)}.wk-gl a{color:var(--blue);font-weight:800;text-decoration:underline;text-underline-offset:2px}.wk-gl .wk-google-img{display:inline-flex;align-items:center;padding:6px 9px;border-radius:8px;border:1px solid #8ca6ff;background:#eaf0ff;color:#183e9e;font-size:12px}.wk-gl .wk-google-img:hover{background:#d8e3ff;color:#102d78}html.dark .wk-gl .wk-google-img{background:#263b5a;border-color:#8ca6ff;color:#eaf0ff}html.dark .wk-gl .wk-google-img:hover{background:#354f78;color:#fff}
 .kbdlegend{margin:18px 0 8px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--panel);display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:12px;color:var(--muted)}
 .kbdlegend strong{color:var(--text)}.kbdlegend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.kbdlegend-head{display:flex;align-items:center;gap:10px;flex:1 1 100%;min-width:0}
+.kbdlegend-head strong{flex:1 1 auto;min-width:0}
+.kbdlegend-toggle{border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:8px;padding:4px 9px;font-size:11px;font-weight:750;cursor:pointer;flex:none}
+.kbdlegend-toggle:hover{color:var(--blue);border-color:#b4c3ff}
+.kbdlegend-items{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;flex:1 1 100%;min-width:0}
+.kbdlegend.collapsed{padding:8px 12px}
+.kbdlegend.collapsed .kbdlegend-items{display:none}
 .kbdlegend kbd{font:700 11px/1 ui-monospace,monospace;padding:4px 7px;border-radius:6px;border:1px solid var(--line);border-bottom-width:2px;background:var(--bg);color:var(--text)}
 @media(max-width:600px){.themesw .ts-label{display:none}.kbdlegend{gap:8px}}
 </style>
@@ -690,8 +697,19 @@ function notify(msg){const t=document.getElementById('toast');t.textContent=msg;
 /* ==== Sesiones, subrayado, disciplinas, selector de banco ==== */
 const SESSKEY='clinq_sessions_v1';
 let sessions=[], manualDraft=null, lastStemSelection=null;
-function loadSessions(){try{const raw=JSON.parse(localStorage.getItem(SESSKEY)||'{}');sessions=(Array.isArray(raw.sessions)?raw.sessions:[]).filter(s=>s&&s.sid&&Array.isArray(s.questions)).map(s=>{/* conserva las preguntas originales de la sesión: agregar o importar bancos no debe cambiar su tamaño */s.questions=s.questions.filter(id=>typeof id==='string'&&id);s.answers=s.answers||{};s.index=Math.max(0,Math.min(Number(s.index)||0,Math.max(0,s.questions.length-1)));return s}).filter(s=>s.questions.length);currentQuiz=sessions.find(s=>s.sid===raw.active)||null}catch(e){sessions=[];currentQuiz=null}}
+function loadSessions(){try{const raw=JSON.parse(localStorage.getItem(SESSKEY)||'{}');sessions=(Array.isArray(raw.sessions)?raw.sessions:[]).filter(s=>s&&s.sid&&Array.isArray(s.questions)).map(s=>{/* conserva las preguntas originales de la sesión: agregar o importar bancos no debe cambiar su tamaño */s.questions=s.questions.filter(id=>typeof id==='string'&&id);s.answers=s.answers||{};s.index=Math.max(0,Math.min(Number(s.index)||0,Math.max(0,s.questions.length-1)));return s}).filter(s=>s.questions.length);currentQuiz=sessions.find(s=>s.sid===raw.active)||null}catch(e){sessions=[];currentQuiz=null}migrateOptionFolds()}
 function saveSessions(){try{if(currentQuiz)currentQuiz.updated=Date.now();localStorage.setItem(SESSKEY,JSON.stringify({sessions,active:currentQuiz?currentQuiz.sid:null}))}catch(e){}}
+/* Una sola vez: reabre las respuestas que quedaron ocultas por el antiguo
+   auto-plegado del modo caso. Después manda la preferencia del usuario. */
+function migrateOptionFolds(){
+ try{
+  if(localStorage.getItem('clinq_opts_reopen_v1')==='1')return;
+  const clear=s=>{if(!s||!s.optionsOpen)return;Object.keys(s.optionsOpen).forEach(k=>{if(s.optionsOpen[k]===false)delete s.optionsOpen[k]})};
+  sessions.forEach(clear);clear(currentQuiz);
+  saveSessions();
+  localStorage.setItem('clinq_opts_reopen_v1','1');
+ }catch(e){}
+}
 function pruneSessions(ids){sessions.forEach(s=>{s.questions=s.questions.filter(id=>!ids.has(id));ids.forEach(id=>{delete s.answers[id];if(s.omitted)delete s.omitted[id]});s.index=Math.max(0,Math.min(s.index,s.questions.length-1))});sessions=sessions.filter(s=>s.questions.length);if(currentQuiz&&!sessions.includes(currentQuiz))currentQuiz=null;saveSessions()}
 function sessionLabel(mode,chosen,onlyId){const srcs=[...new Set(chosen.map(q=>q.source||'Texto pegado'))];return (mode==='exam'?'Examen':'Práctica')+' · '+chosen.length+(chosen.length===1?' pregunta':' preguntas')+(srcs.length===1?' · '+srcs[0]:'')+(!onlyId&&currentQuizConfig().order==='bank'?' · orden del banco':'')}
 function sessionsPanelHTML(){if(!sessions.length)return '';return `<div class="panel" style="margin-bottom:16px"><div class="sectionhead"><div><h3>Sesiones abiertas</h3><p>Se guardan solas; puedes tener varias a la vez y continuarlas cuando quieras.</p></div></div><div class="sessionlist">`+sessions.slice().reverse().map(s=>{const answered=Object.keys(s.answers||{}).length,total=s.questions.length,when=new Date(s.started||Date.now()).toLocaleString('es-DO',{dateStyle:'medium',timeStyle:'short'});return `<div class="sessionrow"><div class="sessioninfo"><strong>${esc(s.label||(s.mode==='exam'?'Examen':'Práctica'))}</strong><span>${s.finished?'Finalizada':'En curso · pregunta '+(s.index+1)+' de '+total} · ${answered} respondidas · iniciada ${esc(when)}</span></div><span class="pill ${s.finished?'green':'blue'}">${s.finished?'Finalizada':(s.mode==='exam'?'Examen':'Práctica')}</span><button class="btn outline small" onclick="renameSession('${s.sid}')" title="Cambiar nombre">✎ Nombre</button>${s.finished?`<button class="btn outline small" onclick="redoSession('${s.sid}')" title="Empezar de nuevo esta sesión con las mismas preguntas">↻ Rehacer</button>`:''}<button class="btn primary small" onclick="resumeSession('${s.sid}')">${s.finished?'Ver resultados':'Continuar'}</button><button class="btn outline small" onclick="closeSession('${s.sid}')">${s.finished?'Cerrar':'Descartar'}</button></div>`}).join('')+`</div></div>`}
@@ -2925,8 +2943,22 @@ async function visionDetect(dataUrl,auto){
    const host=$('quiz-area');if(!host||!document.querySelector('.quizcard'))return;
    host.querySelector('.kbdlegend')?.remove();
    const rows=[['M','Marcar / quitar marca'],['Shift+M','Carpeta de marcadas'],['H','Subrayar texto'],['T','Activar/desactivar tutor'],['V','Valores normales'],['N','Modo día/noche'],['O','Omitir pregunta'],['A–E / 1–5','Elegir respuesta'],['← / →','Anterior / siguiente'],['Espacio','Abrir/cerrar opciones · si ya respondiste, pasa a la siguiente'],['Enter','Siguiente (si se puede)'],['Esc','Cerrar ventanas del tutor']];
-   const d=document.createElement('div');d.className='kbdlegend';d.innerHTML='<strong>⌨ Atajos de teclado</strong>'+rows.map(x=>'<span><kbd>'+x[0]+'</kbd>'+x[1]+'</span>').join('');host.appendChild(d);
+   const folded=(()=>{try{return localStorage.getItem('clinq_kbd_fold')==='1'}catch(e){return false}})();
+   const d=document.createElement('div');d.className='kbdlegend'+(folded?' collapsed':'');
+   d.innerHTML='<div class="kbdlegend-head"><strong>⌨ Atajos de teclado</strong><button type="button" class="kbdlegend-toggle" aria-expanded="'+(folded?'false':'true')+'">'+(folded?'Mostrar atajos':'Ocultar atajos')+'</button></div><div class="kbdlegend-items">'+rows.map(x=>'<span><kbd>'+x[0]+'</kbd>'+x[1]+'</span>').join('')+'</div>';
+   host.appendChild(d);
+   d.querySelector('.kbdlegend-toggle').onclick=()=>{
+    window.__clinqSetKbdFold(!d.classList.contains('collapsed'));
+    try{if(window.__clinqCaseFitNow)window.__clinqCaseFitNow()}catch(e){}
+   };
  }
+ window.__clinqSetKbdFold=function(collapsed){
+  try{localStorage.setItem('clinq_kbd_fold',collapsed?'1':'0')}catch(e){}
+  const d=document.querySelector('#quiz-area .kbdlegend');if(!d)return;
+  d.classList.toggle('collapsed',!!collapsed);
+  const b=d.querySelector('.kbdlegend-toggle');
+  if(b){b.textContent=collapsed?'Mostrar atajos':'Ocultar atajos';b.setAttribute('aria-expanded',collapsed?'false':'true')}
+ };
  document.addEventListener('DOMContentLoaded',()=>{
    addThemeSwitch();installSessionHooks();addLegend();
    if(window.MutationObserver&&document.body)new MutationObserver(()=>{if($('wk-imgs'))setTimeout(installImageCarousel,0)}).observe(document.body,{childList:true,subtree:true});
@@ -4546,15 +4578,15 @@ window.renameImportPreviewBank=function(old,neu,onlyId){return applyPreviewRenam
 .anki-empty-ic{font-size:34px;margin-bottom:8px}
 .anki-empty strong{display:block;color:var(--text);font-size:15px;margin-bottom:4px}
 .anki-empty p{margin:0;font-size:12.5px}
-.anki-study{max-width:820px;margin:0 auto;padding:18px}
-.anki-study-top{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px}
-.anki-bar{height:6px;background:var(--blue2);border-radius:99px;overflow:hidden;margin-bottom:16px}
+.anki-study{max-width:820px;margin:0 auto;padding:12px 14px}
+.anki-study-top{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px;flex:none}
+.anki-bar{height:5px;background:var(--blue2);border-radius:99px;overflow:hidden;margin-bottom:10px;flex:none}
 .anki-bar>div{height:100%;background:var(--blue);border-radius:99px;transition:width .2s ease}
-.anki-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;min-height:220px;display:flex;flex-direction:column;gap:13px;overflow-wrap:anywhere}
-.anki-front{font-size:19px;line-height:1.55}
+.anki-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-height:0;display:flex;flex-direction:column;gap:10px;overflow-wrap:anywhere}
+.anki-front{font-size:17px;line-height:1.5}
 .anki-front p:first-child,.anki-back p:first-child{margin-top:0}
 .anki-front p:last-child,.anki-back p:last-child{margin-bottom:0}
-.anki-back{font-size:15px;line-height:1.6}
+.anki-back{font-size:14px;line-height:1.55}
 .anki-label{font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
 .anki-divider{height:1px;background:var(--line);flex:none}
 .anki-extra{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:13px;color:var(--muted)}
@@ -4564,17 +4596,21 @@ window.renameImportPreviewBank=function(old,neu,onlyId){return applyPreviewRenam
 .anki-img-missing{font-size:17px;opacity:.45;vertical-align:middle}
 .anki-cloze{background:var(--blue2);color:var(--blue);padding:1px 6px;border-radius:6px;font-weight:750}
 .anki-answer{color:var(--green)}
-.anki-grades{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
-.anki-grade{display:flex;flex-direction:column;gap:2px;align-items:center;padding:9px 5px;min-width:0}
+.anki-grades{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:9px;flex:none}
+.anki-grade{display:flex;flex-direction:column;gap:1px;align-items:center;padding:7px 5px;min-width:0}
 .anki-grade small{font-size:10.5px;font-weight:650;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .anki-grade.primary small{color:rgba(255,255,255,.82)}
 .anki-grade.again{border-color:var(--red)!important;color:var(--red)}
 .anki-grade.hard{border-color:var(--gold)!important;color:var(--gold)}
 .anki-grade.easy{border-color:var(--green)!important;color:var(--green)}
 .anki-grade.primary.again,.anki-grade.primary.hard,.anki-grade.primary.easy{color:#fff}
-.anki-reveal{width:100%;margin-top:12px;padding:12px}
-.anki-hint{text-align:center;margin-top:10px}
-.anki-done{text-align:center;padding:34px 18px}
+.anki-reveal{width:100%;margin-top:9px;padding:9px;flex:none}
+.anki-hint{text-align:center;margin-top:6px;font-size:11px;flex:none}
+.anki-study.anki-short .anki-hint{display:none}
+.anki-study.anki-short .anki-front{font-size:16px}
+.anki-study.anki-short .anki-card{padding:11px 13px;gap:8px}
+.anki-study>.anki-options{flex:0 1 auto;max-height:38%;overflow:auto;margin:0 0 8px}
+.anki-done{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px 16px}
 .anki-done-ic{font-size:40px;margin-bottom:10px}
 .anki-done h3{margin:0 0 6px;font-size:19px}
 .anki-done p{margin:0 auto 18px;max-width:46ch;color:var(--muted);font-size:13px}
@@ -4590,6 +4626,11 @@ html.dark .anki-grade.primary small{color:rgba(16,24,39,.72)}
 .anki-opts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:10px}
 .anki-opt{display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:700;color:var(--muted);min-width:0}
 .anki-opt .field{padding:7px 9px;font-size:13px;min-width:0;width:100%}
+/* Más aire dentro de las cajas de texto de toda la sección Anki. */
+#practice-anki .field{padding:11px 14px;line-height:1.42}
+#practice-anki .anki-opt .field{padding:9px 12px;line-height:1.4}
+#practice-anki .anki-search .field{padding:8px 2px}
+#practice-anki textarea.field{padding:12px 14px;line-height:1.55}
 .anki-opt-check{flex-direction:row;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--bg)}
 .anki-opt-check input{width:17px;height:17px;accent-color:var(--blue);cursor:pointer}
 .anki-deadline-hint{font-size:12px;font-weight:650;line-height:1.45;color:var(--text);padding:7px 0}
@@ -4640,6 +4681,18 @@ html.dark .anki-chip.flag4{background:#12243d;color:#60a5fa}
 .ac-adv p{margin:7px 0 0;line-height:1.5}
 .ac-token{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .ac-token .field{flex:1 1 240px;min-width:0}
+/* Paneles plegables de la página Anki */
+.anki-panel-body{display:flex;flex-direction:column;gap:11px;min-width:0}
+.anki-hero-side{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;flex:none}
+.anki-panel-fold{width:30px;height:30px;flex:none;display:grid;place-items:center;border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:9px;font-size:13px;line-height:1;transition:.15s}
+.anki-panel-fold:hover{color:var(--blue);border-color:#b4c3ff;background:var(--blue2)}
+.anki-panel-caret{display:block;transition:transform .16s ease}
+.panel.anki-collapsed .anki-panel-body{display:none}
+.panel.anki-collapsed .anki-actions{display:none}
+.panel.anki-collapsed .anki-panel-caret{transform:rotate(-90deg)}
+.panel.anki-collapsed{padding-bottom:14px}
+html.dark .anki-panel-fold{background:#16243a;border-color:#2c405c;color:#c2d0e5}
+html.dark .anki-panel-fold:hover{background:#1d3150;border-color:#3f5a80;color:#dbe6ff}
 html.dark .ac-deck{background:#131e30}
 @media(max-width:600px){
  .ac-form .field{flex:1 1 100%}
@@ -4751,26 +4804,15 @@ html.dark .practice-tabs button.active{background:#22344f;color:#dce7ff}
 .anki-deck-tools .field{flex:1 1 280px;min-width:0}
 .anki-deck-tools .btn{flex:none}
 .anki-deck-tools .btn[hidden]{display:none}
-/* Subpestañas de Anki: bancos (.apkg) y sus grupos/temas */
-.anki-scope{display:grid;gap:7px;margin:0 0 11px;min-width:0}
-.anki-scope[hidden]{display:none}
-.anki-scope-row{display:flex;align-items:flex-start;gap:8px;min-width:0}
-.anki-scope-lbl{flex:none;min-width:50px;padding:7px 0 0;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
-.anki-scope-tabs{display:flex;gap:6px;min-width:0;overflow-x:auto;padding:1px 1px 4px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
-.anki-scope-tabs::-webkit-scrollbar{height:8px}
-.anki-scope-tabs::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px;border:2px solid transparent;background-clip:content-box}
-.anki-scope-tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;max-width:270px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--text);font-size:12px;font-weight:700;line-height:1.2;padding:6px 9px 6px 11px;white-space:nowrap;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
-.anki-scope-tab .name{overflow:hidden;text-overflow:ellipsis;max-width:205px}
-.anki-scope-tab b{flex:none;font-size:10px;font-weight:800;color:var(--muted);background:var(--blue2);padding:1px 6px;border-radius:99px}
-.anki-scope-tab:hover{border-color:var(--blue);color:var(--blue)}
-.anki-scope-tab.on{background:var(--blue2);border-color:var(--blue);color:var(--blue)}
-.anki-scope-tab.on b{color:var(--blue)}
-.anki-scope-tab:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
-@media(max-width:700px){.anki-scope-lbl{display:none}}
+/* Árbol de bancos (.apkg), grupos y mazos */
 .anki-tree{display:flex;flex-direction:column;gap:7px}
 .anki-tree .anki-trow{--lv:0;margin-left:calc(var(--lv) * 16px);display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:8px 11px;min-width:0}
-.anki-tree .anki-tgroup{background:var(--blue2);border-color:transparent;padding:7px 11px;box-shadow:none}
+.anki-tree .anki-tgroup{background:var(--panel);border-color:var(--line);padding:7px 11px;box-shadow:none}
+.anki-tree .anki-tbank{background:var(--blue2);border-color:transparent}
+.anki-tree .anki-tbank .anki-tfold,.anki-tree .anki-tbank .anki-tsect{font-size:14px}
+.anki-tree .anki-tbank .anki-tname{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;line-height:1.25}
 .anki-tfold{display:flex;align-items:center;gap:8px;border:0;background:none;padding:2px 0;font:inherit;color:inherit;font-weight:800;font-size:13.5px;text-align:left;min-width:0;cursor:pointer;flex:0 1 auto}
+.anki-tsect{display:flex;align-items:center;gap:8px;padding:2px 0;font-weight:800;font-size:13.5px;text-align:left;min-width:0;flex:0 1 auto}
 .anki-tfold:hover{color:var(--blue)}
 .anki-caret{display:inline-block;width:12px;color:var(--muted);font-size:11px;flex:none}
 .anki-tname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -4784,6 +4826,7 @@ html.dark .practice-tabs button.active{background:#22344f;color:#dce7ff}
 .anki-tacts .btn{padding:5px 9px;font-size:12px}
 .anki-empty-inline{padding:16px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);font-size:12.5px;text-align:center}
 html.dark .anki-tree .anki-tgroup{background:#16243a;border-color:#2c405c}
+html.dark .anki-tree .anki-tbank{background:#1d3150;border-color:#2c405c}
 html.dark .anki-tfold:hover{color:#a9bdff}
 @media(max-width:760px){
  .anki-tree .anki-trow{margin-left:calc(var(--lv) * 9px);flex-wrap:wrap}
@@ -4833,40 +4876,6 @@ details.anki-tags-wrap[open]>summary{margin-bottom:7px}
 html.dark .anki-brow-head:hover{background:#20304b}
 html.dark .anki-search{background:#141f32}
 html.dark .anki-tags span{background:#152136;border-color:#2f4159}
-
-/* ===== Caso clínico a pantalla completa (sin scroll de página) ===== */
-html.quiz-fit-on{overflow:hidden}
-#view-practice.quiz-fit #quiz-area{height:var(--quiz-fit-h,calc(100dvh - 150px));display:flex;flex-direction:column;min-height:0}
-#view-practice.quiz-fit .quizwrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;width:100%;max-width:100%}
-#view-practice.quiz-fit .kbdlegend{display:none!important}
-#view-practice.quiz-fit .quizbank-bar{display:none}
-#view-practice.quiz-fit .quiztop{flex:0 0 auto;margin-bottom:8px;flex-wrap:nowrap}
-#view-practice.quiz-fit .quiztop .smalltext{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#view-practice.quiz-fit .progressline{flex:0 0 auto;margin-bottom:9px}
-#view-practice.quiz-fit .quizcard{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:clamp(13px,1.4vw,20px);border-radius:16px}
-#view-practice.quiz-fit .quizcard::-webkit-scrollbar{width:10px}
-#view-practice.quiz-fit .quizcard::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px;border:3px solid transparent;background-clip:content-box}
-#view-practice.quiz-fit .quizstem{font-size:clamp(15px,1.05vw,17px);line-height:1.45}
-#view-practice.quiz-fit .options{gap:8px;margin-top:11px}
-#view-practice.quiz-fit .option{padding:10px 13px;font-size:14.5px;line-height:1.42;border-radius:11px;gap:10px}
-#view-practice.quiz-fit .option .letter{width:24px;height:24px;font-size:12px}
-#view-practice.quiz-fit .option-disclosure{margin-top:10px;border-radius:12px}
-#view-practice.quiz-fit .option-disclosure>summary{padding:9px 14px;font-size:14px}
-#view-practice.quiz-fit .option-disclosure .options{padding:10px 12px 12px}
-#view-practice.quiz-fit .feedback{margin-top:10px;padding:10px 12px;font-size:13.5px}
-#view-practice.quiz-fit .quizcard .notice{margin:8px 0;font-size:12px;padding:8px 10px}
-#view-practice.quiz-fit .quizdock{flex:0 0 auto;margin-top:9px;padding:8px 12px;border-radius:14px}
-#view-practice.quiz-fit .quizdock .quizbottom{margin-top:8px;padding-top:8px}
-#view-practice.quiz-fit .quizbottom{margin-top:8px}
-#view-practice.quiz-fit .quizdock details.dockfold>summary{padding:4px 6px;margin:-2px -6px 0}
-#view-practice.quiz-fit .quizdock details.dockfold[open]>summary{margin-bottom:4px}
-#view-practice.quiz-fit .casebar{margin-bottom:9px;padding-bottom:8px}
-@media(max-height:700px){
- #view-practice.quiz-fit .quizstem{font-size:15px;line-height:1.4}
- #view-practice.quiz-fit .option{padding:8px 11px;font-size:14px}
- #view-practice.quiz-fit .quiztop .btn{font-size:11.5px;padding:6px 8px}
-}
-html.quiz-fit-on .main{padding-bottom:14px}
 </style>
 <script id="clinq-v6">
 (function(){
@@ -5470,8 +5479,11 @@ function renderStats(){
 function deckCards(id){return anki.cards.filter(c=>c.deckId===id)}
 function ankiDeckLabel(d){
  if(!d)return 'Anki';
- const n=String(d.name||'Anki');
- return d.source==='ankicollab'?n.replace(/^AnkiCollab · /,''):n;
+ let n=String(d.name||'Anki');
+ if(d.source==='ankicollab')n=n.replace(/^AnkiCollab · /,'');
+ /* AnkiCollab devuelve la ruta con U+001F en vez de "::"; se normaliza
+    para que el árbol pueda mostrar todos los niveles, sin límite. */
+ return n.replace(/\u001f+/g,'::').replace(/\s*::\s*/g,'::').trim();
 }
 function ankiNorm(s){
  return String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -5516,17 +5528,9 @@ function ankiDeckMeta(s){
   (s.susp?' · '+s.susp+' '+T('suspendidas','suspended'):'');
 }
 let ankiDeckQuery='';
-let ankiStudyScope=null;
-/* ---------- Bancos (.apkg) y sus grupos/temas: subpestañas del módulo Anki ---------- */
-const ASCOPE_KEY='clinq_anki_scope_v1';
-let ankiScope={bank:'',group:''};
-try{
- const so=JSON.parse(localStorage.getItem(ASCOPE_KEY)||'{}');
- if(so&&typeof so==='object'){ankiScope.bank=String(so.bank||'');ankiScope.group=String(so.group||'')}
-}catch(e){}
-function ankiScopeSave(){try{localStorage.setItem(ASCOPE_KEY,JSON.stringify(ankiScope))}catch(e){}}
+/* ---------- Bancos (.apkg), grupos y temas: árbol plegable ---------- */
 function ankiCleanSeg(s){return String(s||'').replace(/^[\s\-–—:·|]+/,'').replace(/\s+/g,' ').trim()}
-/* Mazos planos (sin ::) que comparten un prefijo claro se agrupan como banco + grupos. */
+/* Mazos planos (sin ::) que comparten un prefijo claro se agrupan bajo el mismo banco. */
 function ankiFlatPrefixInfo(flat){
  const rows=flat.map(d=>{const label=String(ankiDeckLabel(d)).trim();return {d,label,tokens:label.split(/\s+/).filter(Boolean)}});
  const out=new Map();
@@ -5554,168 +5558,122 @@ function ankiFlatPrefixInfo(flat){
  }
  return out;
 }
-function ankiScopeModel(decks){
- const banks=new Map(),alias=new Map();
- const keyOf=name=>{
-  const n=ankiCleanSeg(name)||T('Sin banco','No bank');
-  const norm=ankiNorm(n);
-  if(alias.has(norm))return alias.get(norm);
-  alias.set(norm,n);return n;
- };
- const add=(bank,group,d)=>{
-  const bn=keyOf(bank),gn=ankiCleanSeg(group);
-  let b=banks.get(bn);
-  if(!b){b={name:bn,deckIds:new Set(),groups:new Map()};banks.set(bn,b)}
-  b.deckIds.add(String(d.id));
-  let g=b.groups.get(gn);
-  if(!g){g={name:gn,deckIds:new Set()};b.groups.set(gn,g)}
-  g.deckIds.add(String(d.id));
- };
- const flat=[],hier=[];
+/* Ubica cada mazo en su banco y en su ruta de grupos según la jerarquía "::" de Anki. */
+function ankiDeckTreeInfo(decks){
+ const banks=new Map();
  decks.forEach(d=>{
   const segs=ankiDeckSegments(d);
-  if(segs.length>1)hier.push({d,segs});else flat.push(d);
+  if(segs.length<2)return;
+  const n=ankiCleanSeg(segs[0]);
+  if(n&&!banks.has(ankiNorm(n)))banks.set(ankiNorm(n),n);
  });
- hier.forEach(x=>add(x.segs[0],x.segs[1]||'',x.d));
- const findBank=label=>{
-  const n=ankiNorm(label);
-  for(const k of banks.keys())if(ankiNorm(k)===n)return k;
-  return '';
- };
- const rest=[];
- flat.forEach(d=>{
-  const label=ankiCleanSeg(ankiDeckLabel(d));
-  const hit=findBank(label);
-  if(hit)add(hit,'',d);else rest.push(d);
- });
- const prefix=ankiFlatPrefixInfo(rest);
- rest.forEach(d=>{
+ const prefix=ankiFlatPrefixInfo(decks.filter(d=>ankiDeckSegments(d).length<2));
+ const map=new Map();
+ decks.forEach(d=>{
+  const segs=ankiDeckSegments(d).map(ankiCleanSeg).filter(Boolean);
+  const full=ankiDeckLabel(d);
+  if(segs.length>1){
+   map.set(String(d.id),{path:segs.slice(0,-1),leaf:segs[segs.length-1],full});
+   return;
+  }
+  const label=ankiCleanSeg(full)||'Anki';
+  const hit=banks.get(ankiNorm(label));
+  if(hit){map.set(String(d.id),{path:[hit],leaf:label,full});return}
   const info=prefix.get(String(d.id));
-  if(info)add(info.bank,info.group,d);
-  else add(ankiDeckLabel(d),'',d);
+  if(info&&info.bank){map.set(String(d.id),{path:[info.bank],leaf:info.group||label,full});return}
+  map.set(String(d.id),{path:[],leaf:label,full});
  });
- return banks;
+ return map;
 }
-function ankiResolveScope(scopes){
- const allIds=new Set();
- scopes.forEach(b=>b.deckIds.forEach(id=>allIds.add(id)));
- let bank=String(ankiScope.bank||'');
- if(bank&&!scopes.has(bank)){
-  const n=ankiNorm(bank),hit=[...scopes.keys()].find(k=>ankiNorm(k)===n);
-  bank=hit||'';
+/* Subcarpetas derivadas: mazos hermanos que comparten un prefijo claro se
+   agrupan en un nivel más del árbol. Se aplica recursivamente y sin límite. */
+function ankiGroupLeafDecks(node){
+ const entries=node.decks;
+ if(entries.length>1){
+  const tokens=e=>String(e.leaf||'').split(/\s+/).filter(Boolean);
+  const best=new Map();
+  for(let i=0;i<entries.length;i++)for(let j=i+1;j<entries.length;j++){
+   const a=entries[i],b=entries[j],ta=tokens(a),tb=tokens(b);
+   let k=0;
+   while(k<ta.length&&k<tb.length&&ta[k].toLowerCase()===tb[k].toLowerCase())k++;
+   if(k<2||k>=ta.length||k>=tb.length)continue;
+   const pref=ta.slice(0,k).join(' ');
+   [[a,ta],[b,tb]].forEach(([e,t])=>{
+    const prev=best.get(e);
+    if(!prev||k>prev.k)best.set(e,{k,pref,rest:t.slice(k).join(' ')});
+   });
+  }
+  if(best.size){
+   const groups=new Map();
+   best.forEach((info,e)=>{
+    let g=groups.get(info.pref);
+    if(!g){g={node:{name:info.pref,path:node.path?node.path+'::'+info.pref:info.pref,children:new Map(),decks:[]},rows:[]};groups.set(info.pref,g)}
+    g.rows.push({e,rest:info.rest});
+   });
+   groups.forEach((g,pref)=>{
+    g.rows.forEach(({e,rest})=>{
+     const idx=node.decks.indexOf(e);
+     if(idx>=0)node.decks.splice(idx,1);
+     g.node.decks.push(Object.assign({},e,{leaf:rest}));
+    });
+    const existing=node.children.get(pref);
+    if(existing)existing.decks.push.apply(existing.decks,g.node.decks);
+    else node.children.set(pref,g.node);
+   });
+  }
  }
- if(!bank&&scopes.size===1)bank=[...scopes.keys()][0];
- const b=bank?scopes.get(bank):null;
- let group=String(ankiScope.group||'');
- if(!b)group='';
- else if(group==='__general'){if(!b.groups.has(''))group=''}
- else if(group&&!b.groups.has(group))group='';
- let ids,label='';
- if(!b){ids=allIds}
- else if(group==='__general'){ids=new Set(b.groups.get('').deckIds);label=bank+' · '+T('General','General')}
- else if(group){ids=new Set(b.groups.get(group).deckIds);label=bank+' · '+group}
- else{ids=new Set(b.deckIds);label=bank}
- if(ankiScope.bank!==bank||ankiScope.group!==group){ankiScope.bank=bank;ankiScope.group=group;ankiScopeSave()}
- return {bank,group,ids,label,bankObj:b};
-}
-function ankiScopeCards(ids,stats){
- let n=0;(ids||[]).forEach(id=>{const s=stats[id];if(s)n+=s.total});
- return n;
-}
-function renderAnkiScope(scopes,scope,stats){
- const host=$('anki-scope');
- const allBtn=$('anki-study-all');
- if(!host)return;
- if(!scopes||!scopes.size){
-  host.hidden=true;host.innerHTML='';
-  ankiStudyScope=null;
-  if(allBtn)allBtn.textContent='▶ '+T('Estudiar todo','Study all');
-  return;
- }
- const banks=[...scopes.values()].sort((a,b)=>a.name.localeCompare(b.name,'es'));
- const totalIds=new Set();banks.forEach(b=>b.deckIds.forEach(id=>totalIds.add(id)));
- const total=ankiScopeCards(totalIds,stats);
- const showBanks=banks.length>1;
- const b=scope&&scope.bank?scopes.get(scope.bank):null;
- const groups=b?[...b.groups.values()]:[];
- const showGroups=!!b&&groups.length>=2;
- const tab=(attrs,name,count,on,title)=>'<button type="button" class="anki-scope-tab'+(on?' on':'')+'" '+attrs+' role="tab" aria-selected="'+(on?'true':'false')+'" title="'+esc(title||name)+'"><span class="name">'+esc(name)+'</span><b>'+count+'</b></button>';
- let html='';
- if(showBanks){
-  let tabs=tab('data-scope-bank="__all"',T('Todos','All'),total,!(scope&&scope.bank),T('Todos los bancos','All banks'));
-  banks.forEach(x=>{
-   tabs+=tab('data-scope-bank="'+esc(x.name)+'"',x.name,ankiScopeCards(x.deckIds,stats),!!(scope&&scope.bank===x.name),x.name);
-  });
-  html+='<div class="anki-scope-row"><span class="anki-scope-lbl">'+T('Bancos','Banks')+'</span><div class="anki-scope-tabs" role="tablist">'+tabs+'</div></div>';
- }
- if(showGroups){
-  const sorted=groups.slice().sort((a,c)=>(a.name?1:0)-(c.name?1:0)||a.name.localeCompare(c.name,'es'));
-  let tabs=tab('data-scope-group="__all"',T('Todos','All'),ankiScopeCards(b.deckIds,stats),!scope.group,T('Todos los grupos','All groups'));
-  sorted.forEach(g=>{
-   const key=g.name?g.name:'__general';
-   tabs+=tab('data-scope-group="'+esc(key)+'"',g.name||T('General','General'),ankiScopeCards(g.deckIds,stats),scope.group===key,(g.name||T('General','General'))+' — '+b.name);
-  });
-  html+='<div class="anki-scope-row"><span class="anki-scope-lbl">'+T('Grupos','Groups')+'</span><div class="anki-scope-tabs" role="tablist">'+tabs+'</div></div>';
- }
- host.innerHTML=html;
- host.hidden=!html;
- const scoped=showGroups||(showBanks&&scope&&scope.bank);
- ankiStudyScope=scoped&&scope?{ids:[...scope.ids],label:scope.label}:null;
- if(allBtn)allBtn.textContent='▶ '+(showGroups&&scope&&scope.group?T('Estudiar grupo','Study group'):(showBanks&&scope&&scope.bank?T('Estudiar banco','Study bank'):T('Estudiar todo','Study all')));
+ [...node.children.values()].forEach(ankiGroupLeafDecks);
 }
 const ankiTreeOpen={};
 function renderDecks(){
  const host=$('anki-decks');if(!host)return;
  const decks=anki.decks.filter(d=>deckCards(d.id).length);
  if(!decks.length){
-  renderAnkiScope(null,null,{});
   host.innerHTML='<div class="panel anki-empty"><div class="anki-empty-ic">🃏</div><strong>'+T('Todavía no hay mazos de Anki','No Anki decks yet')+'</strong><p>'+T('Importa un archivo .apkg o el texto exportado por Anki para empezar.','Import an .apkg file or the text exported by Anki to get started.')+'</p></div>';
   return;
  }
  const q=ankiNorm(String(ankiDeckQuery||'').trim());
  const stats=ankiStatsByDeck();
- const scopes=ankiScopeModel(decks);
- const scope=ankiResolveScope(scopes);
- renderAnkiScope(scopes,scope,stats);
- const base=q?decks:decks.filter(d=>scope.ids.has(String(d.id)));
- const shown=q?base.filter(d=>ankiNorm(ankiDeckLabel(d)).indexOf(q)>=0||ankiNorm(d.acPath||'').indexOf(q)>=0):base;
- if(q){
-  const allBtn=$('anki-study-all');
-  if(shown.length){
-   ankiStudyScope={ids:shown.map(d=>String(d.id)),label:(ankiDeckQuery||'').trim()};
-   if(allBtn)allBtn.textContent='▶ '+T('Estudiar resultados','Study results');
-  }else{
-   ankiStudyScope={ids:[],label:''};
-   if(allBtn)allBtn.textContent='▶ '+T('Estudiar resultados','Study results');
-  }
- }
+ const tree=ankiDeckTreeInfo(decks);
+ const shown=q?decks.filter(d=>ankiNorm(ankiDeckLabel(d)).indexOf(q)>=0||ankiNorm(d.acPath||'').indexOf(q)>=0):decks;
  if(!shown.length){
   host.innerHTML='<div class="anki-empty-inline">'+T('Ningún mazo coincide con «'+esc(ankiDeckQuery)+'».','No deck matches "'+esc(ankiDeckQuery)+'".')+'</div>';
   return;
  }
  const root={name:'',path:'',children:new Map(),decks:[]};
  shown.forEach(d=>{
+  const info=tree.get(String(d.id))||{path:[],leaf:ankiDeckLabel(d),full:ankiDeckLabel(d)};
   let node=root;
-  ankiDeckSegments(d).forEach(seg=>{
+  info.path.forEach(seg=>{
    if(!node.children.has(seg))node.children.set(seg,{name:seg,path:node.path?node.path+'::'+seg:seg,children:new Map(),decks:[]});
    node=node.children.get(seg);
   });
-  node.decks.push(d);
+  node.decks.push({d,leaf:info.leaf,full:info.full||ankiDeckLabel(d)});
  });
+ /* Un único banco: no hace falta el nodo contenedor. */
+ let bankLevel=true;
+ if(!root.decks.length&&root.children.size===1){
+  const only=[...root.children.values()][0];
+  root.children=new Map(only.children);
+  root.decks=only.decks;
+  bankLevel=false;
+ }
+ ankiGroupLeafDecks(root);
  const sum=node=>{
   let total=0,fresh=0,due=0,susp=0;
-  node.decks.forEach(d=>{const s=stats[d.id];if(!s)return;total+=s.total;fresh+=s.newLeft;due+=s.dueLeft;susp+=s.susp});
+  node.decks.forEach(e=>{const s=stats[e.d.id];if(!s)return;total+=s.total;fresh+=s.newLeft;due+=s.dueLeft;susp+=s.susp});
   node.children.forEach(ch=>{const s=sum(ch);total+=s.total;fresh+=s.fresh;due+=s.due;susp+=s.susp});
   node.total=total;node.fresh=fresh;node.due=due;node.susp=susp;
   return {total,fresh,due,susp};
  };
  sum(root);
- const subtreeIds=node=>node.decks.map(d=>String(d.id)).concat([...node.children.values()].flatMap(subtreeIds));
+ const subtreeIds=node=>node.decks.map(e=>String(e.d.id)).concat([...node.children.values()].flatMap(subtreeIds));
  const rows=[];
- const deckRow=(d,lv)=>{
+ const deckRow=(entry,lv)=>{
+  const d=entry.d;
   const s=stats[d.id]||{total:0,newLeft:0,dueLeft:0,susp:0};
-  const full=ankiDeckLabel(d);
-  const leaf=full.split('::').pop()||full;
+  const full=entry.full;
+  const leaf=entry.leaf||full.split('::').pop()||full;
   const src=d.source==='ankicollab'?'<span class="anki-src">AnkiCollab</span>':'';
   return '<div class="anki-trow anki-deck" style="--lv:'+lv+'">'+
    '<div class="anki-tmain"><span class="anki-tic">🃏</span><div class="anki-ttext"><strong title="'+esc(full)+'">'+esc(leaf)+src+'</strong><small>'+ankiDeckMeta({total:s.total,fresh:s.newLeft,due:s.dueLeft,susp:s.susp})+'</small></div></div>'+
@@ -5725,11 +5683,16 @@ function renderDecks(){
     '<button type="button" class="btn outline small" data-del="'+esc(d.id)+'" title="'+T('Borrar mazo','Delete deck')+'" aria-label="'+T('Borrar mazo','Delete deck')+'">🗑</button>'+
    '</div></div>';
  };
- const groupRow=(node,lv,open)=>{
+ const nodeRow=(node,lv,open,isBank)=>{
   const gids=subtreeIds(node).join(',');
   const label=node.path.replace(/::/g,' › ');
-  return '<div class="anki-trow anki-tgroup" style="--lv:'+lv+'">'+
-   '<button type="button" class="anki-tfold" data-fold="'+esc(node.path)+'" aria-expanded="'+(open?'true':'false')+'"><span class="anki-caret">'+(open?'▾':'▸')+'</span><span class="anki-tname" title="'+esc(label)+'">'+esc(node.name)+'</span></button>'+
+  const hasKids=node.children.size>0||node.decks.length>1;
+  const caret='<span class="anki-caret">'+(hasKids?(open?'▾':'▸'):'•')+'</span>';
+  const icon='<span class="anki-tic">'+(isBank?'📚':'🗂')+'</span>';
+  const head=hasKids
+   ?'<button type="button" class="anki-tfold" data-fold="'+esc(node.path)+'" aria-expanded="'+(open?'true':'false')+'">'+caret+icon+'<span class="anki-tname" title="'+esc(label)+'">'+esc(node.name)+'</span></button>'
+   :'<div class="anki-tsect">'+caret+icon+'<span class="anki-tname" title="'+esc(label)+'">'+esc(node.name)+'</span></div>';
+  return '<div class="anki-trow anki-tgroup'+(isBank?' anki-tbank':'')+'" style="--lv:'+lv+'">'+head+
    '<div class="anki-tmeta">'+ankiDeckMeta({total:node.total,fresh:node.fresh,due:node.due,susp:node.susp})+'</div>'+
    '<div class="anki-tacts">'+
     '<button type="button" class="btn primary small" data-group-study="'+esc(gids)+'" data-group-label="'+esc(label)+'"'+(node.fresh+node.due?'':' disabled')+'>▶ '+T('Estudiar','Study')+'</button>'+
@@ -5737,15 +5700,17 @@ function renderDecks(){
    '</div></div>';
  };
  const byName=(a,b)=>String(a.name).localeCompare(String(b.name),'es');
- const walk=(node,lv)=>{
-  if(!node.children.size){node.decks.slice().sort(byName).forEach(d=>rows.push(deckRow(d,lv)));return}
-  const open=q?true:(ankiTreeOpen[node.path]!=null?ankiTreeOpen[node.path]:node.children.size<=3);
-  rows.push(groupRow(node,lv,open));
+ const byEntry=(a,b)=>String(a.full).localeCompare(String(b.full),'es');
+ const walk=(node,lv,isBank)=>{
+  if(!node.children.size&&node.decks.length===1){rows.push(deckRow(node.decks[0],lv));return}
+  const open=q?true:(ankiTreeOpen[node.path]!=null?ankiTreeOpen[node.path]:true);
+  rows.push(nodeRow(node,lv,open,isBank));
   if(!open)return;
-  node.decks.slice().sort(byName).forEach(d=>rows.push(deckRow(d,lv+1)));
-  [...node.children.values()].sort(byName).forEach(ch=>walk(ch,lv+1));
+  node.decks.slice().sort(byEntry).forEach(e=>rows.push(deckRow(e,lv+1)));
+  [...node.children.values()].sort(byName).forEach(ch=>walk(ch,lv+1,false));
  };
- [...root.children.values()].sort(byName).forEach(ch=>walk(ch,0));
+ [...root.children.values()].sort(byName).forEach(ch=>walk(ch,0,bankLevel));
+ root.decks.slice().sort(byEntry).forEach(e=>rows.push(deckRow(e,0)));
  host.innerHTML=rows.join('');
  host.querySelectorAll('[data-fold]').forEach(b=>b.onclick=()=>{
   const p=b.dataset.fold;
@@ -6878,7 +6843,8 @@ function injectUI(){
     '<div class="sectionhead"><div><h3>Anki</h3><p>'+T('Importa mazos .apkg y repásalos aquí con repaso espaciado. También puedes exportar tu banco ClinQ a un archivo que Anki importa directamente.','Import .apkg decks and review them here with spaced repetition. You can also export your ClinQ bank to a file Anki imports directly.')+'</p></div></div>'+
     '<div class="panel ac-panel" id="ac-panel">'+
      '<div class="ac-head"><div class="ac-head-main"><div class="anki-hero-ic">&#8635;</div><div><strong>AnkiCollab</strong><p>'+T('Conecta un mazo compartido con su clave de suscripción. ClinQ comprueba cambios cada 5 minutos mientras la pestaña está abierta (no es instantáneo: AnkiCollab solo publica cuando el mantenedor actualiza el mazo).','Connect a shared deck with its subscription key. ClinQ checks for changes every 5 minutes while the tab is open (not instant: AnkiCollab only publishes when the maintainer updates the deck).')+'</p></div></div>'+
-      '<label class="ac-auto"><input type="checkbox" id="ac-auto"> '+T('Auto','Auto')+'</label></div>'+
+      '<label class="ac-auto"><input type="checkbox" id="ac-auto"> '+T('Auto','Auto')+'</label><button type="button" class="anki-panel-fold" data-anki-panel="ac-panel" aria-expanded="true" aria-label="'+T('Contraer panel','Collapse panel')+'" title="'+T('Contraer panel','Collapse panel')+'"><span class="anki-panel-caret">▾</span></button></div>'+
+     '<div class="anki-panel-body ac-body">'+
      '<div class="ac-form"><input class="field" id="ac-key" type="text" placeholder="'+T('clave-del-mazo-de-ejemplo','example-deck-key-words')+'" aria-label="'+T('Clave de suscripción de AnkiCollab','AnkiCollab subscription key')+'" autocomplete="off" spellcheck="false"><button type="button" class="btn primary small" id="ac-add">+ '+T('Conectar','Connect')+'</button><button type="button" class="btn outline small" id="ac-sync-all">&#8635; '+T('Actualizar todo','Update all')+'</button></div>'+
      '<div class="smalltext muted" id="ac-hint">'+T('Solo mazos públicos, o privados con tu token. Las imágenes de AnkiCollab todavía no se sincronizan.','Public decks only, or private ones with your token. AnkiCollab images are not synced yet.')+'</div>'+
      '<div class="notice anki-status" id="ac-status" style="display:none"></div>'+
@@ -6888,16 +6854,16 @@ function injectUI(){
       '<div class="ac-token"><input class="field" id="ac-token" type="password" placeholder="'+T('Token de AnkiCollab (opcional)','AnkiCollab token (optional)')+'" autocomplete="off" spellcheck="false"><button type="button" class="btn outline small" id="ac-token-save">'+T('Usar en esta pestaña','Use in this tab')+'</button></div>'+
       '<p id="ac-token-note"></p></details>'+
     '</div>'+
+    '</div>'+
     '<div class="panel anki-hero" id="anki-drop">'+
      '<div class="anki-hero-main"><div class="anki-hero-ic">🃏</div><div><strong>'+T('Trae tus mazos de Anki','Bring your Anki decks')+'</strong><p>'+T('Compatible con .apkg y .colpkg (Basic, Cloze y reversas). Las imágenes se guardan en el almacenamiento del navegador.','Works with .apkg and .colpkg (Basic, Cloze and reversed cards). Images are stored in this browser.')+'</p></div></div>'+
-     '<div class="anki-actions"><button type="button" class="btn primary" id="anki-import-btn">📥 '+T('Importar .apkg','Import .apkg')+'</button><button type="button" class="btn outline" id="anki-export-btn">↗ '+T('Exportar a Anki','Export to Anki')+'</button></div>'+
+     '<div class="anki-hero-side"><button type="button" class="anki-panel-fold" data-anki-panel="anki-drop" aria-expanded="true" aria-label="'+T('Contraer panel','Collapse panel')+'" title="'+T('Contraer panel','Collapse panel')+'"><span class="anki-panel-caret">▾</span></button><div class="anki-actions"><button type="button" class="btn primary" id="anki-import-btn">📥 '+T('Importar .apkg','Import .apkg')+'</button><button type="button" class="btn outline" id="anki-export-btn">↗ '+T('Exportar a Anki','Export to Anki')+'</button></div></div>'+
     '</div>'+
     '<div class="notice anki-note">'+T('También acepta el archivo de texto de Anki («Notas en texto sin formato», .txt/.tsv). Arrastra el archivo sobre la tarjeta o usa el botón. Los mazos se guardan solo en este navegador; no se sincronizan con Drive.','It also accepts Anki\'s plain-text export (.txt/.tsv). Drag the file onto the card or use the button. Decks are stored in this browser only; they are not synced to Drive.')+'</div>'+
     '<div id="anki-status" class="notice anki-status" style="display:none"></div>'+
     '<div class="stats" id="anki-stats"></div>'+
     '<div class="panel anki-options" id="anki-options" style="display:none"></div>'+
     '<div class="sectionhead anki-decks-head"><div><h3>'+T('Tus mazos','Your decks')+'</h3><p>'+T('Cada sesión respeta tus límites diarios, pasos de aprendizaje y plazos.','Each session follows your daily limits, learning steps and deadlines.')+'</p></div><div class="anki-actions"><button type="button" class="btn outline small" id="anki-options-btn">⚙ '+T('Opciones','Options')+'</button><button type="button" class="btn primary small" id="anki-study-all">▶ '+T('Estudiar todo','Study all')+'</button></div></div>'+
-    '<div class="anki-scope" id="anki-scope" hidden></div>'+
     '<div class="anki-deck-tools"><input class="field" id="anki-deck-search" type="search" placeholder="'+T('Buscar mazo (ej. Robin::Cardio)…','Search decks (e.g. Robin::Cardio)…')+'" aria-label="'+T('Buscar mazo','Search decks')+'" autocomplete="off" spellcheck="false"><button type="button" class="btn outline small" id="anki-deck-search-clear" hidden>✕</button></div>'+
     '<div id="anki-decks" class="anki-tree"></div>'+
    '</div>'+
@@ -6965,37 +6931,7 @@ function injectUI(){
  if(file)file.onchange=()=>{const f=file.files&&file.files[0];file.value='';if(f)handleFile(f)};
  const imp=$('anki-import-btn');if(imp)imp.onclick=()=>file&&file.click();
  const exp=$('anki-export-btn');if(exp)exp.onclick=exportAnki;
- const all=$('anki-study-all');if(all)all.onclick=()=>{
-  if(ankiStudyScope&&ankiStudyScope.ids&&ankiStudyScope.ids.length)startStudy(ankiStudyScope.ids,{label:ankiStudyScope.label});
-  else if(ankiStudyScope&&ankiStudyScope.ids)notify(T('No hay mazos que coincidan con la búsqueda.','No decks match the search.'));
-  else startStudy(null);
- };
- const scopeHost=$('anki-scope');
- if(scopeHost)scopeHost.addEventListener('click',e=>{
-  const btn=e.target&&e.target.closest?e.target.closest('[data-scope-bank],[data-scope-group]'):null;
-  if(!btn||!scopeHost.contains(btn))return;
-  e.preventDefault();
-  const bank=btn.getAttribute('data-scope-bank');
-  const group=btn.getAttribute('data-scope-group');
-  if(bank!==null){
-   ankiScope.bank=bank==='__all'?'':bank;
-   ankiScope.group='';
-  }else if(group!==null){
-   ankiScope.group=group==='__all'?'':(group==='__general'?'__general':group);
-  }
-  ankiScopeSave();
-  if(ankiDeckQuery){
-   ankiDeckQuery='';
-   const ds=$('anki-deck-search'),dc=$('anki-deck-search-clear');
-   if(ds)ds.value='';
-   if(dc)dc.hidden=true;
-  }
-  const attr=bank!==null?'data-scope-bank':'data-scope-group';
-  const val=bank!==null?bank:group;
-  renderDecks();
-  const again=[...scopeHost.querySelectorAll('[data-scope-bank],[data-scope-group]')].find(b=>b.getAttribute(attr)===val);
-  if(again)again.focus({preventScroll:true});
- });
+ const all=$('anki-study-all');if(all)all.onclick=()=>startStudy(null);
  const deckSearch=$('anki-deck-search'),deckClear=$('anki-deck-search-clear');
  if(deckSearch){
   deckSearch.addEventListener('input',()=>{
@@ -7018,6 +6954,26 @@ function injectUI(){
   optHost.style.display=open?'':'none';
   if(open){renderOptions(optHost);optHost.scrollIntoView({block:'start',behavior:'smooth'})}
  };
+ /* Paneles plegables (AnkiCollab / importar): estado persistente. */
+ const ANKI_FOLD_KEY='clinq_anki_fold';
+ let ankiFold={};
+ try{ankiFold=JSON.parse(localStorage.getItem(ANKI_FOLD_KEY)||'{}')||{}}catch(e){ankiFold={}}
+ const applyAnkiFold=id=>{
+  const panel=$(id);if(!panel)return;
+  const collapsed=!!ankiFold[id];
+  panel.classList.toggle('anki-collapsed',collapsed);
+  panel.querySelectorAll('.anki-panel-fold').forEach(b=>b.setAttribute('aria-expanded',collapsed?'false':'true'));
+ };
+ ['ac-panel','anki-drop'].forEach(applyAnkiFold);
+ document.querySelectorAll('[data-anki-panel]').forEach(btn=>{
+  btn.onclick=()=>{
+   const id=btn.dataset.ankiPanel;
+   if(!id)return;
+   ankiFold[id]=!ankiFold[id];
+   try{localStorage.setItem(ANKI_FOLD_KEY,JSON.stringify(ankiFold))}catch(e){}
+   applyAnkiFold(id);
+  };
+ });
  const drop=$('anki-drop');
  if(drop){
   ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag')}));
@@ -7319,34 +7275,139 @@ try{
  if(typeof _rs==='function')renderSettings=function(){const r=_rs.apply(this,arguments);setTimeout(()=>{try{paint(true)}catch(e){}},0);return r};
 }catch(e){}
 try{paint(true)}catch(e){}
+})();
 
-/* ===== Caso clínico a pantalla completa: el caso y sus opciones caben sin scroll de página ===== */
-let quizFitTimer=null;
-function quizFit(){
- const view=$('view-practice'),host=$('quiz-area');
- if(!view||!host)return;
- const wrap=host.querySelector('.quizwrap');
- const on=!!(wrap&&view.classList.contains('active')&&host.style.display!=='none'&&window.innerWidth>=760&&!(typeof currentQuiz!=='undefined'&&currentQuiz&&currentQuiz.finished));
- view.classList.toggle('quiz-fit',on);
- document.documentElement.classList.toggle('quiz-fit-on',on);
- if(!on){host.style.removeProperty('--quiz-fit-h');return}
- if(window.scrollY>0){try{window.scrollTo(0,0)}catch(e){}}
- const top=Math.max(0,Math.round(host.getBoundingClientRect().top));
- const h=Math.max(300,window.innerHeight-top-10);
- host.style.setProperty('--quiz-fit-h',h+'px');
+</script>
+<style id="clinq-case-fit-style">
+/* Caso del Banco: la página completa cabe en la ventana, sin scroll (solo escritorio). */
+@media (min-width:921px){
+ html.clinq-case-fit .main{padding-top:10px;padding-bottom:16px}
+ html.clinq-case-fit .main>.topbar{display:none}
+ html.clinq-case-fit #practice-tabs{margin:0 0 10px;padding:3px;width:max-content;max-width:100%}
+ html.clinq-case-fit #practice-tabs button{padding:5px 12px;font-size:12px}
+ html.clinq-case-fit .quiztop{gap:6px;margin:0 0 8px}
+ html.clinq-case-fit .quiztop .btn{padding:5px 9px;font-size:11.5px;line-height:1.35}
+ html.clinq-case-fit .quiztop .smalltext{font-size:11.5px;line-height:1.4}
+ html.clinq-case-fit .progressline{height:4px;margin:0 0 8px}
+ html.clinq-case-fit .quizbank-bar{margin:0 0 6px;padding:4px 10px;border-radius:8px;font-size:11.5px;gap:6px}
+ html.clinq-case-fit .quizbank-bar .qb-ic{font-size:13px}
+ html.clinq-case-fit .quizbank-bar .qb-lbl{display:none}
+ html.clinq-case-fit .quizbank-bar strong{flex:1 1 auto;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ html.clinq-case-fit .quizcard{margin-top:4px;padding:14px 16px;border-radius:14px}
+ html.clinq-case-fit .casebar{margin:0 0 8px;padding-bottom:8px;gap:6px}
+ html.clinq-case-fit .casebar .btn{font-size:10.5px!important;padding:3px 7px!important}
+ html.clinq-case-fit .quizstem{font-size:clamp(15px,.55vw + 12.5px,18px);line-height:1.55}
+ html.clinq-case-fit .qnote{margin:6px 0;padding:4px 0}
+ html.clinq-case-fit .qnote>summary{font-size:12.5px}
+ html.clinq-case-fit details.option-disclosure{margin-top:12px;border-radius:12px}
+ html.clinq-case-fit .option-disclosure>summary{padding:10px 13px;font-size:clamp(13.5px,.3vw + 12px,15px);line-height:1.45}
+ html.clinq-case-fit .options{padding:8px 10px;gap:9px;margin-top:0}
+ html.clinq-case-fit .option{padding:10px 12px;font-size:clamp(14px,.45vw + 12px,16px);line-height:1.55;border-radius:10px;gap:10px}
+ html.clinq-case-fit .letter{height:26px;width:26px;font-size:12.5px;border-radius:8px}
+ html.clinq-case-fit .feedback{margin-top:10px;padding:10px 12px;font-size:clamp(13px,.35vw + 11.5px,15px);line-height:1.6;white-space:normal}
+ html.clinq-case-fit .feedback .hlf{white-space:normal}
+ html.clinq-case-fit .reset-ans-row{margin:7px 0}
+ html.clinq-case-fit .reset-ans{padding:5px 9px;font-size:11.5px}
+ html.clinq-case-fit .quizbottom{margin-top:11px;padding-top:9px;gap:7px}
+ html.clinq-case-fit .quizbottom .btn{padding:6px 10px;font-size:12px;min-height:32px}
+ html.clinq-case-fit .quizbottom .smalltext{font-size:11.5px}
+ html.clinq-case-fit .quizbottom>.casenav{gap:7px}
+ html.clinq-case-fit .quizdock{margin-top:9px;padding:7px 11px;border-radius:10px;box-shadow:none}
+ html.clinq-case-fit .quizdock details.dockfold>summary{padding:3px 7px;margin:-3px -7px 3px}
+ html.clinq-case-fit .quizdock .quizdock-title{font-size:12.5px}
+ html.clinq-case-fit .quizdock .smalltext{font-size:12px;line-height:1.5}
+ html.clinq-case-fit .quizdock .btn{padding:5px 9px;font-size:11.5px}
+ html.clinq-case-fit .refbtn{font-size:11px!important;margin:0 0 5px 10px!important}
 }
-window.clinQQuizFit=quizFit;
+</style>
+<script>
+/* Ajuste del caso del Banco al alto de la ventana. */
 (function(){
- const view=$('view-practice'),host=$('quiz-area');
- if(!view||!host)return;
- const schedule=()=>{if(quizFitTimer)return;quizFitTimer=setTimeout(()=>{quizFitTimer=null;try{quizFit()}catch(e){}},40)};
- try{new MutationObserver(schedule).observe(host,{childList:true})}catch(e){}
- try{new MutationObserver(schedule).observe(view,{attributes:true,attributeFilter:['class','style']})}catch(e){}
- window.addEventListener('resize',schedule);
- window.addEventListener('orientationchange',schedule);
- setTimeout(schedule,500);
-})();
-})();
+ if(window.__clinqCaseFit)return;
+ window.__clinqCaseFit=true;
+ var MQ=window.matchMedia('(min-width:921px)');
+ var raf=0,entered=false;
 
+ function activeQuizCase(){
+  if(!MQ.matches)return null;
+  if(typeof currentQuiz==='undefined'||!currentQuiz||currentQuiz.finished)return null;
+  var view=document.getElementById('view-practice');
+  var quiz=document.getElementById('quiz-area');
+  if(!view||!view.classList.contains('active')||!quiz||quiz.style.display==='none')return null;
+  var wrap=quiz.querySelector('.quizwrap');
+  if(!wrap||!wrap.querySelector('.quizcard'))return null;
+  return wrap;
+ }
+ function schedule(){
+  if(raf)cancelAnimationFrame(raf);
+  raf=requestAnimationFrame(function(){raf=requestAnimationFrame(fit)});
+ }
+ function fit(){
+  raf=0;
+  var wrap=activeQuizCase();
+  var html=document.documentElement;
+  if(!wrap){
+   html.classList.remove('clinq-case-fit');
+   html.dataset.caseFit='0';
+   if(entered){entered=false}
+   var old=document.querySelector('#quiz-area .quizwrap');
+   if(old)old.style.zoom='';
+   return;
+  }
+  html.classList.add('clinq-case-fit');
+  html.dataset.caseFit='1';
+  if(!entered){entered=true;try{window.scrollTo(0,0)}catch(e){}}
+  if(!wrap.classList.contains('quizwrap'))return;
+  /* Sin zoom: el texto conserva su tamaño y su interlineado, y la página
+     desplaza de forma natural si el caso es largo. */
+  try{if(wrap.style.zoom)wrap.style.zoom=''}catch(e){}
+ }
+
+ /* Enganches: cada cambio de contenido o de plegado vuelve a ajustar. */
+ try{
+  var _rq=renderQuizQuestion;
+  renderQuizQuestion=function(){var r=_rq.apply(this,arguments);schedule();return r};
+ }catch(e){}
+ try{
+  var _ca=chooseAnswer;
+  chooseAnswer=function(){var r=_ca.apply(this,arguments);schedule();return r};
+ }catch(e){}
+ try{
+  var _so=setOptionsOpen;
+  setOptionsOpen=function(){var r=_so.apply(this,arguments);schedule();return r};
+ }catch(e){}
+ try{
+  var _sd=setDockFold;
+  setDockFold=function(){var r=_sd.apply(this,arguments);schedule();return r};
+ }catch(e){}
+ try{
+  var _ra=resetAnswer;
+  resetAnswer=function(id){
+   try{if(currentQuiz&&currentQuiz.optionsOpen)currentQuiz.optionsOpen[id]=true}catch(e){}
+   var r=_ra.apply(this,arguments);schedule();return r;
+  };
+ }catch(e){}
+ try{
+  var _sp=setPracticeTab;
+  setPracticeTab=function(){var r=_sp.apply(this,arguments);schedule();return r};
+ }catch(e){}
+ try{
+  var _sv=showView;
+  showView=function(){var r=_sv.apply(this,arguments);schedule();return r};
+ }catch(e){}
+ try{new MutationObserver(schedule).observe(document.getElementById('quiz-area'),{childList:true,subtree:true,characterData:true})}catch(e){}
+ try{new MutationObserver(schedule).observe(document.getElementById('quiz-area'),{attributes:true,attributeFilter:['style']})}catch(e){}
+ document.addEventListener('toggle',schedule,true);
+ document.addEventListener('click',function(e){try{if(e.target.closest&&e.target.closest('#practice-tabs,.nav,#navgroup-practice,.sidebar'))schedule()}catch(_){}},true);
+ document.addEventListener('click',function(e){try{if(e.target.closest&&e.target.closest('#quiz-area'))schedule()}catch(_){}},true);
+ window.addEventListener('resize',schedule,{passive:true});
+ window.addEventListener('orientationchange',schedule,{passive:true});
+ window.addEventListener('popstate',schedule,{passive:true});
+ window.addEventListener('hashchange',schedule,{passive:true});
+ try{MQ.addEventListener('change',schedule)}catch(e){try{MQ.addListener(schedule)}catch(e2){}}
+ if(window.visualViewport)try{visualViewport.addEventListener('resize',schedule,{passive:true})}catch(e){}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule);else schedule();
+ window.__clinqCaseFitNow=fit;
+})();
 </script>
 </body></html>
