@@ -5697,6 +5697,7 @@ function renderDecks(){
    '<div class="anki-tacts">'+
     '<button type="button" class="btn primary small" data-group-study="'+esc(gids)+'" data-group-label="'+esc(label)+'"'+(node.fresh+node.due?'':' disabled')+'>▶ '+T('Estudiar','Study')+'</button>'+
     '<button type="button" class="btn outline small" data-group-browse="'+esc(gids)+'" data-group-label="'+esc(label)+'" title="'+T('Buscar dentro de este grupo','Search inside this group')+'" aria-label="'+T('Buscar en el grupo','Search in group')+'">🔍</button>'+
+    '<button type="button" class="btn outline small" data-group-del="'+esc(gids)+'" data-group-label="'+esc(label)+'" title="'+T(isBank?'Borrar banco completo':'Borrar carpeta completa',isBank?'Delete entire bank':'Delete entire folder')+'" aria-label="'+T(isBank?'Borrar banco':'Borrar carpeta',isBank?'Delete bank':'Delete folder')+'">🗑</button>'+
    '</div></div>';
  };
  const byName=(a,b)=>String(a.name).localeCompare(String(b.name),'es');
@@ -5720,6 +5721,7 @@ function renderDecks(){
  host.querySelectorAll('[data-study]').forEach(b=>b.onclick=()=>startStudy(b.dataset.study));
  host.querySelectorAll('[data-browse]').forEach(b=>b.onclick=()=>openAnkiBrowse(b.dataset.browse));
  host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteDeck(b.dataset.del));
+ host.querySelectorAll('[data-group-del]').forEach(b=>b.onclick=()=>deleteDeckGroup((b.dataset.groupDel||'').split(',').filter(Boolean),b.dataset.groupLabel||''));
  host.querySelectorAll('[data-group-study]').forEach(b=>b.onclick=()=>startStudy((b.dataset.groupStudy||'').split(',').filter(Boolean),{label:b.dataset.groupLabel||''}));
  host.querySelectorAll('[data-group-browse]').forEach(b=>b.onclick=()=>openAnkiBrowse((b.dataset.groupBrowse||'').split(',').filter(Boolean),b.dataset.groupLabel||''));
 }
@@ -6330,6 +6332,22 @@ function deleteDeck(id){
  for(const [k,u] of mediaUrls){if(k.indexOf(String(id)+'|')===0){try{URL.revokeObjectURL(u)}catch(e){}mediaUrls.delete(k)}}
  if(ankiSession&&(ankiSession.deckIds||[]).indexOf(String(id))>=0)ankiSession=null;
  renderAnki();
+}
+function deleteDeckGroup(ids,label){
+ ids=[...new Set((ids||[]).map(String))];
+ const decks=anki.decks.filter(d=>ids.indexOf(String(d.id))>=0);if(!decks.length)return;
+ const n=anki.cards.filter(c=>ids.indexOf(String(c.deckId))>=0).length;
+ if(!confirm(T('¿Borrar «'+label+'» completo? Se eliminarán '+decks.length+' mazo(s) y '+n+' tarjetas. Esta acción no se puede deshacer.','Delete \"'+label+'\" entirely? This will remove '+decks.length+' deck(s) and '+n+' cards. This cannot be undone.')))return;
+ anki.cards=anki.cards.filter(c=>ids.indexOf(String(c.deckId))<0);
+ anki.decks=anki.decks.filter(d=>ids.indexOf(String(d.id))<0);
+ saveAnki();
+ ids.forEach(id=>{
+  idbDeletePrefix(id+'|').catch(()=>{});
+  for(const [k,u] of mediaUrls){if(k.indexOf(id+'|')===0){try{URL.revokeObjectURL(u)}catch(e){}mediaUrls.delete(k)}}
+ });
+ if(ankiSession&&(ankiSession.deckIds||[]).some(x=>ids.indexOf(String(x))>=0))ankiSession=null;
+ renderAnki();
+ notify(T('Se borró «'+label+'».','Deleted \"'+label+'\".'));
 }
 function deadlineInfo(){
  const d=ankiOpts.deadline;if(!d)return null;
