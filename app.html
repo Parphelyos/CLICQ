@@ -627,7 +627,7 @@ body.sb-collapsed .sidebar:hover .navgroup.open .navsub{display:grid!important}
     <div hidden="" aria-hidden="true"><textarea id="notes-text"></textarea><input id="notes-source" value="Apuntes importados"><select id="gen-count"><option value="10">10</option></select><select id="gen-style"><option value="clinical">c</option></select><select id="ai-provider"><option value="gemini">g</option></select><input id="notes-api-key"><input id="notes-model" value="gemini-2.5-flash"><input type="checkbox" id="ai-consent"><div id="provider-notice"><a id="provider-link" href="#">x</a></div><button id="local-gen-btn" type="button"></button><button id="ai-gen-btn" type="button"></button></div>
   </section>
   <section class="view" id="view-library">
-    <div class="sectionhead"><div><h3 style="transform: translate(6px, -4px);">Mi banco de preguntas</h3><p id="library-subtitle">Tus preguntas guardadas localmente.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn outline small" onclick="exportBank()">↧ Exportar respaldo</button><button class="btn outline small" onclick="backupInput.click()">↥ Importar respaldo</button><button class="btn outline small" onclick="addManualQuestion()">＋ Crear pregunta manual</button><button class="btn primary small" onclick="showView('import')">＋ Importar</button><button class="btn danger small" onclick="deleteEntireBank()">🗑 Borrar banco completo</button></div></div>
+    <div class="sectionhead"><div><h3 style="transform: translate(6px, -4px);">Mi banco de preguntas</h3><p id="library-subtitle">Tus preguntas guardadas localmente.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn outline small" onclick="exportBank()">↧ Exportar respaldo</button><button class="btn outline small" id="btn-zip-export" onclick="openZipExport()">🗜 Exportar bancos (ZIP)</button><button class="btn outline small" onclick="backupInput.click()">↥ Importar respaldo</button><button class="btn outline small" onclick="addManualQuestion()">＋ Crear pregunta manual</button><button class="btn primary small" onclick="showView('import')">＋ Importar</button><button class="btn danger small" onclick="deleteEntireBank()">🗑 Borrar banco completo</button></div></div>
     <details class="panel" id="bank-groups-wrap" style="margin:14px 0 18px;padding:12px 16px"><summary style="cursor:pointer;font-weight:800">📚 Bancos importados <span id="bank-groups-count" class="muted" style="font-weight:600"></span></summary><div id="bank-groups" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:14px 0 4px"></div></details>
     <div class="toolbar"><input class="field search" id="search-q" placeholder="Buscar en enunciados y opciones…" oninput="renderLibrary()"><select class="field" id="filter-source" onchange="librarySourceChanged()"><option value="">Todos los documentos</option></select><select class="field" id="filter-status" onchange="renderLibrary()"><option value="">Todos los estados</option><option value="wrong">Respondidas mal</option><option value="correct">Respondidas bien</option><option value="omitted">Omitidas</option><option value="unanswered">Nunca respondidas</option><option value="flagged">Marcadas</option></select><div id="library-topic-bar" class="library-topic-bar"></div></div>
     <div id="library-list" class="questionlist"></div>
@@ -7431,6 +7431,76 @@ try{paint(true)}catch(e){}
  if(window.visualViewport)try{visualViewport.addEventListener('resize',schedule,{passive:true})}catch(e){}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule);else schedule();
  window.__clinqCaseFitNow=fit;
+})();
+</script>
+
+<script>
+/* ===== Exportar bancos seleccionados en un ZIP ===== */
+(function(){
+ const ZURL='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+ let back=null,sel=new Set();
+ const E=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function groups(){const m=new Map();bank.forEach(q=>{const n=q.source||'Texto pegado';if(!m.has(n))m.set(n,[]);m.get(n).push(q)});return[...m].sort((a,b)=>a[0].localeCompare(b[0])).map(([name,qs])=>({name,qs}))}
+ function css(){if(document.getElementById('zipx-style'))return;const st=document.createElement('style');st.id='zipx-style';
+  st.textContent='.zipx-row{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;margin-top:7px;cursor:pointer;background:var(--panel,#fff)}.zipx-row:hover{border-color:#9db0ff}.zipx-row input{width:18px;height:18px;flex:none;accent-color:#3158e5}.zipx-row .n{min-width:0;flex:1;overflow-wrap:anywhere;font-weight:700;font-size:13px}.zipx-row .c{font-size:11px;color:var(--muted);white-space:nowrap}.zipx-list{max-height:min(44vh,380px);overflow:auto;margin-top:6px;padding-right:2px}.zipx-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}.zipx-sum{font-size:12px;color:var(--muted);margin-top:12px}';
+  document.head.appendChild(st)}
+ function build(){
+  css();if(back)back.remove();
+  back=document.createElement('div');back.className='modalback open';
+  back.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-label="Exportar bancos en ZIP"><div class="modalhead"><h3>🗜 Exportar bancos (ZIP)</h3><button class="iconbtn" type="button" data-x="close" aria-label="Cerrar">×</button></div>'+
+   '<p class="smalltext muted" style="margin:0 0 10px">Elige los bancos que quieres incluir. Se crea un archivo .json por banco, que luego puedes reimportar con «Importar respaldo».</p>'+
+   '<div class="zipx-bar"><input class="field" id="zipx-q" placeholder="Filtrar bancos…" style="flex:1;min-width:160px"><button class="btn outline small" type="button" data-x="all">Todos</button><button class="btn outline small" type="button" data-x="none">Ninguno</button></div>'+
+   '<div class="zipx-list" id="zipx-list"></div><div class="zipx-sum" id="zipx-sum"></div>'+
+   '<div class="modalactions"><button class="btn outline" type="button" data-x="close">Cancelar</button><button class="btn primary" type="button" id="zipx-go" data-x="go">↧ Descargar ZIP</button></div></div>';
+  document.body.appendChild(back);
+  back.addEventListener('click',onClick);back.addEventListener('change',e=>{const c=e.target.closest('input[data-b]');if(!c)return;c.checked?sel.add(c.dataset.b):sel.delete(c.dataset.b);sum()});
+  back.querySelector('#zipx-q').addEventListener('input',list);
+  list();
+ }
+ function list(){
+  const host=document.getElementById('zipx-list');if(!host)return;const f=(document.getElementById('zipx-q').value||'').toLowerCase().trim();
+  const g=groups().filter(x=>!f||x.name.toLowerCase().includes(f));
+  host.innerHTML=g.length?g.map(x=>`<label class="zipx-row"><input type="checkbox" data-b="${E(x.name)}"${sel.has(x.name)?' checked':''}><span class="n">${E(x.name)}</span><span class="c">${x.qs.length} preg.</span></label>`).join(''):'<div class="empty">No hay bancos que coincidan.</div>';
+  sum();
+ }
+ function sum(){
+  const g=groups(),chosen=g.filter(x=>sel.has(x.name)),n=chosen.reduce((a,x)=>a+x.qs.length,0);
+  const el=document.getElementById('zipx-sum'),go=document.getElementById('zipx-go');if(!el)return;
+  el.textContent=chosen.length?`${chosen.length} banco(s) seleccionados · ${n} pregunta(s)`:'Ningún banco seleccionado.';
+  if(go)go.disabled=!chosen.length;
+ }
+ function visible(){return[...document.querySelectorAll('#zipx-list input[data-b]')]}
+ function close(){if(back){back.remove();back=null}}
+ function onClick(e){
+  if(e.target===back){close();return}
+  const b=e.target.closest('[data-x]');if(!b)return;const a=b.dataset.x;
+  if(a==='close')close();
+  else if(a==='all'){visible().forEach(c=>{c.checked=true;sel.add(c.dataset.b)});sum()}
+  else if(a==='none'){visible().forEach(c=>{c.checked=false;sel.delete(c.dataset.b)});sum()}
+  else if(a==='go')run(b);
+ }
+ const safe=n=>String(n).replace(/[\\/:*?"<>|\u0000-\u001f]+/g,'_').replace(/\s+/g,' ').trim().replace(/^\.+/,'').slice(0,80)||'banco';
+ async function run(btn){
+  const chosen=groups().filter(x=>sel.has(x.name));if(!chosen.length)return;
+  const old=btn.textContent;btn.disabled=true;btn.textContent='Creando ZIP…';
+  try{
+   const Z=await loadScript(ZURL,'JSZip'),zip=new Z(),used=new Set(),iso=new Date().toISOString();
+   chosen.forEach(x=>{
+    let base=safe(x.name),nm=base,i=2;while(used.has(nm.toLowerCase()))nm=base+' ('+i++ +')';used.add(nm.toLowerCase());
+    zip.file(nm+'.json',JSON.stringify({app:'clinq',version:2,exportedAt:iso,bankName:x.name,questions:x.qs}));
+   });
+   const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='clinq-bancos-'+iso.slice(0,10)+'.zip';
+   document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);
+   notify(`ZIP descargado (${chosen.length} banco(s), ${chosen.reduce((n,x)=>n+x.qs.length,0)} preguntas)`);close();
+  }catch(err){btn.disabled=false;btn.textContent=old;notify('No se pudo crear el ZIP: '+(err&&err.message||err))}
+ }
+ window.openZipExport=function(){
+  if(!bank.length){notify('No hay bancos para exportar.');return}
+  const names=new Set(groups().map(g=>g.name));sel=new Set([...sel].filter(n=>names.has(n)));
+  build();
+ };
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&back)close()});
 })();
 </script>
 </body></html>
