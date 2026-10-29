@@ -1397,7 +1397,7 @@ function toggleFlag(id){const q=bank.find(q=>q.id===id);if(q){q.flagged=!q.flagg
 
 function renderQuizStart(){if(currentQuiz)return;document.getElementById('quiz-area').innerHTML=`<div class="emptybank panel"><div class="emptyicon">🧠</div><h2>Listo para practicar</h2><p>Elige el modo y trabaja con preguntas de tu banco personal. Puedes mezclar las preguntas o concentrarte en las que necesitas repasar.</p><div class="toolbar" style="justify-content:center"><select class="field" id="quiz-status"><option value="all">Cualquier estado</option><option value="wrong">Solo respondidas mal</option><option value="omitted">Solo omitidas</option><option value="correct">Solo respondidas bien</option><option value="unanswered">Nunca respondidas</option><option value="flagged">Solo marcadas para repasar ★</option></select><select class="field" id="quiz-count"><option value="10">10 preguntas</option><option value="20">20 preguntas</option><option value="40">40 preguntas</option><option value="60">60 preguntas</option><option value="100">100 preguntas</option><option value="all">Todas las preguntas</option></select><select class="field" id="quiz-order" aria-label="Orden de las preguntas"><option value="random">Orden aleatorio</option><option value="bank">Orden del banco</option></select><label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#66758a"><input id="quiz-review" type="checkbox"> Solo repaso</label></div><details id="quiz-sources-wrap" class="panel" style="margin:0 auto 16px;max-width:760px;text-align:left;padding:14px"><summary style="cursor:pointer;font-weight:800;font-size:13px">Bancos / documentos <span id="quiz-sources-sum" class="muted" style="font-weight:600"></span></summary><div class="smalltext muted" style="margin:8px 0 10px">Marca uno o varios (por ejemplo A + B). Si no marcas ninguno, se usan todos.</div><div id="quiz-sources" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">${sourceNames().map(sn=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;border:1px solid #e2e8f0;border-radius:9px"><input type="checkbox" class="quiz-source-check" value="${esc(sn)}"><span>${esc(sn)} <span class="muted">(${bank.filter(q=>(q.source||'Texto pegado')===sn).length})</span></span></label>`).join('')}</div><label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;margin-top:10px"><input id="quiz-source-exclude" type="checkbox"> Excluir los marcados (usar todos menos estos)</label></details><details id="quiz-folders-wrap" class="panel" style="margin:0 auto 16px;max-width:760px;text-align:left;padding:14px"><summary style="cursor:pointer;font-weight:800;font-size:13px">⭐ Marcadas <span id="quiz-folders-sum" class="muted" style="font-weight:600"></span></summary><div class="smalltext muted" style="margin:8px 0 10px">Marca una o varias carpetas para estudiar solo las preguntas que guardaste en ellas. Si no marcas ninguna, no se filtra por carpeta.</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">${folderNames().map(f=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;border:1px solid #e2e8f0;border-radius:9px"><input type="checkbox" class="quiz-folder-check" value="${esc(f)}"><span>📁 ${esc(f)} <span class="muted">(${bank.filter(q=>folderOf(q)===f).length})</span></span></label>`).join('')}</div></details><div class="panel" style="margin:0 auto 16px;max-width:760px;text-align:left;padding:14px"><div style="font-weight:800;font-size:13px;margin-bottom:4px">Especialidades del banco</div><div class="smalltext muted" style="margin-bottom:10px">Marca una o varias. Si no marcas ninguna, se usarán todas las especialidades.</div><div id="quiz-specialties" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">${availableSpecialties().map(sp=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;border:1px solid #e2e8f0;border-radius:9px"><input type="checkbox" class="quiz-specialty-check" value="${esc(sp)}"><span>${esc(sp)} <span class="muted">(${bank.filter(q=>inferSpecialty(q.stem,q.source,q.subject)===sp).length})</span></span></label>`).join('')}</div></div><div id="quiz-preview" class="panel" style="margin:0 auto 16px;max-width:760px;padding:14px;border-color:#b4c3ff;background:#f8faff"></div><div class="panel session-name-create" style="margin:0 auto 14px;max-width:760px;padding:14px;text-align:left"><label for="quiz-session-name" style="display:block;font-size:13px;font-weight:800;margin-bottom:7px">Nombre de la sesión (opcional)</label><input id="quiz-session-name" class="field" type="text" maxlength="90" placeholder="Ej. Uveítis, repaso renal, simulacro de cirugía" style="width:100%"><div class="smalltext muted" style="margin-top:5px">Puedes ponerle nombre antes de empezar y cambiarlo después desde Sesiones abiertas.</div></div><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap"><button class="btn primary" onclick="startQuiz('practice')">▶ Modo práctica</button><button class="btn outline" onclick="startQuiz('exam')">⏱️ Modo examen</button></div></div>`+sessionsPanelHTML();applyQuizConfig()}
 function startQuiz(mode,onlyId=null){if(!bank.length){notify('Primero importa preguntas a tu banco.');showView('import');return}let chosen;if(onlyId){chosen=bank.filter(q=>q.id===onlyId)}else{const cfg=currentQuizConfig();saveQuizConfig();let src=cfg.source,onlyReview=cfg.review,quizStatus=cfg.status,count=cfg.count,checkedSpecialties=cfg.specialties;chosen=quizPool(cfg);if(cfg.order==='random')shuffle(chosen);if(count!=='all')chosen=chosen.slice(0,Number(count))}if(!chosen.length){notify('No hay preguntas que coincidan con esos filtros.');return}[...new Set(chosen.map(q=>q.source||'Texto pegado'))].forEach(name=>touchBankActivity(name,'opened'));const requestedName=(document.getElementById('quiz-session-name')?.value||'').trim();currentQuiz={sid:'s_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),mode,label:requestedName||sessionLabel(mode,chosen,onlyId),questions:chosen.map(q=>q.id),index:0,answers:{},finished:false,started:Date.now(),updated:Date.now()};sessions.push(currentQuiz);saveSessions();showView('practice');renderQuizQuestion()}
-function renderQuizQuestion(){let host=document.getElementById('quiz-area');if(!currentQuiz)return renderQuizStart();saveSessions();if(currentQuiz.finished){renderQuizResults();return}let q=bank.find(x=>x.id===currentQuiz.questions[currentQuiz.index]);if(!q){let ni=-1;for(let i=currentQuiz.index+1;i<currentQuiz.questions.length;i++){if(bank.some(x=>x.id===currentQuiz.questions[i])){ni=i;break}}if(ni<0){for(let i=0;i<currentQuiz.index;i++){if(bank.some(x=>x.id===currentQuiz.questions[i])){ni=i;break}}}if(ni<0){host.innerHTML='<div class="emptybank panel"><div class="emptyicon">📝</div><h2>Esta sesión no tiene preguntas disponibles</h2><p>Las preguntas de esta sesión ya no están en tu banco. Puedes cerrarla y crear una nueva.</p><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap"><button class="btn primary" onclick="exitQuiz()">Volver a sesiones</button><button class="btn outline" onclick="closeSession(\''+currentQuiz.sid+'\')">Cerrar esta sesión</button></div></div>';return}currentQuiz.index=ni;return renderQuizQuestion()}let idx=currentQuiz.index+1,total=currentQuiz.questions.length,chosen=currentQuiz.answers[q.id],revealed=currentQuiz.mode==='practice'&&chosen!==undefined;let options=q.options||[];host.innerHTML=`<div class="quizwrap"><div class="quiztop"><button class="btn outline small" onclick="exitQuiz()" title="Tu sesión queda guardada">← Sesiones</button><div class="smalltext muted">${currentQuiz.mode==='exam'?'Modo examen':'Modo práctica'} · Pregunta ${idx} de ${total}</div><button class="btn outline small" onclick="addManualQuestion()">＋ Crear pregunta</button><button class="btn outline small" onclick="toggleFlag('${q.id}')">${q.flagged?'★ Marcada':'☆ Marcar para repasar'}</button><button class="btn danger small" onclick="finishQuiz()">Finalizar sesión</button></div><div class="progressline"><div style="width:${Math.round((idx-1)/total*100)}%"></div></div><div class="quizcard"><div class="casebar"><div id="stem-tools"></div></div><div class="quizstem hlf" id="quiz-stem-${q.id}" data-qid="${q.id}" data-field="stem">${renderQuestionStem(q)}</div>${q.flagged?`<div class="notice" style="margin:8px 0;user-select:none;-webkit-user-select:none">★ Marcada para repasar · Próxima revisión: ${q.nextReviewAt?new Date(q.nextReviewAt).toLocaleString('es-DO',{dateStyle:'medium',timeStyle:'short'}):'mañana'}</div>`:''}<details class="option-disclosure" ${currentQuiz.optionsOpen?.[q.id]?'open':''} ontoggle="setOptionsOpen('${q.id}',this.open)"><summary><span>Opciones de respuesta</span><span class="disclosure-hint">${currentQuiz.optionsOpen?.[q.id]?'Haz clic para ocultarlas':'Abrir para responder'}</span></summary><div class="options">${options.map(o=>{let cls='option';if(chosen===o.key)cls+=' selected';if(revealed&&q.answer===o.key)cls+=' correct';if(revealed&&chosen===o.key&&q.answer&&chosen!==q.answer)cls+=' incorrect';let disabled=(currentQuiz.mode==='practice'&&chosen!==undefined)||currentQuiz.finished;return `<div role="button" tabindex="${disabled?'-1':'0'}" aria-disabled="${disabled?'true':'false'}" class="${cls}" onclick="optClick(event,'${q.id}','${o.key}')"><span class="letter">${o.key}</span><span class="hlf" data-qid="${q.id}" data-field="opt:${o.key}">${renderHL(q,'opt:'+o.key)}</span></div>`}).join('')}</div></details>${revealed?`<div class="feedback ${!q.answer?'neutral':chosen===q.answer?'good':'bad'}"><strong>${!q.answer?'Respuesta no configurada':chosen===q.answer?'✓ Correcto':'✕ Incorrecto'+(q.answer?' · Respuesta: '+q.answer:'')}</strong>${q.explanation?'\n\n<span class="hlf" data-qid="'+q.id+'" data-field="exp">'+renderHL(q,'exp')+'</span>':!q.answer?'\nEdita esta pregunta para añadir la clave correcta y su explicación.':''}</div>`:''}</div><div class="quizdock"><details class="dockfold" ${currentQuiz.dockOpen?.[q.id]===true?'open':''} ontoggle="setDockFold('${q.id}',this.open,this)"><summary><span class="quizdock-title">Corregir esta pregunta</span><span class="dockfold-hint">${currentQuiz.dockOpen?.[q.id]===true?'Ocultar':'Mostrar'}</span></summary><div class="smalltext muted" style="margin-bottom:10px">Si la clave del documento está equivocada, puedes corregirla aquí. Los cambios se guardan en el banco original.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${q.needsCorrection?'primary':'outline'} small" onclick="toggleNeedsCorrection('${q.id}')">${q.needsCorrection?'✓ Marcada para corregir':'⚑ Marcar como incorrecta'}</button><button class="btn outline small" onclick="openEdit('${q.id}')">✎ Editar pregunta y respuesta correcta</button><button class="btn danger small" onclick="deleteQuestion('${q.id}')">🗑 Borrar del banco original</button></div></details><div class="quizbottom"><div class="casenav"><button class="btn outline small" onclick="previousQuestion()" ${currentQuiz.index===0?'disabled':''}>← Anterior</button><button class="btn outline small" onclick="skipQuestion()">${currentQuiz.mode==='exam'?'Saltar por ahora':'Omitir pregunta'}</button></div>${currentQuiz.mode==='practice'?(chosen!==undefined?(idx<total?`<button class="btn primary" onclick="nextQuestion()">Siguiente pregunta →</button>`:'<span class="smalltext muted" style="align-self:center">Última pregunta: finaliza desde el botón superior.</span>'):'<span class="smalltext muted" style="align-self:center">Selecciona una opción o finaliza la sesión.</span>'):(idx<total?`<button class="btn primary" onclick="nextQuestion()">Siguiente →</button>`:'<span class="smalltext muted" style="align-self:center">Última pregunta: finaliza desde el botón superior.</span>')}</div></div></div>`}
+function renderQuizQuestion(){let host=document.getElementById('quiz-area');if(!currentQuiz)return renderQuizStart();saveSessions();if(currentQuiz.finished){renderQuizResults();return}let q=bank.find(x=>x.id===currentQuiz.questions[currentQuiz.index]);if(!q){let ni=-1;for(let i=currentQuiz.index+1;i<currentQuiz.questions.length;i++){if(bank.some(x=>x.id===currentQuiz.questions[i])){ni=i;break}}if(ni<0){for(let i=0;i<currentQuiz.index;i++){if(bank.some(x=>x.id===currentQuiz.questions[i])){ni=i;break}}}if(ni<0){host.innerHTML='<div class="emptybank panel"><div class="emptyicon">📝</div><h2>Esta sesión no tiene preguntas disponibles</h2><p>Las preguntas de esta sesión ya no están en tu banco. Puedes cerrarla y crear una nueva.</p><div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap"><button class="btn primary" onclick="exitQuiz()">Volver a sesiones</button><button class="btn outline" onclick="closeSession(\''+currentQuiz.sid+'\')">Cerrar esta sesión</button></div></div>';return}currentQuiz.index=ni;return renderQuizQuestion()}let idx=currentQuiz.index+1,total=currentQuiz.questions.length,chosen=currentQuiz.answers[q.id],revealed=currentQuiz.mode==='practice'&&chosen!==undefined;let options=q.options||[];host.innerHTML=`<div class="quizwrap"><div class="quiztop"><button class="btn outline small" onclick="exitQuiz()" title="Tu sesión queda guardada">← Sesiones</button><div class="smalltext muted">${currentQuiz.mode==='exam'?'Modo examen':'Modo práctica'} · Pregunta ${idx} de ${total}</div><button class="btn outline small" onclick="addManualQuestion()">＋ Crear pregunta</button><button class="btn outline small" onclick="toggleFlag('${q.id}')">${q.flagged?'★ Marcada':'☆ Marcar para repasar'}</button><button class="btn danger small" onclick="finishQuiz()">Finalizar sesión</button></div><div class="progressline"><div style="width:${Math.round((idx-1)/total*100)}%"></div></div><div class="quizcard"><div class="casebar"><div id="stem-tools"></div></div><div class="quizstem hlf" id="quiz-stem-${q.id}" data-qid="${q.id}" data-field="stem">${renderQuestionStem(q)}</div>${q.flagged?`<div class="notice" style="margin:8px 0;user-select:none;-webkit-user-select:none">★ Marcada para repasar · Próxima revisión: ${q.nextReviewAt?new Date(q.nextReviewAt).toLocaleString('es-DO',{dateStyle:'medium',timeStyle:'short'}):'mañana'}</div>`:''}<details class="option-disclosure" ${currentQuiz.optionsOpen?.[q.id]!==false?'open':''} ontoggle="setOptionsOpen('${q.id}',this.open)"><summary><span>Opciones de respuesta</span><span class="disclosure-hint">${currentQuiz.optionsOpen?.[q.id]!==false?'Haz clic para ocultarlas':'Abrir para responder'}</span></summary><div class="options">${options.map(o=>{let cls='option';if(chosen===o.key)cls+=' selected';if(revealed&&q.answer===o.key)cls+=' correct';if(revealed&&chosen===o.key&&q.answer&&chosen!==q.answer)cls+=' incorrect';let disabled=(currentQuiz.mode==='practice'&&chosen!==undefined)||currentQuiz.finished;return `<div role="button" tabindex="${disabled?'-1':'0'}" aria-disabled="${disabled?'true':'false'}" class="${cls}" onclick="optClick(event,'${q.id}','${o.key}')"><span class="letter">${o.key}</span><span class="hlf" data-qid="${q.id}" data-field="opt:${o.key}">${renderHL(q,'opt:'+o.key)}</span></div>`}).join('')}</div></details>${revealed?`<div class="feedback ${!q.answer?'neutral':chosen===q.answer?'good':'bad'}"><strong>${!q.answer?'Respuesta no configurada':chosen===q.answer?'✓ Correcto':'✕ Incorrecto'+(q.answer?' · Respuesta: '+q.answer:'')}</strong>${q.explanation?'\n\n<span class="hlf" data-qid="'+q.id+'" data-field="exp">'+renderHL(q,'exp')+'</span>':!q.answer?'\nEdita esta pregunta para añadir la clave correcta y su explicación.':''}</div>`:''}</div><div class="quizdock"><details class="dockfold" ${currentQuiz.dockOpen?.[q.id]===true?'open':''} ontoggle="setDockFold('${q.id}',this.open,this)"><summary><span class="quizdock-title">Corregir esta pregunta</span><span class="dockfold-hint">${currentQuiz.dockOpen?.[q.id]===true?'Ocultar':'Mostrar'}</span></summary><div class="smalltext muted" style="margin-bottom:10px">Si la clave del documento está equivocada, puedes corregirla aquí. Los cambios se guardan en el banco original.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${q.needsCorrection?'primary':'outline'} small" onclick="toggleNeedsCorrection('${q.id}')">${q.needsCorrection?'✓ Marcada para corregir':'⚑ Marcar como incorrecta'}</button><button class="btn outline small" onclick="openEdit('${q.id}')">✎ Editar pregunta y respuesta correcta</button><button class="btn danger small" onclick="deleteQuestion('${q.id}')">🗑 Borrar del banco original</button></div></details><div class="quizbottom"><div class="casenav"><button class="btn outline small" onclick="previousQuestion()" ${currentQuiz.index===0?'disabled':''}>← Anterior</button><button class="btn outline small" onclick="skipQuestion()">${currentQuiz.mode==='exam'?'Saltar por ahora':'Omitir pregunta'}</button></div>${currentQuiz.mode==='practice'?(chosen!==undefined?(idx<total?`<button class="btn primary" onclick="nextQuestion()">Siguiente pregunta →</button>`:'<span class="smalltext muted" style="align-self:center">Última pregunta: finaliza desde el botón superior.</span>'):'<span class="smalltext muted" style="align-self:center">Selecciona una opción o finaliza la sesión.</span>'):(idx<total?`<button class="btn primary" onclick="nextQuestion()">Siguiente →</button>`:'<span class="smalltext muted" style="align-self:center">Última pregunta: finaliza desde el botón superior.</span>')}</div></div></div>`}
 function setOptionsOpen(id,isOpen){if(!currentQuiz)return;currentQuiz.optionsOpen=currentQuiz.optionsOpen||{};currentQuiz.optionsOpen[id]=!!isOpen;saveSessions()}
 function setDockFold(qid,open,el){if(!currentQuiz)return;currentQuiz.dockOpen=currentQuiz.dockOpen||{};currentQuiz.dockOpen[qid]=!!open;saveSessions();if(el&&el.querySelector){const h=el.querySelector('.dockfold-hint');if(h)h.textContent=open?'Ocultar':'Mostrar'}}
 function chooseAnswer(id,key){if(!currentQuiz||currentQuiz.finished)return;const q=bank.find(q=>q.id===id);if(!q)return;if(currentQuiz.mode==='practice'&&currentQuiz.answers[id]!==undefined)return;currentQuiz.answers[id]=key;if(currentQuiz.mode==='practice'){q.attempts=(q.attempts||0)+1;if(q.answer&&key===q.answer)q.correctCount=(q.correctCount||0)+1;q.updated=Date.now();try{localStorage.setItem(DBKEY,JSON.stringify(bank))}catch(e){}}renderQuizQuestion();refreshAll()}
@@ -4680,6 +4680,124 @@ html.dark .practice-tabs button.active{background:#22344f;color:#dce7ff}
  .anki-card{padding:16px}
 }
 
+/* ===== V.2.1: biblioteca de mazos en árbol, buscador y etiquetas al final ===== */
+.anki-deck-tools{display:flex;gap:8px;align-items:center;margin:0 0 12px;min-width:0}
+.anki-deck-tools .field{flex:1 1 280px;min-width:0}
+.anki-deck-tools .btn{flex:none}
+.anki-deck-tools .btn[hidden]{display:none}
+.anki-tree{display:flex;flex-direction:column;gap:7px}
+.anki-tree .anki-trow{--lv:0;margin-left:calc(var(--lv) * 16px);display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:8px 11px;min-width:0}
+.anki-tree .anki-tgroup{background:var(--blue2);border-color:transparent;padding:7px 11px;box-shadow:none}
+.anki-tfold{display:flex;align-items:center;gap:8px;border:0;background:none;padding:2px 0;font:inherit;color:inherit;font-weight:800;font-size:13.5px;text-align:left;min-width:0;cursor:pointer;flex:0 1 auto}
+.anki-tfold:hover{color:var(--blue)}
+.anki-caret{display:inline-block;width:12px;color:var(--muted);font-size:11px;flex:none}
+.anki-tname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.anki-tmeta{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;text-align:right}
+.anki-tmain{display:flex;gap:9px;align-items:center;min-width:0;flex:1 1 auto}
+.anki-tic{flex:none;font-size:14px;opacity:.75}
+.anki-ttext{min-width:0}
+.anki-ttext strong{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.anki-ttext small{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.anki-tacts{display:flex;gap:5px;flex:none;align-items:center}
+.anki-tacts .btn{padding:5px 9px;font-size:12px}
+.anki-empty-inline{padding:16px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);font-size:12.5px;text-align:center}
+html.dark .anki-tree .anki-tgroup{background:#16243a;border-color:#2c405c}
+html.dark .anki-tfold:hover{color:#a9bdff}
+@media(max-width:760px){
+ .anki-tree .anki-trow{margin-left:calc(var(--lv) * 9px);flex-wrap:wrap}
+ .anki-tmeta{text-align:left}
+ .anki-tacts{width:100%;justify-content:flex-end}
+}
+/* Etiquetas: solo al final de la respuesta, discretas y plegables */
+.anki-tags-wrap{margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.anki-tags-label{font-size:9.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+details.anki-tags-wrap{display:block}
+details.anki-tags-wrap>summary{cursor:pointer;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);list-style:none}
+details.anki-tags-wrap>summary::-webkit-details-marker{display:none}
+details.anki-tags-wrap>summary:before{content:'\1F3F7\FE0E ';filter:grayscale(1);opacity:.7}
+details.anki-tags-wrap[open]>summary{margin-bottom:7px}
+.anki-tags{display:flex;gap:5px;flex-wrap:wrap}
+.anki-tags span{font-size:10px;font-weight:700;color:var(--muted);background:var(--bg);border:1px solid var(--line);padding:1px 7px;border-radius:99px}
+/* Buscador dentro de un mazo */
+.anki-browse{max-width:880px;margin:0 auto}
+.anki-browse-top{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px}
+.anki-browse-title{min-width:0;flex:1 1 200px;text-align:center}
+.anki-browse-title strong{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.anki-browse-title small{font-size:11.5px;color:var(--muted)}
+.anki-search{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:3px 5px 3px 10px}
+.anki-search .field{border:0;background:transparent;padding:8px 2px;flex:1 1 auto;min-width:0;box-shadow:none}
+.anki-search .field:focus{outline:none}
+.anki-search:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue2)}
+.anki-search-ic{opacity:.55;font-size:13px;flex:none}
+.anki-search-clear{border:0;background:none;color:var(--muted);font-size:13px;cursor:pointer;padding:5px 7px;border-radius:8px;flex:none}
+.anki-search-clear[hidden]{display:none}
+.anki-search-clear:hover{background:var(--blue2);color:var(--blue)}
+.anki-browse-count{margin:8px 2px 10px}
+.anki-browse-list{display:flex;flex-direction:column;gap:7px}
+.anki-brow{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+.anki-brow.open{border-color:var(--blue)}
+.anki-brow-head{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;border:0;background:none;padding:10px 12px;cursor:pointer;color:inherit;font:inherit}
+.anki-brow-head:hover{background:var(--blue2)}
+.anki-brow-front{font-size:13.5px;font-weight:650;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.anki-brow.open .anki-brow-front{-webkit-line-clamp:unset;display:block}
+.anki-brow-meta{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.anki-brow-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:1px}
+.anki-brow-tags span{font-size:9.5px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:0 6px}
+.anki-brow-tags .more{color:var(--blue);border-color:transparent;background:var(--blue2)}
+.anki-brow-body{padding:0 12px 12px;border-top:1px dashed var(--line);margin-top:2px}
+.anki-brow-back{padding-top:10px;font-size:13.5px;line-height:1.55}
+.anki-brow-body .anki-tags{margin-top:9px}
+.anki-brow-empty{padding:22px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--line);border-radius:12px}
+html.dark .anki-brow-head:hover{background:#20304b}
+html.dark .anki-search{background:#141f32}
+html.dark .anki-tags span{background:#152136;border-color:#2f4159}
+
+/* ===== Caso clínico a pantalla completa (sin scroll de página) ===== */
+html.quiz-fit-on{overflow:hidden}
+#view-practice.quiz-fit #quiz-area{height:var(--quiz-fit-h,calc(100dvh - 150px));display:flex;flex-direction:column;min-height:0}
+#view-practice.quiz-fit .quizwrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;width:100%;max-width:100%}
+#view-practice.quiz-fit .kbdlegend{display:none!important}
+#view-practice.quiz-fit .quizbank-bar{display:none}
+#view-practice.quiz-fit .quiztop{flex:0 0 auto;margin-bottom:8px;flex-wrap:nowrap}
+#view-practice.quiz-fit .quiztop .smalltext{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#view-practice.quiz-fit .progressline{flex:0 0 auto;margin-bottom:9px}
+#view-practice.quiz-fit .quizcard{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:clamp(13px,1.4vw,20px);border-radius:16px}
+#view-practice.quiz-fit .quizcard::-webkit-scrollbar{width:10px}
+#view-practice.quiz-fit .quizcard::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px;border:3px solid transparent;background-clip:content-box}
+#view-practice.quiz-fit .quizstem{font-size:clamp(15px,1.05vw,17px);line-height:1.45}
+#view-practice.quiz-fit .options{gap:8px;margin-top:11px}
+#view-practice.quiz-fit .option{padding:10px 13px;font-size:14.5px;line-height:1.42;border-radius:11px;gap:10px}
+#view-practice.quiz-fit .option .letter{width:24px;height:24px;font-size:12px}
+#view-practice.quiz-fit .option-disclosure{margin-top:10px;border-radius:12px}
+#view-practice.quiz-fit .option-disclosure>summary{padding:9px 14px;font-size:14px}
+#view-practice.quiz-fit .option-disclosure .options{padding:10px 12px 12px}
+#view-practice.quiz-fit .feedback{margin-top:10px;padding:10px 12px;font-size:13.5px}
+#view-practice.quiz-fit .quizcard .notice{margin:8px 0;font-size:12px;padding:8px 10px}
+#view-practice.quiz-fit .quizdock{flex:0 0 auto;margin-top:9px;padding:8px 12px;border-radius:14px}
+#view-practice.quiz-fit .quizdock .quizbottom{margin-top:8px;padding-top:8px}
+#view-practice.quiz-fit .quizbottom{margin-top:8px}
+#view-practice.quiz-fit .quizdock details.dockfold>summary{padding:4px 6px;margin:-2px -6px 0}
+#view-practice.quiz-fit .quizdock details.dockfold[open]>summary{margin-bottom:4px}
+#view-practice.quiz-fit .casebar{margin-bottom:9px;padding-bottom:8px}
+@media(max-height:700px){
+ #view-practice.quiz-fit .quizstem{font-size:15px;line-height:1.4}
+ #view-practice.quiz-fit .option{padding:8px 11px;font-size:14px}
+ #view-practice.quiz-fit .quiztop .btn{font-size:11.5px;padding:6px 8px}
+}
+html.quiz-fit-on .main{padding-bottom:14px}
+/* Dos columnas cuando hay espacio (clase puesta por JS midiendo el ancho real): el caso queda a la izquierda y las opciones a la derecha, juntos en pantalla */
+#view-practice.quiz-fit.quiz-two .quizcard{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);grid-template-rows:auto auto minmax(0,1fr) auto auto auto;gap:6px 22px;overflow-y:auto}
+#view-practice.quiz-fit.quiz-two .quizcard>.casebar{grid-column:1/-1;grid-row:1}
+#view-practice.quiz-fit.quiz-two .quizcard>.qnote{grid-column:1/-1;grid-row:2}
+#view-practice.quiz-fit.quiz-two .quizcard>.quizstem{grid-column:1;grid-row:3;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+#view-practice.quiz-fit.quiz-two .quizcard>.option-disclosure{grid-column:2;grid-row:3;margin-top:0;overflow:hidden;align-self:stretch}
+#view-practice.quiz-fit.quiz-two .quizcard>.option-disclosure>.options{max-height:var(--q2-opts-h,320px);overflow-y:auto;overscroll-behavior:contain;padding-top:10px}
+#view-practice.quiz-fit.quiz-two .quizcard>.feedback{grid-column:1;grid-row:4;margin-top:0}
+#view-practice.quiz-fit.quiz-two .quizcard>.reset-ans-row{grid-column:1;grid-row:5}
+#view-practice.quiz-fit.quiz-two .quizcard>.quizbottom{grid-column:1/-1;grid-row:6;margin-top:2px}
+#view-practice.quiz-fit.quiz-two .quizcard>.qarrow{display:none}
+#view-practice.quiz-fit.quiz-two .option{padding:9px 11px;font-size:13.5px}
+#view-practice.quiz-fit.quiz-two .option .letter{width:22px;height:22px;font-size:11px}
 </style>
 <script id="clinq-v6">
 (function(){
@@ -5286,6 +5404,50 @@ function ankiDeckLabel(d){
  const n=String(d.name||'Anki');
  return d.source==='ankicollab'?n.replace(/^AnkiCollab · /,''):n;
 }
+function ankiNorm(s){
+ return String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+function ankiPlainText(html){
+ return String(html==null?'':html)
+  .replace(/<br\s*\/?>/gi,' ')
+  .replace(/<\/(p|div|li|tr|h[1-6])>/gi,' ')
+  .replace(/<[^>]*>/g,' ')
+  .replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/&lt;/gi,'<').replace(/&gt;/gi,'>')
+  .replace(/&quot;/gi,'"').replace(/&#39;/gi,"'")
+  .replace(/\s+/g,' ').trim();
+}
+function ankiDeckSegments(d){
+ return ankiDeckLabel(d).split('::').map(s=>s.trim()).filter(Boolean);
+}
+function ankiStatsByDeck(){
+ const now=Date.now(),map={};
+ anki.cards.forEach(c=>{
+  normalizeCard(c);
+  const k=String(c.deckId);
+  let s=map[k];
+  if(!s)s=map[k]={total:0,new:0,due:0,susp:0};
+  s.total++;
+  if(c.suspended){s.susp++;return}
+  if(ankiIsBuried(c))return;
+  if(c.state==='new')s.new++;
+  else if(c.due!=null&&c.due<=now)s.due++;
+ });
+ Object.keys(map).forEach(k=>{
+  const s=map[k];
+  s.newLeft=Math.min(s.new,Math.max(0,(ankiOpts.newPerDay||0)-ankiToday('new',k)));
+  s.dueLeft=Math.min(s.due,Math.max(0,(ankiOpts.reviewsPerDay||0)-ankiToday('rev',k)));
+ });
+ return map;
+}
+function ankiDeckMeta(s){
+ s=s||{};
+ return (s.total||0)+' '+T('tarjetas','cards')+
+  (s.fresh?' · <span class="anki-new">'+s.fresh+' '+T('nuevas','new')+'</span>':'')+
+  (s.due?' · <span class="anki-due">'+s.due+' '+T('para repasar','due')+'</span>':'')+
+  (s.susp?' · '+s.susp+' '+T('suspendidas','suspended'):'');
+}
+let ankiDeckQuery='';
+const ankiTreeOpen={};
 function renderDecks(){
  const host=$('anki-decks');if(!host)return;
  const decks=anki.decks.filter(d=>deckCards(d.id).length);
@@ -5293,32 +5455,192 @@ function renderDecks(){
   host.innerHTML='<div class="panel anki-empty"><div class="anki-empty-ic">🃏</div><strong>'+T('Todavía no hay mazos de Anki','No Anki decks yet')+'</strong><p>'+T('Importa un archivo .apkg o el texto exportado por Anki para empezar.','Import an .apkg file or the text exported by Anki to get started.')+'</p></div>';
   return;
  }
- const now=Date.now();
- decks.sort((a,b)=>a.name.localeCompare(b.name,'es'));
- host.innerHTML=decks.map(d=>{
-  const cards=deckCards(d.id).map(normalizeCard);
-  let fresh=0,due=0,susp=0;
-  cards.forEach(c=>{
-   if(c.suspended){susp++;return}
-   if(ankiIsBuried(c))return;
-   if(c.state==='new')fresh++;
-   else if(c.due!=null&&c.due<=now)due++;
+ const q=ankiNorm(String(ankiDeckQuery||'').trim());
+ const stats=ankiStatsByDeck();
+ const shown=q?decks.filter(d=>ankiNorm(ankiDeckLabel(d)).indexOf(q)>=0||ankiNorm(d.acPath||'').indexOf(q)>=0):decks.slice();
+ if(!shown.length){
+  host.innerHTML='<div class="anki-empty-inline">'+T('Ningún mazo coincide con «'+esc(ankiDeckQuery)+'».','No deck matches "'+esc(ankiDeckQuery)+'".')+'</div>';
+  return;
+ }
+ const root={name:'',path:'',children:new Map(),decks:[]};
+ shown.forEach(d=>{
+  let node=root;
+  ankiDeckSegments(d).forEach(seg=>{
+   if(!node.children.has(seg))node.children.set(seg,{name:seg,path:node.path?node.path+'::'+seg:seg,children:new Map(),decks:[]});
+   node=node.children.get(seg);
   });
-  const freshLeft=Math.min(fresh,Math.max(0,(ankiOpts.newPerDay||0)-ankiToday('new',d.id)));
-  const dueLeft=Math.min(due,Math.max(0,(ankiOpts.reviewsPerDay||0)-ankiToday('rev',d.id)));
+  node.decks.push(d);
+ });
+ const sum=node=>{
+  let total=0,fresh=0,due=0,susp=0;
+  node.decks.forEach(d=>{const s=stats[d.id];if(!s)return;total+=s.total;fresh+=s.newLeft;due+=s.dueLeft;susp+=s.susp});
+  node.children.forEach(ch=>{const s=sum(ch);total+=s.total;fresh+=s.fresh;due+=s.due;susp+=s.susp});
+  node.total=total;node.fresh=fresh;node.due=due;node.susp=susp;
+  return {total,fresh,due,susp};
+ };
+ sum(root);
+ const subtreeIds=node=>node.decks.map(d=>String(d.id)).concat([...node.children.values()].flatMap(subtreeIds));
+ const rows=[];
+ const deckRow=(d,lv)=>{
+  const s=stats[d.id]||{total:0,newLeft:0,dueLeft:0,susp:0};
+  const full=ankiDeckLabel(d);
+  const leaf=full.split('::').pop()||full;
   const src=d.source==='ankicollab'?'<span class="anki-src">AnkiCollab</span>':'';
-  return '<div class="panel anki-deck">'+
-   '<div class="anki-deck-main"><strong>'+esc(ankiDeckLabel(d))+src+'</strong><small>'+cards.length+' '+T('tarjetas','cards')+' · <span class="anki-new">'+freshLeft+' '+T('nuevas','new')+'</span> · <span class="anki-due">'+dueLeft+' '+T('para repasar','due')+'</span>'+(susp?' · '+susp+' '+T('suspendidas','suspended'):'')+'</small></div>'+
-   '<div class="anki-deck-actions"><button type="button" class="btn primary small" data-study="'+esc(d.id)+'">▶ '+T('Estudiar','Study')+'</button><button type="button" class="btn outline small" data-del="'+esc(d.id)+'" title="'+T('Borrar mazo','Delete deck')+'" aria-label="'+T('Borrar mazo','Delete deck')+'">🗑</button></div>'+
-  '</div>';
- }).join('');
+  return '<div class="anki-trow anki-deck" style="--lv:'+lv+'">'+
+   '<div class="anki-tmain"><span class="anki-tic">🃏</span><div class="anki-ttext"><strong title="'+esc(full)+'">'+esc(leaf)+src+'</strong><small>'+ankiDeckMeta({total:s.total,fresh:s.newLeft,due:s.dueLeft,susp:s.susp})+'</small></div></div>'+
+   '<div class="anki-tacts">'+
+    '<button type="button" class="btn primary small" data-study="'+esc(d.id)+'"'+(s.newLeft+s.dueLeft?'':' disabled')+'>▶ '+T('Estudiar','Study')+'</button>'+
+    '<button type="button" class="btn outline small" data-browse="'+esc(d.id)+'" title="'+T('Buscar dentro de este mazo','Search inside this deck')+'" aria-label="'+T('Buscar en el mazo','Search in deck')+'">🔍</button>'+
+    '<button type="button" class="btn outline small" data-del="'+esc(d.id)+'" title="'+T('Borrar mazo','Delete deck')+'" aria-label="'+T('Borrar mazo','Delete deck')+'">🗑</button>'+
+   '</div></div>';
+ };
+ const groupRow=(node,lv,open)=>{
+  const gids=subtreeIds(node).join(',');
+  const label=node.path.replace(/::/g,' › ');
+  return '<div class="anki-trow anki-tgroup" style="--lv:'+lv+'">'+
+   '<button type="button" class="anki-tfold" data-fold="'+esc(node.path)+'" aria-expanded="'+(open?'true':'false')+'"><span class="anki-caret">'+(open?'▾':'▸')+'</span><span class="anki-tname" title="'+esc(label)+'">'+esc(node.name)+'</span></button>'+
+   '<div class="anki-tmeta">'+ankiDeckMeta({total:node.total,fresh:node.fresh,due:node.due,susp:node.susp})+'</div>'+
+   '<div class="anki-tacts">'+
+    '<button type="button" class="btn primary small" data-group-study="'+esc(gids)+'" data-group-label="'+esc(label)+'"'+(node.fresh+node.due?'':' disabled')+'>▶ '+T('Estudiar','Study')+'</button>'+
+    '<button type="button" class="btn outline small" data-group-browse="'+esc(gids)+'" data-group-label="'+esc(label)+'" title="'+T('Buscar dentro de este grupo','Search inside this group')+'" aria-label="'+T('Buscar en el grupo','Search in group')+'">🔍</button>'+
+   '</div></div>';
+ };
+ const byName=(a,b)=>String(a.name).localeCompare(String(b.name),'es');
+ const walk=(node,lv)=>{
+  if(!node.children.size){node.decks.slice().sort(byName).forEach(d=>rows.push(deckRow(d,lv)));return}
+  const open=q?true:(ankiTreeOpen[node.path]!=null?ankiTreeOpen[node.path]:node.children.size<=3);
+  rows.push(groupRow(node,lv,open));
+  if(!open)return;
+  node.decks.slice().sort(byName).forEach(d=>rows.push(deckRow(d,lv+1)));
+  [...node.children.values()].sort(byName).forEach(ch=>walk(ch,lv+1));
+ };
+ [...root.children.values()].sort(byName).forEach(ch=>walk(ch,0));
+ host.innerHTML=rows.join('');
+ host.querySelectorAll('[data-fold]').forEach(b=>b.onclick=()=>{
+  const p=b.dataset.fold;
+  const cur=ankiTreeOpen[p]!=null?ankiTreeOpen[p]:true;
+  ankiTreeOpen[p]=!cur;renderDecks();
+ });
  host.querySelectorAll('[data-study]').forEach(b=>b.onclick=()=>startStudy(b.dataset.study));
+ host.querySelectorAll('[data-browse]').forEach(b=>b.onclick=()=>openAnkiBrowse(b.dataset.browse));
  host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteDeck(b.dataset.del));
+ host.querySelectorAll('[data-group-study]').forEach(b=>b.onclick=()=>startStudy((b.dataset.groupStudy||'').split(',').filter(Boolean),{label:b.dataset.groupLabel||''}));
+ host.querySelectorAll('[data-group-browse]').forEach(b=>b.onclick=()=>openAnkiBrowse((b.dataset.groupBrowse||'').split(',').filter(Boolean),b.dataset.groupLabel||''));
+}
+
+/* ---------- Buscador dentro de un mazo (por caso, respuesta o etiqueta) ---------- */
+let ankiBrowse=null;
+function ankiDeckIds(v){
+ return (Array.isArray(v)?v:[v]).map(x=>String(x==null?'':x).trim()).filter(Boolean);
+}
+function openAnkiBrowse(deckIds,label){
+ const ids=ankiDeckIds(deckIds);
+ if(!ids.length)return;
+ let title=label||'';
+ if(!title){
+  title=ids.map(id=>{const d=anki.decks.find(x=>String(x.id)===id);return d?ankiDeckLabel(d):''}).filter(Boolean).join(' · ');
+ }
+ ankiBrowse={ids,title,q:'',open:''};
+ if(ankiTick){clearInterval(ankiTick);ankiTick=null}
+ renderBrowse();
+}
+function closeAnkiBrowse(){
+ ankiBrowse=null;
+ renderAnki();
+}
+function ankiBrowseCards(){
+ if(!ankiBrowse)return [];
+ const ids=ankiBrowse.ids;
+ return anki.cards.filter(c=>ids.indexOf(String(c.deckId))>=0);
+}
+function ankiBrowseMatches(){
+ if(!ankiBrowse)return [];
+ const cards=ankiBrowseCards();
+ const q=ankiNorm(String(ankiBrowse.q||'').trim());
+ if(!q)return cards;
+ return cards.filter(c=>{
+  const hay=ankiNorm(ankiPlainText(c.front)+' '+ankiPlainText(c.back)+' '+ankiPlainText(c.extra)+' '+(c.tags||[]).join(' '));
+  return hay.indexOf(q)>=0;
+ });
+}
+function renderBrowse(){
+ const lib=$('anki-library'),host=$('anki-study');
+ if(!ankiBrowse){renderAnki();return}
+ if(!host)return;
+ if(lib)lib.style.display='none';
+ host.style.display='block';
+ const total=ankiBrowseCards().length;
+ host.innerHTML='<div class="anki-browse">'+
+  '<div class="anki-browse-top">'+
+   '<button type="button" class="btn outline small" id="anki-browse-back">← '+T('Mazos','Decks')+'</button>'+
+   '<div class="anki-browse-title"><strong title="'+esc(ankiBrowse.title)+'">'+esc(ankiBrowse.title)+'</strong><small>'+total+' '+T('tarjetas','cards')+'</small></div>'+
+   '<button type="button" class="btn primary small" id="anki-browse-study">▶ '+T('Estudiar','Study')+'</button>'+
+  '</div>'+
+  '<div class="anki-search"><span class="anki-search-ic" aria-hidden="true">🔍</span><input class="field" id="anki-browse-q" type="search" placeholder="'+T('Buscar por caso, respuesta o etiqueta…','Search by case, answer or tag…')+'" aria-label="'+T('Buscar dentro del mazo','Search inside the deck')+'" autocomplete="off" spellcheck="false"><button type="button" class="anki-search-clear" id="anki-browse-clear" aria-label="'+T('Borrar búsqueda','Clear search')+'">✕</button></div>'+
+  '<div class="smalltext muted anki-browse-count" id="anki-browse-count"></div>'+
+  '<div class="anki-browse-list" id="anki-browse-list"></div>'+
+ '</div>';
+ const input=$('anki-browse-q');
+ if(input){
+  input.value=ankiBrowse.q;
+  input.addEventListener('input',()=>{ankiBrowse.q=input.value;renderBrowseList()});
+  input.addEventListener('keydown',e=>{
+   e.stopPropagation();
+   if(e.key==='Escape'){e.preventDefault();input.value='';ankiBrowse.q='';renderBrowseList()}
+  });
+ }
+ const clear=$('anki-browse-clear');
+ if(clear)clear.onclick=()=>{if(input){input.value='';input.focus()}ankiBrowse.q='';renderBrowseList()};
+ const back=$('anki-browse-back');if(back)back.onclick=closeAnkiBrowse;
+ const study=$('anki-browse-study');
+ if(study)study.onclick=()=>{
+  if(!ankiBrowse)return;
+  const ids=ankiBrowseMatches().map(c=>String(c.id));
+  if(!ids.length)return;
+  const label=ankiBrowse.q?ankiBrowse.title+' · "'+ankiBrowse.q+'"':ankiBrowse.title;
+  startStudy(ankiBrowse.ids,{cardIds:ids,label});
+ };
+ renderBrowseList();
+ if(input)input.focus();
+}
+function renderBrowseList(){
+ const host=$('anki-browse-list');if(!host||!ankiBrowse)return;
+ const all=ankiBrowseCards();
+ const matches=ankiBrowseMatches();
+ const cap=150;
+ const rows=matches.slice(0,cap).map(c=>{
+  normalizeCard(c);
+  const deck=anki.decks.find(d=>String(d.id)===String(c.deckId));
+  const tags=(c.tags||[]).filter(Boolean);
+  const open=ankiBrowse.open===String(c.id);
+  const chips=tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+(tags.length>4?'<span class="more">+'+(tags.length-4)+'</span>':'');
+  const meta=[deck?ankiDeckLabel(deck):'',ankiStateLabel(c)].filter(Boolean).join(' · ');
+  const body=open?('<div class="anki-brow-body"><div class="anki-brow-back">'+
+    (String(c.back||'').replace(/^(?:\s*<hr\b[^>]*>\s*)+/i,'')||'<span class="muted">—</span>')+
+    (c.extra?'<div class="anki-extra">'+c.extra+'</div>':'')+'</div>'+
+    (tags.length?'<div class="anki-tags">'+tags.map(t=>'<span>'+esc(t)+'</span>').join('')+'</div>':'')+'</div>'):'';
+  return '<div class="anki-brow'+(open?' open':'')+'">'+
+   '<button type="button" class="anki-brow-head" data-open="'+esc(c.id)+'" aria-expanded="'+(open?'true':'false')+'">'+
+    '<span class="anki-brow-front">'+esc(ankiPlainText(c.front).slice(0,260)||'(…)')+'</span>'+
+    '<span class="anki-brow-meta">'+esc(meta)+'</span>'+
+    (tags.length?'<span class="anki-brow-tags">'+chips+'</span>':'')+
+   '</button>'+body+'</div>';
+ }).join('');
+ const cnt=$('anki-browse-count');
+ if(cnt)cnt.textContent=matches.length+' '+T('de','of')+' '+all.length+' '+T('tarjetas','cards')+(matches.length>cap?' · '+T('mostrando ','showing ')+cap:'');
+ host.innerHTML=rows||'<div class="anki-brow-empty">'+T('Sin resultados para «'+esc(ankiBrowse.q)+'».','No results for "'+esc(ankiBrowse.q)+'".')+'</div>';
+ host.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{
+  const id=b.dataset.open;
+  ankiBrowse.open=ankiBrowse.open===id?'':id;
+  renderBrowseList();
+ });
+ hydrateMedia(host);
 }
 function renderAnki(){
  if(!$('practice-anki'))return;
  if(ankiSession){renderStudy();return}
  if(ankiTick){clearInterval(ankiTick);ankiTick=null}
+ if(ankiBrowse){renderBrowse();return}
  const lib=$('anki-library'),study=$('anki-study');
  if(lib)lib.style.display='';if(study){study.style.display='none';study.innerHTML=''}
  refreshAnkiDay();renderStats();renderDecks();
@@ -5329,7 +5651,7 @@ function renderAnki(){
 /* ---------- Estudio ---------- */
 const AOKEY='clinq_anki_opts_v1';
 const ADKEY='clinq_anki_day_v1';
-const ANKI_DEFAULTS={newPerDay:20,reviewsPerDay:200,learnSteps:'1 10',relearnSteps:'10',graduatingIvl:1,easyIvl:4,easyBonus:130,intervalModifier:100,hardFactor:120,maxIvl:36500,startEase:250,minIvl:1,newInterval:0,leechThreshold:8,leechAction:'suspend',fuzz:5,rolloverHour:4,learnAhead:20,deadline:'',showTimer:true};
+const ANKI_DEFAULTS={newPerDay:20,reviewsPerDay:200,learnSteps:'1 10',relearnSteps:'10',graduatingIvl:1,easyIvl:4,easyBonus:130,intervalModifier:100,hardFactor:120,maxIvl:36500,startEase:250,minIvl:1,newInterval:0,leechThreshold:8,leechAction:'suspend',fuzz:5,rolloverHour:4,learnAhead:20,deadline:'',showTimer:true,showTags:true};
 function ankiNum(v,min,max,d){v=Number(v);if(!isFinite(v))v=d;return Math.min(max,Math.max(min,v))}
 function ankiStepStr(v,d){
  const a=(Array.isArray(v)?v:String(v==null?'':v).split(/[\s,]+/)).map(x=>Math.round(Number(x))).filter(x=>isFinite(x)&&x>=1&&x<=10080);
@@ -5358,6 +5680,7 @@ function loadAnkiOpts(){
  out.learnAhead=Math.round(ankiNum(o.learnAhead,0,180,d.learnAhead));
  out.deadline=/^\d{4}-\d{2}-\d{2}$/.test(String(o.deadline||''))?String(o.deadline):'';
  out.showTimer=o.showTimer!==false;
+ out.showTags=o.showTags!==false;
  return out;
 }
 let ankiOpts=loadAnkiOpts();
@@ -5550,19 +5873,43 @@ function ankiMix(rev,neu){
  }
  return out;
 }
-function startStudy(deckId){
+function startStudy(deckIds,opts){
+ opts=opts||{};
  refreshAnkiDay();
  const now=Date.now();
- const pool=ankiPool(deckId);
+ const ids=ankiDeckIds(deckIds);
+ const only=opts.cardIds&&opts.cardIds.length?new Set(opts.cardIds.map(String)):null;
+ let pool=ids.length?anki.cards.filter(c=>ids.indexOf(String(c.deckId))>=0):anki.cards.slice();
+ if(only)pool=pool.filter(c=>only.has(String(c.id)));
  const q=ankiQueueFor(pool,now);
  const queue=q.learn.concat(ankiMix(q.rev,q.neu)).map(c=>String(c.id));
  if(!queue.length){
   const next=ankiNextDue(pool);
-  notify(next?T('Nada para ahora. La próxima tarjeta vence '+ankiIn(next)+'.','Nothing due now. The next card is due '+ankiIn(next)+'.'):T('No hay tarjetas nuevas o pendientes en este mazo.','There are no new or due cards in this deck.'));
+  notify(next?T('Nada para ahora. La próxima tarjeta vence '+ankiIn(next)+'.','Nothing due now. The next card is due '+ankiIn(next)+'.'):T('No hay tarjetas nuevas o pendientes en esta selección.','There are no new or due cards in this selection.'));
   return;
  }
- ankiSession={deckId:deckId?String(deckId):null,queue,idx:0,revealed:false,done:0,again:0,history:[],started:now,cardAt:now,optsOpen:false};
+ ankiSession={deckIds:ids,deckId:ids.length===1?String(ids[0]):null,title:opts.label||'',cardIds:only?[...only]:null,queue,idx:0,revealed:false,done:0,again:0,history:[],started:now,cardAt:now,optsOpen:false};
  renderStudy();
+}
+function ankiSessionPool(s){
+ s=s||ankiSession;
+ if(!s)return [];
+ const ids=s.deckIds||[];
+ let pool=ids.length?anki.cards.filter(c=>ids.indexOf(String(c.deckId))>=0):anki.cards.slice();
+ if(s.cardIds&&s.cardIds.length){const only=new Set(s.cardIds.map(String));pool=pool.filter(c=>only.has(String(c.id)))}
+ return pool;
+}
+function ankiSessionLabel(s){
+ s=s||ankiSession;
+ if(!s)return 'Anki';
+ if(s.title)return s.title;
+ const ids=s.deckIds||[];
+ if(!ids.length)return T('Todos los mazos','All decks');
+ if(ids.length===1){
+  const d=anki.decks.find(x=>String(x.id)===String(ids[0]));
+  return d?ankiDeckLabel(d):'Anki';
+ }
+ return ids.length+' '+T('mazos','decks');
 }
 function exitSession(){
  ankiSession=null;
@@ -5704,7 +6051,7 @@ function renderStudy(){
  const remain=Math.max(0,ankiSession.queue.length-ankiSession.idx);
  const c=ankiSession.idx<ankiSession.queue.length?cardById(ankiSession.queue[ankiSession.idx]):null;
  if(!c){
-  const pool=ankiPool(ankiSession.deckId);
+  const pool=ankiSessionPool();
   const more=ankiQueueFor(pool,Date.now());
   const hasMore=more.learn.length+more.rev.length+more.neu.length>0;
   const secs=Math.round((Date.now()-ankiSession.started)/1000);
@@ -5715,14 +6062,22 @@ function renderStudy(){
     '<button type="button" class="btn outline" id="anki-exit">'+T('Volver a los mazos','Back to decks')+'</button>'+
    '</div></div>';
   const ex=$('anki-exit');if(ex)ex.onclick=exitSession;
-  const mo=$('anki-more');if(mo)mo.onclick=()=>startStudy(ankiSession&&ankiSession.deckId);
+  const mo=$('anki-more');
+  if(mo)mo.onclick=()=>{
+   if(!ankiSession)return;
+   startStudy(ankiSession.deckIds,{cardIds:ankiSession.cardIds||undefined,label:ankiSession.title||''});
+  };
   return;
  }
  normalizeCard(c);
  const deck=anki.decks.find(d=>String(d.id)===String(c.deckId));
+ const sessionLabel=ankiSessionLabel()+(deck&&deck.source==='ankicollab'&&!ankiSession.title?' · AnkiCollab':'');
  const done=ankiSession.done;
  const pct=Math.round(done/Math.max(1,done+remain)*100);
- const tags=(c.tags||[]).length?'<div class="anki-tags">'+(c.tags||[]).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div>':'';
+ const tagList=(c.tags||[]).map(t=>String(t||'').trim()).filter(Boolean);
+ const tagsBlock=(!tagList.length||!ankiOpts.showTags)?'':(tagList.length<=6
+  ?'<div class="anki-tags-wrap"><span class="anki-tags-label">'+T('Etiquetas','Tags')+'</span><div class="anki-tags">'+tagList.map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></div>'
+  :'<details class="anki-tags-wrap"><summary>'+T('Etiquetas','Tags')+' ('+tagList.length+')</summary><div class="anki-tags">'+tagList.map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></details>');
  const flag=Number(c.flag)||0;
  const chips='<div class="anki-chips"><span class="anki-chip">'+ankiStateLabel(c)+'</span>'+
   (flag?'<span class="anki-chip flag'+flag+'">⚑ '+esc(ankiFlagName(flag))+'</span>':'')+
@@ -5739,11 +6094,11 @@ function renderStudy(){
    ankiBtn('anki-suspend','⏸',T('Suspender tarjeta (=)','Suspend card (=)'))+
    ankiBtn('anki-flag','⚑',T('Cambiar marca (F)','Change flag (F)'))+
    ankiBtn('anki-settings','⚙',T('Opciones de repaso','Review options'))+
-  '</div><div class="smalltext muted anki-study-meta">'+esc(deck?ankiDeckLabel(deck):'Anki')+(deck&&deck.source==='ankicollab'?' · AnkiCollab':'')+' · <b>'+remain+'</b> '+T('restantes','left')+(clock?' · '+clock:'')+'</div></div>'+
+  '</div><div class="smalltext muted anki-study-meta">'+esc(sessionLabel)+' · <b>'+remain+'</b> '+T('restantes','left')+(clock?' · '+clock:'')+'</div></div>'+
   '<div class="anki-bar"><div style="width:'+pct+'%"></div></div>'+
-  '<div class="anki-card'+(ankiSession.revealed?' revealed':'')+'">'+chips+tags+
+  '<div class="anki-card'+(ankiSession.revealed?' revealed':'')+'">'+chips+
    '<div class="anki-front">'+(c.front||'<span class="muted">(…)</span>')+'</div>'+
-   (ankiSession.revealed?'<div class="anki-divider"></div><div class="anki-back"><div class="anki-label">'+T('Respuesta','Answer')+'</div>'+(String(c.back||'').replace(/^(?:\s*<hr\b[^>]*>\s*)+/i,'')||'<span class="muted">—</span>')+(c.extra?'<div class="anki-extra">'+c.extra+'</div>':'')+'</div>':'')+
+   (ankiSession.revealed?'<div class="anki-divider"></div><div class="anki-back"><div class="anki-label">'+T('Respuesta','Answer')+'</div>'+(String(c.back||'').replace(/^(?:\s*<hr\b[^>]*>\s*)+/i,'')||'<span class="muted">—</span>')+(c.extra?'<div class="anki-extra">'+c.extra+'</div>':'')+tagsBlock+'</div>':'')+
   '</div>'+
   (ankiSession.revealed?'<div class="anki-grades">'+[0,1,2,3].map(g=>gradeButton(c,g)).join('')+'</div>':'<button type="button" class="btn primary anki-reveal" id="anki-reveal">'+T('Mostrar respuesta','Show answer')+'</button>')+
   '<div class="smalltext muted anki-hint">'+T('Espacio: mostrar · 1–4: calificar · U: deshacer · S: omitir · -: enterrar · =: suspender · F: marcar','Space: show · 1–4: grade · U: undo · S: skip · -: bury · =: suspend · F: flag')+'</div>';
@@ -5777,7 +6132,7 @@ function deleteDeck(id){
  saveAnki();
  idbDeletePrefix(String(id)+'|').catch(()=>{});
  for(const [k,u] of mediaUrls){if(k.indexOf(String(id)+'|')===0){try{URL.revokeObjectURL(u)}catch(e){}mediaUrls.delete(k)}}
- if(ankiSession&&String(ankiSession.deckId)===String(id))ankiSession=null;
+ if(ankiSession&&(ankiSession.deckIds||[]).indexOf(String(id))>=0)ankiSession=null;
  renderAnki();
 }
 function deadlineInfo(){
@@ -5855,8 +6210,11 @@ function renderOptions(host){
   '<div class="anki-opts-sec"><strong>'+T('Leech','Leeches')+'</strong><div class="anki-opts-grid">'+
    num('ao-leech',T('Umbral de fallos','Lapse threshold'),o.leechThreshold,0,99)+
    '<label class="anki-opt"><span>'+T('Acción','Action')+'</span><select class="field" id="ao-leechact"><option value="suspend"'+(o.leechAction==='suspend'?' selected':'')+'>'+T('Suspender tarjeta','Suspend card')+'</option><option value="tag"'+(o.leechAction==='tag'?' selected':'')+'>'+T('Etiquetar como leech','Tag as leech')+'</option></select></label>'+
-   '<label class="anki-opt anki-opt-check"><span>'+T('Mostrar cronómetro','Show timer')+'</span><input type="checkbox" id="ao-timer"'+(o.showTimer?' checked':'')+'></label>'+
   '</div></div>'+
+  '<div class="anki-opts-sec"><strong>'+T('Pantalla de repaso','Review screen')+'</strong><div class="anki-opts-grid">'+
+   '<label class="anki-opt anki-opt-check"><span>'+T('Mostrar cronómetro','Show timer')+'</span><input type="checkbox" id="ao-timer"'+(o.showTimer?' checked':'')+'></label>'+
+   '<label class="anki-opt anki-opt-check"><span>'+T('Mostrar etiquetas al revelar','Show tags when revealed')+'</span><input type="checkbox" id="ao-tags"'+(o.showTags?' checked':'')+'></label>'+
+  '</div><p class="smalltext muted">'+T('Las etiquetas se muestran siempre al final de la respuesta, nunca sobre el enunciado.','Tags always appear at the end of the answer, never above the question.')+'</p></div>'+
   '<div class="anki-opts-sec"><strong>'+T('Mantenimiento','Maintenance')+'</strong><div class="anki-opts-actions">'+
    '<button type="button" class="btn outline small" id="anki-unsuspend"'+(susp?'':' disabled')+'>'+T('Reactivar suspendidas','Unsuspend all')+' ('+susp+')</button>'+
    '<button type="button" class="btn outline small" id="anki-unbury"'+(buried?'':' disabled')+'>'+T('Desenterrar hoy','Unbury today')+' ('+buried+')</button>'+
@@ -5890,6 +6248,7 @@ function renderOptions(host){
   const rs=q('ao-relearn');if(rs)o.relearnSteps=ankiStepStr(rs.value,ANKI_DEFAULTS.relearnSteps);
   const la=q('ao-leechact');if(la)o.leechAction=la.value==='tag'?'tag':'suspend';
   const tm=q('ao-timer');o.showTimer=!!(tm&&tm.checked);
+  const tg=q('ao-tags');o.showTags=!!(tg&&tg.checked);
   const dd=q('ao-deadline');o.deadline=dd&&/^\d{4}-\d{2}-\d{2}$/.test(dd.value)?dd.value:'';
   saveAnkiOpts();refreshAnkiDay();renderAnki();
   notify(T('Opciones guardadas.','Options saved.'));
@@ -6307,7 +6666,8 @@ function injectUI(){
     '<div class="stats" id="anki-stats"></div>'+
     '<div class="panel anki-options" id="anki-options" style="display:none"></div>'+
     '<div class="sectionhead anki-decks-head"><div><h3>'+T('Tus mazos','Your decks')+'</h3><p>'+T('Cada sesión respeta tus límites diarios, pasos de aprendizaje y plazos.','Each session follows your daily limits, learning steps and deadlines.')+'</p></div><div class="anki-actions"><button type="button" class="btn outline small" id="anki-options-btn">⚙ '+T('Opciones','Options')+'</button><button type="button" class="btn primary small" id="anki-study-all">▶ '+T('Estudiar todo','Study all')+'</button></div></div>'+
-    '<div id="anki-decks" class="anki-grid"></div>'+
+    '<div class="anki-deck-tools"><input class="field" id="anki-deck-search" type="search" placeholder="'+T('Buscar mazo (ej. Robin::Cardio)…','Search decks (e.g. Robin::Cardio)…')+'" aria-label="'+T('Buscar mazo','Search decks')+'" autocomplete="off" spellcheck="false"><button type="button" class="btn outline small" id="anki-deck-search-clear" hidden>✕</button></div>'+
+    '<div id="anki-decks" class="anki-tree"></div>'+
    '</div>'+
    '<div id="anki-study" class="tl-panel anki-study" style="display:none"></div>'+
    '<input id="anki-file" type="file" accept=".apkg,.colpkg,.anki21,.txt,.tsv,.csv" hidden>';
@@ -6374,6 +6734,22 @@ function injectUI(){
  const imp=$('anki-import-btn');if(imp)imp.onclick=()=>file&&file.click();
  const exp=$('anki-export-btn');if(exp)exp.onclick=exportAnki;
  const all=$('anki-study-all');if(all)all.onclick=()=>startStudy(null);
+ const deckSearch=$('anki-deck-search'),deckClear=$('anki-deck-search-clear');
+ if(deckSearch){
+  deckSearch.addEventListener('input',()=>{
+   ankiDeckQuery=deckSearch.value;
+   if(deckClear)deckClear.hidden=!deckSearch.value;
+   renderDecks();
+  });
+  deckSearch.addEventListener('keydown',e=>{
+   e.stopPropagation();
+   if(e.key==='Escape'){e.preventDefault();deckSearch.value='';ankiDeckQuery='';if(deckClear)deckClear.hidden=true;renderDecks()}
+  });
+ }
+ if(deckClear)deckClear.onclick=()=>{
+  if(deckSearch){deckSearch.value='';deckSearch.focus()}
+  ankiDeckQuery='';deckClear.hidden=true;renderDecks();
+ };
  const optBtn=$('anki-options-btn'),optHost=$('anki-options');
  if(optBtn&&optHost)optBtn.onclick=()=>{
   const open=optHost.style.display==='none';
@@ -6644,6 +7020,46 @@ try{
  if(typeof _rs==='function')renderSettings=function(){const r=_rs.apply(this,arguments);setTimeout(()=>{try{paint(true)}catch(e){}},0);return r};
 }catch(e){}
 try{paint(true)}catch(e){}
+
+/* ===== Caso clínico a pantalla completa: el caso y sus opciones caben sin scroll de página ===== */
+let quizFitTimer=null;
+function quizFit(){
+ const view=$('view-practice'),host=$('quiz-area');
+ if(!view||!host)return;
+ const wrap=host.querySelector('.quizwrap');
+ const on=!!(wrap&&view.classList.contains('active')&&host.style.display!=='none'&&window.innerWidth>=760&&!(typeof currentQuiz!=='undefined'&&currentQuiz&&currentQuiz.finished));
+ view.classList.toggle('quiz-fit',on);
+ view.classList.toggle('quiz-two',on&&view.clientWidth>=640);
+ document.documentElement.classList.toggle('quiz-fit-on',on);
+ if(!on){host.style.removeProperty('--quiz-fit-h');return}
+ if(window.scrollY>0){try{window.scrollTo(0,0)}catch(e){}}
+ const top=Math.max(0,Math.round(host.getBoundingClientRect().top));
+ const h=Math.max(300,window.innerHeight-top-10);
+ host.style.setProperty('--quiz-fit-h',h+'px');
+ /* Dos columnas: mide la fila del caso/opciones y fija la altura util del panel de opciones */
+ const card=host.querySelector('.quizcard'),disc=card&&card.querySelector('.option-disclosure');
+ if(card&&disc&&view.classList.contains('quiz-two')){
+  const cs=getComputedStyle(card);
+  const pad=(parseFloat(cs.paddingTop)||0)+(parseFloat(cs.paddingBottom)||0);
+  let others=0;
+  [...card.children].forEach(el=>{if(el!==disc&&el.tagName!=='BUTTON')others+=el.getBoundingClientRect().height});
+  const sum=disc.querySelector('summary');
+  const sumH=sum?sum.getBoundingClientRect().height:0;
+  const r3=card.clientHeight-others-30-pad; /* 30 = 5 huecos de 6px entre las 6 filas */
+  card.style.setProperty('--q2-opts-h',Math.max(150,Math.round(r3-sumH-12))+'px');
+ }else if(card){card.style.removeProperty('--q2-opts-h')}
+}
+window.clinQQuizFit=quizFit;
+(function(){
+ const view=$('view-practice'),host=$('quiz-area');
+ if(!view||!host)return;
+ const schedule=()=>{if(quizFitTimer)return;quizFitTimer=setTimeout(()=>{quizFitTimer=null;try{quizFit()}catch(e){}},40)};
+ try{new MutationObserver(schedule).observe(host,{childList:true})}catch(e){}
+ try{new MutationObserver(schedule).observe(view,{attributes:true,attributeFilter:['class','style']})}catch(e){}
+ window.addEventListener('resize',schedule);
+ window.addEventListener('orientationchange',schedule);
+ setTimeout(schedule,500);
+})();
 })();
 
 </script>
